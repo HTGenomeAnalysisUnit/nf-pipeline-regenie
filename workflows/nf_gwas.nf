@@ -82,8 +82,8 @@ include { MERGE_RESULTS               } from '../modules/local/merge_results'  a
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir")
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 
-workflow NF_GWAS {
-
+workflow NF_GWAS {   
+   //CHROM PARALLELIZE BRANCH
     CACHE_JBANG_SCRIPTS (
         regenie_log_parser_java,
         regenie_filter_java,
