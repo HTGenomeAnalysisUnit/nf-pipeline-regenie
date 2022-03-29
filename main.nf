@@ -19,5 +19,6 @@ include { NF_GWAS } from './workflows/nf_gwas'
 */
 
 workflow {
+    log.info "PARALLEL CHROM VERSION"
     NF_GWAS ()
 }

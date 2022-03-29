@@ -5,15 +5,15 @@ process REGENIE_STEP2 {
   tag "${plink2_pgen_file.simpleName}"
 
   input:
-	  path step1_out
-    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file)
+	  path(step1_out)
+    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file), val(chrom)
     path phenotypes_file
     path sample_file
     path covariates_file
 
   output:
     tuple val(filename), path("*regenie.gz"), emit: regenie_step2_out
-    path "${filename}.log", emit: regenie_step2_out_log
+    path "${chrom}_${filename}.log", emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
@@ -41,6 +41,7 @@ process REGENIE_STEP2 {
     --minMAC ${params.regenie_min_mac} \
     --minINFO ${params.regenie_min_imputation_score} \
     --gz \
+    --chr $chrom \
     $binaryTrait \
     $test \
     $bgen_sample \
@@ -49,6 +50,6 @@ process REGENIE_STEP2 {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${filename}
+    --out ${chrom}_${filename}
   """
 }

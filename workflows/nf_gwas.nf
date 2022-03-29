@@ -81,9 +81,10 @@ include { MERGE_RESULTS_FILTERED      } from '../modules/local/merge_results_fil
 include { MERGE_RESULTS               } from '../modules/local/merge_results'  addParams(outdir: "$outdir")
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir")
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
+include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
 
 workflow NF_GWAS {   
-   //CHROM PARALLELIZE BRANCH
+   
     CACHE_JBANG_SCRIPTS (
         regenie_log_parser_java,
         regenie_filter_java,
@@ -173,9 +174,12 @@ workflow NF_GWAS {
 
     }
 
+    //CHROM PARALLELIZE BRANCH
+    chromosomes = Channel.of(1..23)
+    bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
     REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
-        imputed_plink2_ch,
+        bychr_imputed_ch,
         VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
         sample_file,
         covariates_file_validated
@@ -187,7 +191,9 @@ workflow NF_GWAS {
     )
 
 // regenie creates a file for each tested phenotype. Merge-steps require to group by phenotpe.
-REGENIE_STEP2.out.regenie_step2_out
+CONCAT_STEP2_RESULTS(REGENIE_STEP2.out.regenie_step2_out.groupTuple())
+
+CONCAT_STEP2_RESULTS.out.regenie_step2_out
   .transpose()
   .map { prefix, file -> tuple(getPhenotype(prefix, file), file) }
   .set { regenie_step2_by_phenotype }
