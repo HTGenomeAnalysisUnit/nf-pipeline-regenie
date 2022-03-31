@@ -186,12 +186,14 @@ workflow NF_GWAS {
     )
 
     REGENIE_LOG_PARSER_STEP2 (
-        REGENIE_STEP2.out.regenie_step2_out_log.collect(),
+        REGENIE_STEP2.out.regenie_step2_out_log.first(),
         CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
     )
 
 // regenie creates a file for each tested phenotype. Merge-steps require to group by phenotpe.
-CONCAT_STEP2_RESULTS(REGENIE_STEP2.out.regenie_step2_out.groupTuple())
+concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
+//concat_input_ch.view()
+CONCAT_STEP2_RESULTS(concat_input_ch)
 
 CONCAT_STEP2_RESULTS.out.regenie_step2_out
   .transpose()
