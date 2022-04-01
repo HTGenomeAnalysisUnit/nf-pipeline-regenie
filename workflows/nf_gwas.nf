@@ -66,15 +66,19 @@ if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format 
 //Array genotypes
 Channel.fromFilePairs("${params.genotypes_array}", size: 3).set {genotyped_plink_ch}
 
+//Check split settings
+if (params.step2_split_by == 'chunk') {
+  snplist_ch = file(params.imputed_snplist, checkIfExists: true)
+}
+
 include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
 include { IMPUTED_TO_PLINK2           } from '../modules/local/imputed_to_plink2' addParams(outdir: "$outdir")
 include { PRUNE_GENOTYPED             } from '../modules/local/prune_genotyped' addParams(outdir: "$outdir")
 include { QC_FILTER_GENOTYPED         } from '../modules/local/qc_filter_genotyped' addParams(outdir: "$outdir")
-include { REGENIE_STEP1               } from '../modules/local/regenie_step1' addParams(outdir: "$outdir")
+include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1' addParams(outdir: "$outdir", save_step1_predictions: params.save_step1_predictions)
 include { REGENIE_LOG_PARSER_STEP1    } from '../modules/local/regenie_log_parser_step1'  addParams(outdir: "$outdir")
-include { REGENIE_STEP2               } from '../modules/local/regenie_step2' addParams(outdir: "$outdir")
 include { REGENIE_LOG_PARSER_STEP2    } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "$outdir")
 include { FILTER_RESULTS              } from '../modules/local/filter_results'
 include { MERGE_RESULTS_FILTERED      } from '../modules/local/merge_results_filtered'  addParams(outdir: "$outdir")
@@ -82,6 +86,13 @@ include { MERGE_RESULTS               } from '../modules/local/merge_results'  a
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir")
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
+
+if (params.step2_split_by == 'chunk') {
+  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: false)
+  include { REGENIE_STEP2_BYCHUNK as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir")
+} else if (params.step2_split_by == 'chr') {
+  include { REGENIE_STEP2_BYCHR as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir")
+}
 
 workflow NF_GWAS {   
    
@@ -148,7 +159,7 @@ workflow NF_GWAS {
           genotyped_final_ch = QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
       }
 
-    if (!params.regenie_skip_predictions){
+    if (!params.regenie_premade_predictions){
 
         REGENIE_STEP1 (
             genotyped_final_ch,
@@ -157,6 +168,15 @@ workflow NF_GWAS {
             VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
             covariates_file_validated
         )
+        /*
+        REGENIE_STEP1 (
+            genotyped_final_ch,
+            QC_FILTER_GENOTYPED.out.genotyped_filtered_snplist_ch,
+            QC_FILTER_GENOTYPED.out.genotyped_filtered_id_ch,
+            VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+            covariates_file_validated
+        )
+        */
 
         REGENIE_LOG_PARSER_STEP1 (
             REGENIE_STEP1.out.regenie_step1_out_log,
@@ -167,14 +187,21 @@ workflow NF_GWAS {
         regenie_step1_parsed_logs_ch = REGENIE_LOG_PARSER_STEP1.out.regenie_step1_parsed_logs
 
     } else {
-
-        regenie_step1_out_ch = Channel.of('/')
+        /* 
+        You can load pre-made regenie level 1 preds. 
+        You must specifify a path of /my/path/regenie_step1_out* 
+        A file named regenie_step1_out_pred.list must be present together with files like
+        regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ...
+        The .list file must contain absolute paths for the .gz files.
+        */
+        regenie_step1_out_ch = Channel.fromPath(params.regenie_premade_predictions, checkIfExists: true)
 
         regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
 
     }
 
     //CHROM PARALLELIZE BRANCH
+    if (params.step2_split_by == 'chr') { 
     chromosomes = Channel.of(1..23)
     bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
     REGENIE_STEP2 (
@@ -184,6 +211,18 @@ workflow NF_GWAS {
         sample_file,
         covariates_file_validated
     )
+    } else if (params.step2_split_by == 'chunk') {
+      MAKE_CHUNKS(snplist_ch, params.step2_chunk_size)
+      chunks_ch = MAKE_CHUNKS.out.splitText() { it.trim() }
+      bychunk_imputed_ch = imputed_plink2_ch.combine(chunks_ch)
+      REGENIE_STEP2 (
+        regenie_step1_out_ch.collect(),
+        bychunk_imputed_ch,
+        VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+        sample_file,
+        covariates_file_validated
+      )
+    }
 
     REGENIE_LOG_PARSER_STEP2 (
         REGENIE_STEP2.out.regenie_step2_out_log.first(),
