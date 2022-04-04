@@ -32,7 +32,7 @@ gwas_report_template = file("$baseDir/reports/gwas_report_template.Rmd",checkIfE
 regenie_log_parser_java  = file("$baseDir/bin/RegenieLogParser.java", checkIfExists: true)
 regenie_filter_java = file("$baseDir/bin/RegenieFilter.java", checkIfExists: true)
 regenie_validate_input_java = file("$baseDir/bin/RegenieValidateInput.java", checkIfExists: true)
-updated_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
+update_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
 
 //Annotation files
 genes_hg19 = file("$baseDir/genes/genes.GRCh37.sorted.bed", checkIfExists: true)
@@ -66,6 +66,11 @@ if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format 
 
 //Array genotypes
 Channel.fromFilePairs("${params.genotypes_array}", size: 3).set {genotyped_plink_ch}
+
+//Check db file
+if (params.db) {
+  sqlite_db = file(params.db, checkIfExists: true)
+}
 
 //Check split settings
 if (params.step2_split_by == 'chunk') {
@@ -277,7 +282,7 @@ CONCAT_STEP2_RESULTS.out.regenie_step2_out
     )
 
     if (params.db) {
-      UPDATE_DB(updated_db_sql, file(params.db), MERGE_RESULTS.out.results_merged)
+      UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged)
     }
 }
 
