@@ -5,7 +5,6 @@ process MAKE_CHUNKS {
 
     input:
         file(snps_list) //sorted tab-separated file with contig, snp pos
-        val(chunk_size)
 
     output:
         path 'chunks.txt'
@@ -15,10 +14,7 @@ process MAKE_CHUNKS {
     awk '{print \$0 >> \$1".snps"}' $snps_list
     for f in *.snps
     do 
-        awk 'NR==1 || !(NR%10000); END { if (NR%10000) {print \$0} }' \$f \
-        | paste - - \
-        | awk 'NR==1 {print \$1":"\$2"-"\$4; start=\$4+1}; NR > 1 {print \$1":"start"-"\$2; print \$1":"\$2+1"-"\$4; start=\$4+1}' \
-        > \$f.intervals
+        awk 'NR == 1 {start=\$2}; NR > 1 && !(NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2; start = \$2+1}; END { if (NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2} }' \$f > \$f.intervals      
     done
 
     cat *.intervals > chunks.txt

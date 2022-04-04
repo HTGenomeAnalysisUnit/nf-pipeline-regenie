@@ -32,6 +32,7 @@ gwas_report_template = file("$baseDir/reports/gwas_report_template.Rmd",checkIfE
 regenie_log_parser_java  = file("$baseDir/bin/RegenieLogParser.java", checkIfExists: true)
 regenie_filter_java = file("$baseDir/bin/RegenieFilter.java", checkIfExists: true)
 regenie_validate_input_java = file("$baseDir/bin/RegenieValidateInput.java", checkIfExists: true)
+updated_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
 
 //Annotation files
 genes_hg19 = file("$baseDir/genes/genes.GRCh37.sorted.bed", checkIfExists: true)
@@ -88,7 +89,7 @@ include { REPORT                      } from '../modules/local/report'  addParam
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
 
 if (params.step2_split_by == 'chunk') {
-  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: false)
+  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size)
   include { REGENIE_STEP2_BYCHUNK as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir")
 } else if (params.step2_split_by == 'chr') {
   include { REGENIE_STEP2_BYCHR as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir")
@@ -138,7 +139,7 @@ workflow NF_GWAS {
 
         //no conversion needed (already BGEN), set input to imputed_plink2_ch channel
         channel.fromPath("${params.genotypes_imputed}")
-        .map { tuple(it.baseName, it, file('dummy_a'), file('dummy_b')) }
+        .map { tuple(it.baseName, it, file('dummy_a'), file('dummy_b'), file(it+".bgi")) }
         .set {imputed_plink2_ch}
     }
 
@@ -200,7 +201,7 @@ workflow NF_GWAS {
 
     }
 
-    //CHROM PARALLELIZE BRANCH
+    //PARALLELIZE BRANCH
     if (params.step2_split_by == 'chr') { 
     chromosomes = Channel.of(1..23)
     bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
@@ -212,8 +213,9 @@ workflow NF_GWAS {
         covariates_file_validated
     )
     } else if (params.step2_split_by == 'chunk') {
-      MAKE_CHUNKS(snplist_ch, params.step2_chunk_size)
+      MAKE_CHUNKS(snplist_ch)
       chunks_ch = MAKE_CHUNKS.out.splitText() { it.trim() }
+      //chunks_ch.view()
       bychunk_imputed_ch = imputed_plink2_ch.combine(chunks_ch)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
@@ -229,11 +231,11 @@ workflow NF_GWAS {
         CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
     )
 
-// regenie creates a file for each tested phenotype. Merge-steps require to group by phenotpe.
+//concat by chromosome results into a single result file per pheno
 concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
-//concat_input_ch.view()
 CONCAT_STEP2_RESULTS(concat_input_ch)
 
+// regenie creates a file for each tested phenotype. Merge-steps require to group by phenotpe.
 CONCAT_STEP2_RESULTS.out.regenie_step2_out
   .transpose()
   .map { prefix, file -> tuple(getPhenotype(prefix, file), file) }
@@ -273,6 +275,10 @@ CONCAT_STEP2_RESULTS.out.regenie_step2_out
         regenie_step1_parsed_logs_ch.collect(),
         REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
     )
+
+    if (params.db) {
+      UPDATE_DB(updated_db_sql, file(params.db), MERGE_RESULTS.out.results_merged)
+    }
 }
 
 workflow.onComplete {

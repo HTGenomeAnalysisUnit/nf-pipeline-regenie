@@ -59,19 +59,19 @@ process REGENIE_STEP2_BYCHUNK {
 
   publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
 
-  label "regenie2_chunk"
+  label "step2_bychunk"
   tag "${plink2_pgen_file.simpleName}"
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file), val(chunk)
+    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file), path(bgi_index), val(chunk)
     path phenotypes_file
     path sample_file
     path covariates_file
 
   output:
     tuple val(filename), path("*regenie.gz"), emit: regenie_step2_out
-    path "${chrom}_${filename}.log", emit: regenie_step2_out_log
+    path "${chunk}_${filename}.log", emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
@@ -98,7 +98,7 @@ process REGENIE_STEP2_BYCHUNK {
     --threads ${task.cpus} \
     --minMAC ${params.regenie_min_mac} \
     --minINFO ${params.regenie_min_imputation_score} \
-    --gz \
+    --gz --verbose \
     --range $chunk \
     $binaryTrait \
     $test \
@@ -108,6 +108,6 @@ process REGENIE_STEP2_BYCHUNK {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${chrom}_${filename}
+    --out ${chunk}_${filename}
   """
 }

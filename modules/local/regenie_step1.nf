@@ -89,6 +89,7 @@ process RUNL0 {
 
 process RUNL1 {
   label 'step1_runl1'
+  stageInMode 'copy'
   
   publishDir "${params.outdir}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
@@ -126,7 +127,7 @@ process RUNL1 {
     --bsize ${params.regenie_bsize_step1} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
     --run-l1 ${master_file} \
-    --gz \
+    --keep-l0 --gz --verbose \
     --out regenie_step1_out
   """
 }
