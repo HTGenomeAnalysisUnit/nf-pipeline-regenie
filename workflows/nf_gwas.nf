@@ -92,6 +92,7 @@ include { MERGE_RESULTS               } from '../modules/local/merge_results'  a
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir")
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
+include { UPDATE_DB                   } from '../modules/local/update_db' addParams(project: params.project)
 
 if (params.step2_split_by == 'chunk') {
   include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size)
@@ -282,7 +283,7 @@ CONCAT_STEP2_RESULTS.out.regenie_step2_out
     )
 
     if (params.db) {
-      UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged)
+      UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged.collect{ it[1] })
     }
 }
 

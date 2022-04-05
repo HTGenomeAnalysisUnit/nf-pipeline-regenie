@@ -11,9 +11,9 @@ process UPDATE_DB {
     """
     for f in *.regenie.gz
     do
-        phenotype=\${f##.regenie.gz}
-        tableid="${params.project}_\$phenotype"
-        zcat \$f | awk -v pheno=\$phenotype '{OFS="\\t"}; \$13 >= 1.3 {print pheno, \$0}' > filtered.tsv
+        phenotype=\${f%%.regenie.gz}
+        tableid=\$(echo "${params.project}_\$phenotype" | tr "-" "_" | tr " " "_" | tr '.' '_')
+        zcat \$f | awk -v pheno=\$phenotype -v runid="${params.project}" '{OFS="\\t"}; NR == 1 {print "RUN_ID","PHENO", \$0}; NR > 1 && \$13 >= 1.3 {print runid, pheno, \$0}' > filtered.tsv
         
         cp $sql_lite_script \${tableid}.sql
         sed -i "s/@table_name@/\$tableid/g" \${tableid}.sql 

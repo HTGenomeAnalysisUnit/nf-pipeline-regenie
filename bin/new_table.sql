@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS @table_name@;
 
 CREATE TABLE @table_name@ (
+    "RUN_ID" TEXT,
     "PHENO" TEXT,
     "CHROM" TEXT,
     "GENPOS" INTEGER,
