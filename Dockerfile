@@ -1,5 +1,10 @@
 FROM ubuntu:18.04
 COPY environment.yml .
+LABEL author="Edoardo Giacopuzzi"
+LABEL contact="edoardo.giacopuzzi@fht.org"
+LABEL image_version="0.1"
+LABEL regenie_version="3.0"
+LABEL bgenix_version="1.1.7"
 
 #  Install miniconda
 RUN  apt-get update && apt-get install -y wget
@@ -13,6 +18,7 @@ RUN conda env update -n root -f environment.yml
 # Install software
 RUN apt-get update && \
     apt-get install -y gfortran \
+    build-essential \
     python3 \
     zlib1g-dev \
     libgomp1 \
@@ -27,6 +33,17 @@ RUN wget https://github.com/jbangdev/jbang/releases/download/v0.91.0/jbang-0.91.
     mv jbang-0.91.0 jbang  && \
     rm jbang*.zip
 ENV PATH="/opt/jbang/bin:${PATH}"
+
+# Install bgen tools
+WORKDIR "/opt"
+RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
+    tar -zxvf bgen.tgz && \
+    cd bgen.tgz && \
+    ./waf configure && \
+    ./waf && \
+    ./waf install && \
+    cd .. && \
+    rm -rf bgen.tgz
 
 # Install regenie (not as conda package available)
 WORKDIR "/opt"

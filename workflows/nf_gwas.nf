@@ -4,7 +4,7 @@ requiredParams = [
     'genotypes_imputed', 'genotypes_build',
     'genotypes_imputed_format', 'phenotypes_filename',
     'phenotypes_columns', 'phenotypes_binary_trait',
-    'regenie_test'
+    'regenie_test', 'step1_n_chunks', 'step2_split_by'
 ]
 
 for (param in requiredParams) {
@@ -35,9 +35,13 @@ regenie_validate_input_java = file("$baseDir/bin/RegenieValidateInput.java", che
 update_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
 
 //Annotation files
-genes_hg19 = file("$baseDir/genes/genes.GRCh37.sorted.bed", checkIfExists: true)
-genes_hg38 = file("$baseDir/genes/genes.GRCh38.sorted.bed", checkIfExists: true)
-
+if (params.genes) {
+  genes_hg19 = file(params.genes)
+  genes_hg38 = file(params.genes)
+} else {
+  genes_hg19 = file("$baseDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
+  genes_hg38 = file("$baseDir/genes/genes.GRCh38.sorted.bed", checkIfExists: true)
+}
 //Phenotypes
 phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
 phenotypes = Channel.from(phenotypes_array)
@@ -72,15 +76,12 @@ if (params.db) {
   sqlite_db = file(params.db, checkIfExists: true)
 }
 
-//Check split settings
-if (params.step2_split_by == 'chunk') {
-  snplist_ch = file(params.imputed_snplist, checkIfExists: true)
-}
-
 include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
-include { IMPUTED_TO_PLINK2           } from '../modules/local/imputed_to_plink2' addParams(outdir: "$outdir")
+include { IMPUTED_TO_BGEN             } from '../modules/local/imputed_to_plink2' addParams(outdir: "$outdir")
+include { MAKE_BGEN_INDEX             } from '../modules/local/make_bgen_index' addParams(outdir: "$outdir", publish: params.save_bgen_index)
+include { MAKE_SNPLIST                } from '../modules/local/make_snplist' addParams(outdir: "$outdir", publish: params.save_snplist)
 include { PRUNE_GENOTYPED             } from '../modules/local/prune_genotyped' addParams(outdir: "$outdir")
 include { QC_FILTER_GENOTYPED         } from '../modules/local/qc_filter_genotyped' addParams(outdir: "$outdir")
 include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1' addParams(outdir: "$outdir", save_step1_predictions: params.save_step1_predictions)
@@ -89,7 +90,7 @@ include { REGENIE_LOG_PARSER_STEP2    } from '../modules/local/regenie_log_parse
 include { FILTER_RESULTS              } from '../modules/local/filter_results'
 include { MERGE_RESULTS_FILTERED      } from '../modules/local/merge_results_filtered'  addParams(outdir: "$outdir")
 include { MERGE_RESULTS               } from '../modules/local/merge_results'  addParams(outdir: "$outdir")
-include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir")
+include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
 include { UPDATE_DB                   } from '../modules/local/update_db' addParams(project: params.project)
@@ -130,23 +131,43 @@ workflow NF_GWAS {
      covariates_file_validated_log = Channel.fromPath("NO_COV_LOG")
 
    }
+    //Check split settings
+  
 
     //convert vcf files to plink2 format (not bgen!)
     if (params.genotypes_imputed_format == "vcf"){
         imputed_files =  channel.fromPath("${params.genotypes_imputed}", checkIfExists: true)
 
-        IMPUTED_TO_PLINK2 (
+        IMPUTED_TO_BGEN (
             imputed_files
         )
-
-        imputed_plink2_ch = IMPUTED_TO_PLINK2.out.imputed_plink2
-
+        imputed_plink2_ch = IMPUTED_TO_BGEN.out.imputed_bgen
+        imputed_bgen_ch = IMPUTED_TO_BGEN.out.imputed_bgen
+    
     }  else {
+        imputed_bgen_file = file(params.genotypes_imputed)
+        imputed_bgen_ch = tuple(imputed_bgen_file.baseName, imputed_bgen_file, file('dummy_a'))
+        
+        bgen_index_file = file("${params.genotypes_imputed}.bgi")
+        if (bgen_index_file.exists()) {
+          //no conversion needed (already BGEN), set input to imputed_plink2_ch channel
+          channel.fromPath("${params.genotypes_imputed}")
+          .map { tuple(it.baseName, it, file(it+".bgi")) }
+          .set {imputed_plink2_ch}
+        } else {
+          MAKE_BGEN_INDEX(imputed_bgen_file)
+          MAKE_BGEN_INDEX.out
+          .map { tuple(it[0].baseName, it[0], it[1]) }
+          .set {imputed_plink2_ch}
+        }
+    }
 
-        //no conversion needed (already BGEN), set input to imputed_plink2_ch channel
-        channel.fromPath("${params.genotypes_imputed}")
-        .map { tuple(it.baseName, it, file('dummy_a'), file('dummy_b'), file(it+".bgi")) }
-        .set {imputed_plink2_ch}
+    if (params.step2_split_by == 'chunk') {
+      if (params.imputed_snplist) {
+        snplist_ch = file(params.imputed_snplist, checkIfExists: true)
+      } else {
+        snplist_ch = MAKE_SNPLIST(imputed_bgen_ch)
+      }
     }
 
     QC_FILTER_GENOTYPED (
@@ -198,8 +219,10 @@ workflow NF_GWAS {
         You can load pre-made regenie level 1 preds. 
         You must specifify a path of /my/path/regenie_step1_out* 
         A file named regenie_step1_out_pred.list must be present together with files like
-        regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ...
+        regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ... (one per phenotype)
         The .list file must contain absolute paths for the .gz files.
+        These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
+        used to generate step1 predictions (both files and column designation must match exactly)
         */
         regenie_step1_out_ch = Channel.fromPath(params.regenie_premade_predictions, checkIfExists: true)
 
@@ -207,7 +230,7 @@ workflow NF_GWAS {
 
     }
 
-    //PARALLELIZE BRANCH
+    //PARALLELIZE BY CHROM
     if (params.step2_split_by == 'chr') { 
     chromosomes = Channel.of(1..23)
     bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
@@ -218,10 +241,10 @@ workflow NF_GWAS {
         sample_file,
         covariates_file_validated
     )
+    //PARALLELIZE BY CHUNK
     } else if (params.step2_split_by == 'chunk') {
       MAKE_CHUNKS(snplist_ch)
       chunks_ch = MAKE_CHUNKS.out.splitText() { it.trim() }
-      //chunks_ch.view()
       bychunk_imputed_ch = imputed_plink2_ch.combine(chunks_ch)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
@@ -237,16 +260,38 @@ workflow NF_GWAS {
         CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
     )
 
-//concat by chromosome results into a single result file per pheno
-concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
-CONCAT_STEP2_RESULTS(concat_input_ch)
+  //concat by chromosome results into a single result file per pheno
+  concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
+  CONCAT_STEP2_RESULTS(concat_input_ch)
 
-// regenie creates a file for each tested phenotype. Merge-steps require to group by phenotpe.
+  // generate a tuple of phenotype and corresponding result
+  CONCAT_STEP2_RESULTS.out.regenie_results_gz
+    .map { it -> return tuple(it.simpleName, it) }
+    .set { regenie_step2_by_phenotype }
+
+  //TODO CLUMP_RESULT(regenie_step2_by_phenotype, imputed_freq_file)
+  //TODO Create genelist in range format from the BED files
+
+  FILTER_RESULTS (
+          regenie_step2_by_phenotype
+          //CACHE_JBANG_SCRIPTS.out.regenie_filter_jar
+      )
+  
+  ANNOTATE_FILTERED (
+          FILTER_RESULTS.out.results_filtered,
+          genes_hg19,
+          genes_hg38
+      )
+  
+  merged_results_and_annotated_filtered =  regenie_step2_by_phenotype.combine(
+      ANNOTATE_FILTERED.out.annotated_ch, by: 0
+    )
+
+/*
 CONCAT_STEP2_RESULTS.out.regenie_step2_out
   .transpose()
   .map { prefix, file -> tuple(getPhenotype(prefix, file), file) }
   .set { regenie_step2_by_phenotype }
-
 
     FILTER_RESULTS (
         regenie_step2_by_phenotype,
@@ -267,11 +312,12 @@ CONCAT_STEP2_RESULTS.out.regenie_step2_out
         genes_hg38
     )
 
+
     //combined merge results and annotated filtered results by phenotype (index 0)
     merged_results_and_annotated_filtered =  MERGE_RESULTS.out.results_merged.combine(
       ANNOTATE_FILTERED.out.annotated_ch, by: 0
     )
-
+  */
     REPORT (
         merged_results_and_annotated_filtered,
         VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
@@ -282,6 +328,8 @@ CONCAT_STEP2_RESULTS.out.regenie_step2_out
         REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
     )
 
+    //Update sqlite3 database if db is provided
+    //Only SNPs with LOG10P > 1.3 (pval ~< 0.05) are stored
     if (params.db) {
       UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged.collect{ it[1] })
     }
@@ -293,6 +341,10 @@ workflow.onComplete {
 }
 
 // extract phenotype name from regenie output file.
+/*
 def getPhenotype(prefix, file ) {
     return file.baseName.replaceAll(prefix + "_", '').replaceAll('.regenie', '')
 }
+*/
+
+

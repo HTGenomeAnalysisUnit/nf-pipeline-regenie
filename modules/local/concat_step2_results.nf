@@ -1,14 +1,28 @@
 process CONCAT_STEP2_RESULTS {
+    publishDir "${params.outdir}/results", mode: 'copy'
+    
     input:
         tuple val(filename), file(regenie_gz)
     
     output:
-        tuple val(filename), file("${filename}_*regenie.gz"), emit: regenie_step2_out
+        path "*regenie.gz", emit: regenie_results_gz
+        path "*regenie.gz.tbi", emit: regenie_results_tbi
     
     script:
     """
-    for f in *.regenie.gz; do pheno=\${f%%.regenie.gz}; pheno=\${pheno##*_}; echo "\$pheno" >> phenos.tmp; done
+    #make tmp dir for sort 
+    mkdir tmp_sort
+
+    #get list of phenos from regenie output file names
+    for f in *.regenie.gz
+    do 
+        pheno=\${f%%.regenie.gz}
+        pheno=\${pheno##*_}
+        echo "\$pheno" >> phenos.tmp
+    done
     sort -u phenos.tmp > phenos.list
+    
+    #concat chunk files for each pheno
     while read -r pheno
     do
         for f in *\${pheno}.regenie.gz;
@@ -17,7 +31,11 @@ process CONCAT_STEP2_RESULTS {
         done
         headerfile=\$(ls *\${pheno}.regenie.gz | head -1)
         zcat \$headerfile | head -1 > header.txt
-        cat header.txt ${filename}_\${pheno}.tmp | gzip -c > ${filename}_\${pheno}.regenie.gz 
+        cat header.txt ${filename}_\${pheno}.tmp | sed 's/ /\t/g' | sort -k1,1V -k2,2n -T tmp_sort | bgzip -c > \${pheno}.regenie.gz 
+        tabix -f -b 2 -e 2 -s 1 -S 1 \${pheno}.regenie.gz
     done < phenos.list
+    
+    #remove chunk files
+    rm ${filename}*.regenie.gz
     """
 }

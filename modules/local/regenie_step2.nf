@@ -7,7 +7,7 @@ process REGENIE_STEP2_BYCHR {
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file), val(chrom)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), val(chrom)
     path phenotypes_file
     path sample_file
     path covariates_file
@@ -17,8 +17,8 @@ process REGENIE_STEP2_BYCHR {
     path "${chrom}_${filename}.log", emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
-    def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
+    //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
+    //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
     def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
@@ -33,7 +33,7 @@ process REGENIE_STEP2_BYCHR {
   """
   regenie \
     --step 2 \
-    $format ${filename}${extension} \
+    --bgen ${plink_bgen_file} \
     --phenoFile ${phenotypes_file} \
     --phenoColList  ${params.phenotypes_columns} \
     --bsize ${params.regenie_bsize_step2} \
@@ -74,8 +74,8 @@ process REGENIE_STEP2_BYCHUNK {
     path "${chunk}_${filename}.log", emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
-    def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
+    //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
+    //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
     def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
@@ -90,7 +90,7 @@ process REGENIE_STEP2_BYCHUNK {
   """
   regenie \
     --step 2 \
-    $format ${filename}${extension} \
+    --bgen ${plink_bgen_file} \
     --phenoFile ${phenotypes_file} \
     --phenoColList  ${params.phenotypes_columns} \
     --bsize ${params.regenie_bsize_step2} \
