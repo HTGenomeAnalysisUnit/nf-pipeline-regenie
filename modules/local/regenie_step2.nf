@@ -1,6 +1,7 @@
 process REGENIE_STEP2_BYCHR {
-
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+  if (params.save_step2_logs) {
+    publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+  }
 
   label "regenie2_chr"
   tag "${plink2_pgen_file.simpleName}"
@@ -57,14 +58,16 @@ process REGENIE_STEP2_BYCHR {
 
 process REGENIE_STEP2_BYCHUNK {
 
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+  if (params.save_step2_logs) {
+    publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+  }
 
   label "step2_bychunk"
-  tag "${plink2_pgen_file.simpleName}"
+  tag "${plink_bgen_file.simpleName}"
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink2_pgen_file), path(plink2_psam_file), path(plink2_pvar_file), path(bgi_index), val(chunk)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), val(chunk)
     path phenotypes_file
     path sample_file
     path covariates_file
