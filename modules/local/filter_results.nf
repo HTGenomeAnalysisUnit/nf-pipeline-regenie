@@ -10,7 +10,7 @@ process FILTER_RESULTS {
     //tuple val(phenotype), path("${regenie_chromosomes}"), emit: results
 
   """
-  zcat $regenie_result_gz | awk 'NR == 1 {print ;}; NR > 1 && \$13 >= ${params.annotation_min_log10p}' > ${regenie_chromosomes.baseName}.filtered
+  zcat $regenie_result_gz | awk 'NR == 1 {print ;}; NR > 1 && \$13 >= ${params.annotation_min_log10p}' > ${regenie_result_gz.baseName}.filtered
   #todo: CSVWriter for gzip
   gzip ${regenie_result_gz.baseName}.filtered
   """

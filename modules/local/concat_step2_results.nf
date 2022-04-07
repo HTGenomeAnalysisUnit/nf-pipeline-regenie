@@ -30,12 +30,12 @@ process CONCAT_STEP2_RESULTS {
             zcat \$f | tail -n+2 >> ${filename}_\${pheno}.tmp
         done
         headerfile=\$(ls *\${pheno}.regenie.gz | head -1)
-        zcat \$headerfile | head -1 > header.txt
-        cat header.txt ${filename}_\${pheno}.tmp | sed 's/ /\t/g' | sort -k1,1V -k2,2n -T tmp_sort | bgzip -c > \${pheno}.regenie.gz 
+        zcat \$headerfile | head -1 | sed 's/ /\t/g' > header.txt
+        (cat header.txt && sed 's/ /\t/g' ${filename}_\${pheno}.tmp | sort -k1,1V -k2,2n -T tmp_sort) | bgzip -c > \${pheno}.regenie.gz 
         tabix -f -b 2 -e 2 -s 1 -S 1 \${pheno}.regenie.gz
     done < phenos.list
     
     #remove chunk files
-    rm ${filename}*.regenie.gz
+    rm *_${filename}_*.regenie.gz
     """
 }

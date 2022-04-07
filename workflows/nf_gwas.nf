@@ -40,7 +40,7 @@ if (params.genes) {
   genes_hg38 = file(params.genes)
 } else {
   genes_hg19 = file("$baseDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
-  genes_hg38 = file("$baseDir/genes/genes.GRCh38.sorted.bed", checkIfExists: true)
+  genes_hg38 = file("$baseDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
 }
 //Phenotypes
 phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
@@ -93,7 +93,7 @@ include { MERGE_RESULTS_FILTERED      } from '../modules/local/merge_results_fil
 include { MERGE_RESULTS               } from '../modules/local/merge_results'  addParams(outdir: "$outdir")
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
-include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results'
+include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results' addParams(outdir: "$outdir")
 include { UPDATE_DB                   } from '../modules/local/update_db' addParams(project: params.project)
 
 if (params.step2_split_by == 'chunk') {
@@ -111,7 +111,7 @@ workflow NF_GWAS {
     'genotypes_build','imputed_snplist',
     'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
     'covariates_filename','covariates_columns',
-    'regenie_test','annotation_min_log10p'
+    'regenie_test','annotation_min_log10p',
     'save_step1_predictions','db'
     ]
     log_params_string = []
@@ -288,6 +288,7 @@ or contact: edoardo.giacopuzzi@fht.org
 
   // generate a tuple of phenotype and corresponding result
   CONCAT_STEP2_RESULTS.out.regenie_results_gz
+    .flatten()
     .map { it -> return tuple(it.simpleName, it) }
     .set { regenie_step2_by_phenotype }
 
@@ -330,6 +331,7 @@ or contact: edoardo.giacopuzzi@fht.org
 
   //==== SAVE CONFIGURATION ====
   pipeline_log_dir = file("$outdir/analysis_config")
+  pipeline_log_dir.mkdirs()
   
   def msg="""\
   ## Pipeline information ##
@@ -352,10 +354,8 @@ or contact: edoardo.giacopuzzi@fht.org
 
   for (f in workflow.configFiles) {
     config_file = file(f)
-    println "$config_file"
     f.copyTo("$pipeline_log_dir")
   }
-
 }
 
 workflow.onComplete {

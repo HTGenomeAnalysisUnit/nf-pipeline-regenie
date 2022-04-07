@@ -35,13 +35,14 @@ An example of project config file is provided as `example_project.conf`. You can
 
 Essential inputs are:
 1. A unique project id (`project`) that will be used to create output folder and reports
-2. A bgen file of your full genotype data (`genotypes_imputed`) with bgi index (that you can generate using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. A `bgen` module is available to index your file if needed. You can use something like `bgenix -g my_data.bgen -index`
-3. A SNP list for your full genotype data. This is a tab-separated file without header containing 2 columns: chr, pos for all SNPs in your data. You can obtain it from bgen index or from a bim file 
-4. A {bed,bim,fam} dataset containing independent SNPs used by regenie step 1 (`genotypes_array`). Ideally, this would contain ~500k QCed SNPs and MUST contain less than 1M SNPs.
-5. A tab-separated file with header for phenotypes and the list of column names to process. Note that quantitative and binary traits can not be mixed. Regenie will impute missing values when present.
-6. A tab-separated file with header for covariates and the list of column names to process(can be omitted if no covars). Here it is fine to mix binary and quantitative covars. Binary covars must contain 0/1 values to be treated as binary. Note that **no missing values** are allowed in this table.
+2. A bgen file of your full genotype data (`genotypes_imputed`). Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on this file.
+3. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). A `bgen` module is available to index your file if needed. You can use something like `bgenix -g my_data.bgen -index`
+4. A SNP list for your full genotype data. This is a tab-separated file without header containing 2 columns: chr, pos for all SNPs in your data. You can obtain it from bgi index or from a bim file 
+5. A {bed,bim,fam} dataset containing independent SNPs used by regenie step 1 (`genotypes_array`). Ideally, this would contain ~500k QCed SNPs and MUST contain less than 1M SNPs. An automatic QC will be performed on this file since step1 requires strict filtering criteria.
+6. A tab-separated file with header for phenotypes and the list of column names to process. Note that quantitative and binary traits can not be mixed. Regenie will impute missing values when present.
+7. A tab-separated file with header for covariates and the list of column names to process(can be omitted if no covars). Here it is fine to mix binary and quantitative covars. Binary covars must contain 0/1 values to be treated as binary. Note that **no missing values** are allowed in this table.
 
-**NB.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that this will add considerable time to the execution due to slow conversion so it is storngly suggested to pre-process your input dataset to provide these files.
+**NB.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that in case of a large dataset, this will add considerable time to the execution due to slow conversion so it is strongly suggested to pre-process your input dataset to generate the needed inputs (BGEN + BGI + SNPLIST).
 
 ## Ouputs
 
