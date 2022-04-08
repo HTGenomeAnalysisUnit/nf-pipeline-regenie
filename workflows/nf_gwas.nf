@@ -172,7 +172,7 @@ or contact: edoardo.giacopuzzi@fht.org
   
     } else {
     //Input is already BGEN  
-      imputed_bgen_file = file(params.genotypes_imputed)
+      imputed_bgen_file = file(params.genotypes_imputed, checkIfExists: true)
       imputed_bgen_ch = tuple(imputed_bgen_file.baseName, imputed_bgen_file, file('dummy_a'))
       
       bgen_index_file = file("${params.genotypes_imputed}.bgi")
@@ -238,14 +238,15 @@ or contact: edoardo.giacopuzzi@fht.org
     } else {
       /* 
       You can load pre-made regenie level 1 preds. 
-      You must specifify a path of /my/path/regenie_step1_out* 
+      You must specify a path of /my/path/regenie_step1_out* 
       A file named regenie_step1_out_pred.list must be present together with files like
       regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ... (one per phenotype)
-      The .list file must contain absolute paths for the .gz files.
       These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
       used to generate step1 predictions (both files and column designation must match exactly)
       */
-      regenie_step1_out_ch = Channel.fromPath(params.regenie_premade_predictions, checkIfExists: true)
+      regenie_step1_out_ch = Channel
+        .fromPath(params.regenie_premade_predictions, checkIfExists: true)
+        .collect()
 
       regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
 
@@ -328,7 +329,9 @@ or contact: edoardo.giacopuzzi@fht.org
   if (params.db) {
     UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged.collect{ it[1] })
   }
+}
 
+workflow.onComplete {
   //==== SAVE CONFIGURATION ====
   pipeline_log_dir = file("$outdir/analysis_config")
   pipeline_log_dir.mkdirs()
@@ -356,19 +359,12 @@ or contact: edoardo.giacopuzzi@fht.org
     config_file = file(f)
     f.copyTo("$pipeline_log_dir")
   }
+
+  nextflow_log = file("${workflow.launchDir}/.nextflow.log")
+  nextflow_log.copyTo("${pipeline_log_dir}/nextflow.log")
+
+  //CLOSE MESSAGE
+  println "Pipeline completed at: $workflow.complete"
+  println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
+  println "Results location: ${ outdir }"
 }
-
-workflow.onComplete {
-    println "Pipeline completed at: $workflow.complete"
-    println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
-    println "Results location: ${ outdir }"
-}
-
-// extract phenotype name from regenie output file.
-/*
-def getPhenotype(prefix, file ) {
-    return file.baseName.replaceAll(prefix + "_", '').replaceAll('.regenie', '')
-}
-*/
-
-
