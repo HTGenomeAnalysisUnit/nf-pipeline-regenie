@@ -66,6 +66,7 @@ process RUNL0 {
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
+  def useLoocv = params.use_loocv ? "--loocv" : ''
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -79,6 +80,7 @@ process RUNL0 {
     $deleteMissings \
     $forceStep1 \
     $refFirst \
+    $useLoocv \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
@@ -110,6 +112,7 @@ process RUNL1 {
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
+  def useLoocv = params.use_loocv ? "--loocv" : ''
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -123,6 +126,7 @@ process RUNL1 {
     $deleteMissings \
     $forceStep1 \
     $refFirst \
+    $useLoocv \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
