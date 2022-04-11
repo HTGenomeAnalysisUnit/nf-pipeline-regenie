@@ -129,6 +129,7 @@ process RUNL1 {
     $useLoocv \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
+    --niter ${params.niter} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
     --run-l1 ${master_file} \
     --keep-l0 --gz --verbose \
