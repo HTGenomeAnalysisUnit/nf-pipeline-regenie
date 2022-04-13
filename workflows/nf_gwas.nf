@@ -47,10 +47,17 @@ phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
 phenotypes = Channel.from(phenotypes_array)
 
 //Covariates
-covariates_file = file(params.covariates_filename)
+if (params.covariates_filename == 'NO_COV_FILE') {
+  covar_tmp_file = file("${workflow.workDir}/NO_COV_FILE")
+  covar_tmp_file.append('')
+  covariates_file = file("$covar_tmp_file")
+} else {
+  covariates_file = file(params.covariates_filename)
+}
 if (params.covariates_filename != 'NO_COV_FILE' && !covariates_file.exists()){
   exit 1, "Covariate file ${params.covariates_filename} not found."
 }
+
 
 //Optional sample file
 sample_file = file(params.regenie_sample_file)
@@ -143,7 +150,7 @@ or contact: edoardo.giacopuzzi@fht.org
         CACHE_JBANG_SCRIPTS.out.regenie_validate_input_jar
     )
 
-    if(covariates_file.exists()) {
+    if(covariates_file.exists() && covariates_file.name != 'NO_COV_FILE') {
         VALIDATE_COVARIATS (
           covariates_file,
           CACHE_JBANG_SCRIPTS.out.regenie_validate_input_jar
