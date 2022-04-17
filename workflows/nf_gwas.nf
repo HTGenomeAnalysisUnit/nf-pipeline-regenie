@@ -28,11 +28,12 @@ if(!params.covariates_columns.isEmpty()){
 
 gwas_report_template = file("$baseDir/reports/gwas_report_template.Rmd",checkIfExists: true)
 
-//JBang scripts
+//Check scripts
 regenie_log_parser_java  = file("$baseDir/bin/RegenieLogParser.java", checkIfExists: true)
 regenie_filter_java = file("$baseDir/bin/RegenieFilter.java", checkIfExists: true)
 regenie_validate_input_java = file("$baseDir/bin/RegenieValidateInput.java", checkIfExists: true)
 update_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
+update_projects_sql = file("$baseDir/bin/update_projects.sql", checkIfExists: true)
 
 //Annotation files
 if (params.genes) {
@@ -334,7 +335,7 @@ or contact: edoardo.giacopuzzi@fht.org
   //This store result in a sqlite3 db file if provided
   //Only SNPs with LOG10P > 1.3 (pval ~< 0.05) are stored
   if (params.db) {
-    UPDATE_DB(update_db_sql, sqlite_db, MERGE_RESULTS.out.results_merged.collect{ it[1] })
+    UPDATE_DB(update_db_sql, update_projects_sql, sqlite_db, MERGE_RESULTS.out.results_merged.collect{ it[1] })
   }
 }
 
