@@ -3,8 +3,9 @@
 ========================================================================================
     genepi/nf-gwas
 ========================================================================================
-    Github : https://github.com/genepi/nf-gwas
-    Author: Sebastian Schönherr & Lukas Forer
+    GitLab : https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie
+    Author : Edoardo Giacopuzzi
+    Based on github : https://github.com/genepi/nf-gwas
     ---------------------------
 */
 
