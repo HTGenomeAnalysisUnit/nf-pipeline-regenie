@@ -44,7 +44,19 @@ Essential inputs are:
 
 **NB.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that in case of a large dataset, this will add considerable time to the execution due to slow conversion so it is strongly suggested to pre-process your input dataset to generate the needed inputs (BGEN + BGI + SNPLIST).
 
-## Ouputs
+## Run with master table
+
+Master table is tab-delimited with header
+Expected column names in master table (order is not relevant): run_group, trait_type, test_type, pheno_file, cov_file, sample_size, model_id, perc_miss
+- path for pheno file and cov file must be relative to the master table path
+- pheno file and cov file must be tab delimited, with header and first 2 columns as FID, IID
+- Use NO_COV_FILE as cov_file to indicate no covariates
+- run_group is a unique identifier for the run and will be used as project id and to create output folder
+- test_type can be either `additive`,`dominant` or `recessive`
+- trait_type can be either `quant` or `log`
+- pheno names and cov names are taken from respespective file headers, so ensure the names are sanitized (no spaces, no special characters)
+
+## Outputs
 
 By default the pipeline will generate all results in `output/<project>` organized as follow:
 ```

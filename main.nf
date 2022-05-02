@@ -11,14 +11,17 @@
 
 nextflow.enable.dsl = 2
 
-include { NF_GWAS } from './workflows/nf_gwas'
-
-/*
-========================================================================================
-    RUN ALL WORKFLOWS
-========================================================================================
-*/
+if (params.with_master) {
+    include { SETUP_MULTIPLE_RUNS } from './workflows/setup_runs'
+} else {
+    include { NF_GWAS } from './workflows/nf_gwas'
+}
 
 workflow {
-    NF_GWAS ()
+    if (params.with_master) {
+        println "Using a master mode"
+        SETUP_MULTIPLE_RUNS()
+    } else {
+        NF_GWAS()
+    }
 }

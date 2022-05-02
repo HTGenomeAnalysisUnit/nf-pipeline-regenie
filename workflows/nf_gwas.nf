@@ -14,7 +14,7 @@ for (param in requiredParams) {
 }
 
 if(params.outdir == null) {
-  outdir = "output/${params.project}"
+  outdir = "${params.project}"
 } else {
   outdir = params.outdir
 }
@@ -26,22 +26,22 @@ if(!params.covariates_columns.isEmpty()){
   covariates_array = params.covariates_columns.trim().split(',')
 }
 
-gwas_report_template = file("$baseDir/reports/gwas_report_template.Rmd",checkIfExists: true)
+gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
 
 //Check scripts
-regenie_log_parser_java  = file("$baseDir/bin/RegenieLogParser.java", checkIfExists: true)
-regenie_filter_java = file("$baseDir/bin/RegenieFilter.java", checkIfExists: true)
-regenie_validate_input_java = file("$baseDir/bin/RegenieValidateInput.java", checkIfExists: true)
-update_db_sql = file("$baseDir/bin/new_table.sql", checkIfExists: true)
-update_projects_sql = file("$baseDir/bin/update_projects.sql", checkIfExists: true)
+regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
+regenie_filter_java = file("$projectDir/bin/RegenieFilter.java", checkIfExists: true)
+regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
+update_db_sql = file("$projectDir/bin/new_table.sql", checkIfExists: true)
+update_projects_sql = file("$projectDir/bin/update_projects.sql", checkIfExists: true)
 
 //Annotation files
 if (params.genes) {
   genes_hg19 = file(params.genes)
   genes_hg38 = file(params.genes)
 } else {
-  genes_hg19 = file("$baseDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
-  genes_hg38 = file("$baseDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
+  genes_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
+  genes_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
 }
 //Phenotypes
 phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
@@ -77,7 +77,7 @@ if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format 
 }
 
 //Array genotypes
-Channel.fromFilePairs("${params.genotypes_array}", size: 3).set {genotyped_plink_ch}
+Channel.fromFilePairs("${params.genotypes_array}.{bim,bed,fam}", size: 3).set {genotyped_plink_ch}
 
 //Check db file
 if (params.db) {
