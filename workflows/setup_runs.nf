@@ -35,5 +35,5 @@ workflow.onComplete {
     //CLOSE MESSAGE
     println "Pipeline completed at: $workflow.complete"
     println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
-    println "Results location: ${ outdir }"
+    println "Results location: ${ master_outdir }"
 }
