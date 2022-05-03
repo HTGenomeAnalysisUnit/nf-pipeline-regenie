@@ -102,7 +102,7 @@ include { MERGE_RESULTS               } from '../modules/local/merge_results'  a
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results' addParams(outdir: "$outdir")
-include { DB_MAKE_VCF                 } from '../modules/local/update_db' addParams(pval_threshold: params.db_pval_threshold)
+include { DB_MAKE_VCF                 } from '../modules/local/db_make_vcf' addParams(pval_threshold: params.db_pval_threshold)
 
 if (params.step2_split_by == 'chunk') {
   include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size)
@@ -336,6 +336,7 @@ or contact: edoardo.giacopuzzi@fht.org
   //Only SNPs with LOG10P > 1.3 (pval ~< 0.05) are stored
   if (params.create_db) {
     DB_MAKE_VCF (regenie_step2_by_phenotype, min_header, models_table)
+  }
 }
 
 workflow.onComplete {
