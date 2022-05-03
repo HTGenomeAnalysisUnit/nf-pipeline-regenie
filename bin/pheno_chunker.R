@@ -172,9 +172,9 @@ pheno.chunker=function(pheno_file="data/test_phenotype.tsv" #names of the phenot
      idx.pheno=c("FID","IID",outcomes)
      pheno.matr=pheno[row.names(pheno)%in%model.id.list,..idx.pheno]
      
-     n.miss.model=round(apply(pheno.matr[,-1],2,FUN = function(x)length(which(is.na(x)))/length(x)),3)
+     n.miss.model=round(apply(pheno.matr[,-c(1,2)],2,FUN = function(x)length(which(is.na(x)))/length(x)),3)
      n.miss.chunk=c(n.miss.chunk,paste(paste(names(n.miss.model),n.miss.model,sep=":"),collapse=","))
-     chunck.model=c(chunck.model,paste(tmp.models$trait_name,collapse=","))
+     chunck.model=c(chunck.model,paste(tmp.models$model_id,collapse=","))
      dir.create(paste0("chunk_",i))
      
      if(any(extract.cov(tmp.models$model[j])!=1)){

@@ -34,7 +34,7 @@ with open(config_file) as f:
 for row in read_tsv(input_file):
     run_config_file = open(f"{row['run_group']}/gwas.conf", "w")
     run_template = conf_template
-    run_template = update_conf(run_template, 'outdir', f"{base_dir}/{row['run_group']}")
+    run_template = update_conf(run_template, 'outdir', base_dir)
     run_template = update_conf(run_template, 'project', row['run_group'])
     run_template = update_conf(run_template, 'covariates_filename', row['cov_file'])
     run_template = update_conf(run_template, 'phenotypes_filename', row['pheno_file'])

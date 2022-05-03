@@ -16,7 +16,7 @@ for (param in requiredParams) {
 if(params.outdir == null) {
   outdir = "${params.project}"
 } else {
-  outdir = params.outdir
+  outdir = "${params.outdir}/${params.project}"
 }
 
 phenotypes_array = params.phenotypes_columns.trim().split(',')
