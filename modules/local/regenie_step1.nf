@@ -138,7 +138,7 @@ process RUNL1 {
     --out regenie_step1_out
   
   cp regenie_step1_out_pred.list regenie_step1_offsets.list
-  sed -i 's| | ${params.outdir}/regenie_step1_preds/|g' regenie_step1_offsets.list
+  sed -i 's| .\\+/regenie_step1| ${params.outdir}/regenie_step1_preds/regenie_step1|g' regenie_step1_offsets.list
   """
 }
 
