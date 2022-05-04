@@ -1,9 +1,8 @@
 process DB_MERGE {
     publishDir "${params.outdir}", mode: 'copy', saveAs: { filename -> "${params.project}_db.${filename.extension}"}
-
-    tag "${params.project}"
     
-    module 'bcftools/1.15'
+    label 'db_merge'
+    tag "${params.project}"
 
     input:
         tuple file(bcf_files), file(bcf_indexes)
@@ -39,7 +38,7 @@ process DB_MERGE {
     echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\$samples" >> header.txt
 
     echo -e "\n== merge DBs =="
-    bcftools merge --use-header header.txt --threads ${task.cpus} -m none --no-version -l filelist -Ob -o gwas_db.bcf
+    bcftools merge --use-header header.txt --threads ${task.cpus} -m none --no-version -l filelist -Ob -o gwas_db-${workflow.sessionID}-${task.index}.bcf
 
     echo -e "\n== index =="
     bcftools index --csi gwas_db-${workflow.sessionID}-${task.index}.bcf

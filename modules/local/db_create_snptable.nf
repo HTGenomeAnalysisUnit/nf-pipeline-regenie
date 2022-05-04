@@ -1,9 +1,8 @@
 process DB_CREATE_SNPTABLE {
-    publishDir "${params.outdir}/gwas_db", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
+    label 'db_make'
     tag "${params.project}"
-    
-    module 'echtvar/0.1.4:bcftools/1.15'
 
     input:
         tuple file(db_bcf_file), file(db_bcf_index)

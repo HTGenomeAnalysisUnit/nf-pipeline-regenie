@@ -365,8 +365,6 @@ or contact: edoardo.giacopuzzi@fht.org
     }
 
     DB_CREATE_SNPTABLE(gwas_db, snp_annotations, update_snptable_sql, min_header)
-  } else {
-    gwas_db = Channel.empty()
   }
 }
 

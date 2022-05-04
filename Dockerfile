@@ -23,8 +23,23 @@ RUN apt-get update && \
     zlib1g-dev \
     libgomp1 \
     procps \
-    libx11-6
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    libx11-6 \
+    autoconf ca-certificates wget libbz2-dev \
+    libc6-dev libcurl4-gnutls-dev libfreetype6 libgsl-dev liblzma-dev \
+    libncurses5-dev libperl-dev libreadline-dev libssl-dev libz-dev \
+&& apt-get -y autoremove \
+&& apt-get -y clean all \
+&& rm -rf /var/cache
+
+# Install bcftools
+WORKDIR "/opt"
+RUN wget https://github.com/samtools/bcftools/releases/download/1.15/bcftools-1.15.tar.bz2 \
+&& tar -jxvf bcftools-1.15.tar.bz2 && rm bcftools-1.15.tar.bz2 \
+&& cd bcftools-1.15 \
+&& ./configure --enable-libgsl --enable-perl-filters \
+&& make \
+&& make install
+ENV BCFTOOLS_PLUGINS /opt/bcftools-1.15/plugins
 
 # Install jbang (not as conda package available)
 WORKDIR "/opt"
