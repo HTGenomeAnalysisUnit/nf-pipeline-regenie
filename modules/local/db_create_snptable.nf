@@ -1,11 +1,12 @@
-process DB_MAKE_VCF {
-    publishDir "${params.outdir}", mode: 'copy'
+process DB_CREATE_SNPTABLE {
+    publishDir "${params.outdir}/gwas_db", mode: 'copy'
+
     tag "${params.project}"
     
     module 'echtvar/0.1.4:bcftools/1.15'
 
     input:
-        file(db_bcf_file)
+        tuple file(db_bcf_file), file(db_bcf_index)
         file(annotations)
         file(update_snps_sql)
         file(min_header)
