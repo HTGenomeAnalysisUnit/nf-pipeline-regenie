@@ -161,6 +161,13 @@ You can load level 1 preds from this folder in subsequent analyses by setting `r
 - With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
 - With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
 
+## Note on unexpected exit from multi models execution
+
+At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.
+In this case, please verify if you have any running jobs using `squeue -u $USER` and terminate any job with name containing `nf-SETUP_MULTIPLE_RUNS_SUBMIT_GWAS_RUN` or `nf-NF_GWAS_REGENIE`.
+
+Normally, if one of the single run submission terminates with error, the master pipeline will go on and a warning is reported. This ensure the whole pipeline can gracefully terminate and all sub-jobs are properly cleaned up. You can see from the warning message which run has failed an eventually re-run this analysis as single GWAS.
+
 ## Documentation
 More detailed documentation of all parameters can be found --DOCS IN PROGRESS--.
 
