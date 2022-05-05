@@ -161,6 +161,14 @@ You can load level 1 preds from this folder in subsequent analyses by setting `r
 - With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
 - With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
 
+## Multi models execution monitoring
+
+If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named `run-<chunk_id>-gwas`. 
+
+In the master output folder you will also see:
+- `master_config` folder containing logs, info and config about the master job
+- `execution_log` folder. This will contain the exection path and status for each job and eventually error log files. If one of the single tasks fails, you can move to the path reported here and after fixing the error, resume the single job using the command reported in `resume_command.sh` after adding the `-resume` flag. 
+
 ## Note on unexpected exit from multi models execution
 
 At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.

@@ -14,7 +14,7 @@ traits_table = file(params.traits_table, checkIfExists: true)
 
 models_table.copyTo("$master_outdir/models.tsv")
 
-master_log_dir = file("${launchDir}/execution_log")
+master_log_dir = file("${master_outdir}/execution_log")
 master_log_dir.mkdirs()
 
 for (p in ["genotypes_imputed", "imputed_snplist"]) {
