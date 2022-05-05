@@ -12,6 +12,11 @@ if(!params.master_outdir) {
 master_outdir = file(params.master_outdir)
 master_outdir.mkdirs()
 
+if (params.master_log_dir) {
+    master_log_dir = file(params.master_log_dir)
+    master_log_dir.mkdirs()
+}
+
 for (p in ["genotypes_imputed", "imputed_snplist"]) {
     file(params[p], checkIfExists: true)
 }

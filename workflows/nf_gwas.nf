@@ -400,8 +400,29 @@ workflow.onComplete {
   nextflow_log = file("${workflow.launchDir}/.nextflow.log")
   nextflow_log.copyTo("${pipeline_log_dir}/nextflow.log")
 
+  if (params.master_log_dir != null) {
+    master_log = file("${params.master_log_dir}/job_execution_summary.log")
+    def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
+    master_log.append(master_log_msg)
+  }
+
   //CLOSE MESSAGE
   println "Pipeline completed at: $workflow.complete"
   println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
   println "Results location: ${ outdir }"
+}
+
+workflow.onError {
+  if (params.master_log_dir != null) {
+    error_log = file("${params.master_log_dir}/${params.project}_error.log")
+    def error_log_msg="""
+    ### ERROR MESSAGE ###
+    ${workflow.errorMessage}
+
+    ### ERROR REPORT ###
+    ${workflow.errorReport}
+    """
+    .stripIndent()
+    error_log.append(error_log_msg)
+  }
 }
