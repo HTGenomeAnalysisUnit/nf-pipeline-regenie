@@ -50,5 +50,6 @@ for row in read_tsv(input_file):
         phenos = ",".join(first_line[2:])
         run_template = update_conf(run_template, 'phenotypes_columns', phenos)
 
-    run_config_file.write(run_template)
+    run_config_file.write(run_template + "\n")
+    run_config_file.write(f"manifest.name = 'run-{row['run_group']}-gwas'\n")
     run_config_file.close()

@@ -17,7 +17,8 @@ process SUBMIT_GWAS_RUN {
     -profile ${params.gwas_submit_profile} \
     -c $shared_config \
     -c $chunk_dir/gwas.conf \
-    -work-dir ${workDir}/nf-wf-${workflow.sessionId}/nf-subrun-${task.index}
+    -work-dir ${workDir}/nf-wf-${workflow.sessionId}/nf-subrun-${task.index} \
+    --master_log_dir ${params.master_log_dir} \
     --db_folder ${params.outdir}/gwas_db
   """
 }

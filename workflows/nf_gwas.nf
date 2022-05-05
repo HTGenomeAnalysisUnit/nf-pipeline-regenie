@@ -19,6 +19,11 @@ if(params.outdir == null) {
   outdir = "${params.outdir}/${params.project}"
 }
 
+if (params.master_log_dir != null) {
+  master_log_dir = "${params.master_log_dir}"
+}
+
+project_id = params.project
 phenotypes_array = params.phenotypes_columns.trim().split(',')
 
 covariates_array= []
@@ -380,6 +385,7 @@ workflow.onComplete {
   Nextflow version required = ${workflow.manifest.nextflowVersion}
 
   ## Execution summary ##
+  Execution status: ${ workflow.success ? 'OK' : 'failed' }
   Execution name: ${workflow.runName}
   Execution ID: ${workflow.sessionId}
   Execution date: ${workflow.start}
@@ -400,22 +406,20 @@ workflow.onComplete {
   nextflow_log = file("${workflow.launchDir}/.nextflow.log")
   nextflow_log.copyTo("${pipeline_log_dir}/nextflow.log")
 
-  if (params.master_log_dir != null) {
-    master_log = file("${params.master_log_dir}/job_execution_summary.log")
+  //if (params.master_log_dir != null) {
+    master_log = file("${master_log_dir}/job_execution_summary.log")
     def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
     master_log.append(master_log_msg)
-  }
+  //}
 
   //CLOSE MESSAGE
-  println "Pipeline completed at: $workflow.complete"
-  println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
   println "Results location: ${ outdir }"
 }
 
 workflow.onError {
   if (params.master_log_dir != null) {
-    error_log = file("${params.master_log_dir}/${params.project}_error.log")
-    def error_log_msg="""
+    error_log = file("${master_log_dir}/${project_id}_error.log")
+    def error_log_msg="""\
     ### ERROR MESSAGE ###
     ${workflow.errorMessage}
 
