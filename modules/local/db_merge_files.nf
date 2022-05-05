@@ -9,7 +9,7 @@ process DB_MERGE {
         file(min_header)
         
     output:
-        tuple file("gwas_db-${workflow.sessionId}.bcf"), file("gwas_db-${workflow.sessionId}.bcf.csi"), emit: gwas_db
+        tuple file("gwas_db-${params.project}.bcf"), file("gwas_db-${params.project}.bcf.csi"), emit: gwas_db
 
     script:
     """
@@ -38,9 +38,9 @@ process DB_MERGE {
     echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\$samples" >> header.txt
 
     echo -e "\n== merge DBs =="
-    bcftools merge --use-header header.txt --threads ${task.cpus} -m none --no-version -l filelist -Ob -o gwas_db-${workflow.sessionID}-${task.index}.bcf
+    bcftools merge --use-header header.txt --threads ${task.cpus} -m none --no-version -l filelist -Ob -o gwas_db-${params.project}.bcf
 
     echo -e "\n== index =="
-    bcftools index --csi gwas_db-${workflow.sessionId}.bcf
+    bcftools index --csi gwas_db-${params.project}.bcf
     """    
 }

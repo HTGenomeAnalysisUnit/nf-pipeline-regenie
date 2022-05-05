@@ -3,7 +3,8 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Sig group: hom_alt=pval below 5e-8, het=pval below 1e-5, hom_ref=pval above 1e-5, mis: not tested">
 ##FORMAT=<ID=INFO,Number=1,Type=Float,Description="INFO score of the variant">
 ##FORMAT=<ID=LOGP,Number=1,Type=Float,Description="-log10(pval)">
-##FORMAT=<ID=TYPE,Number=1,Type=String,Description="Type of trait: Q=quant, B=binary">
+##FORMAT=<ID=TYPE,Number=1,Type=String,Description="Type of trait: quant or log">
+##FORMAT=<ID=GMODEL,Number=1,Type=String,Description="Genetic model tested">
 ##FORMAT=<ID=EFFECT,Number=1,Type=Float,Description="Effect size value: beta when type=Q, OR when type=B">
 ##FORMAT=<ID=SE,Number=1,Type=Float,Description="Standard error">
 ##FORMAT=<ID=N,Number=1,Type=Integer,Description="N samples tested in GWAS">
