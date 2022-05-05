@@ -17,7 +17,7 @@ process DB_CREATE_SNPTABLE {
     def echtvar_sources = annotations.collect{ "-e $it" }.join(" ")
     """
     echo -e "\n== create snp vcf =="
-    time (cat $min_header && echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE" && bcftools query -f "%CHROM\t%POS\t%ID\t%REF\t%ALT\t100\tPASS\t.\tGT\t.\n" $bcf_file) | bgzip -@${task.cpus} -c > snp.table.vcf.gz
+    time (cat $min_header && echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE" && bcftools query -f "%CHROM\t%POS\t%ID\t%REF\t%ALT\t100\tPASS\t.\tGT\t.\n" $db_bcf_file) | bgzip -@${task.cpus} -c > snp.table.vcf.gz
 
     echo -e "\n== index snp table =="
     tabix -p vcf --csi snp.table.vcf.gz

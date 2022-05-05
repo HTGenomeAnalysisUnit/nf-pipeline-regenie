@@ -6,6 +6,8 @@ Original concept based on this amazing [github repository](https://github.com/ge
 
 The pipeline is optimized for massive scaling and can analyze 5 quantitative phenotype on 500k individuals and 11M SNPs in ~4.5h.
 
+Two running modes are available: **single project mode** and **multi models mode**.
+
 ## Quick Start
 
 1) Load Nextflow and Singularity modules
@@ -14,24 +16,7 @@ The pipeline is optimized for massive scaling and can analyze 5 quantitative phe
 module load nextflow/22.04.0 singularity/3.6.3
 ```
 
-2A) Run the pipeline on a single project
-
-```bash
-nextflow run /project/alfredo/pipelines/nf-pipeline-regenie/main.nf \
-    -profile slurm -c your_project.conf
-```
-
-2B) Run the pipeline for multiple models using a model table
-
-```bash
-nextflow run /project/alfredo/pipelines/nf-pipeline-regenie/main.nf \
-    -profile slurm -c shared_parameters.conf \
-    --with_master \
-    --shared_config_file shared_parameters.conf \
-    --models_table models.tsv \
-    --traits_table full_traits.csv \
-    --master_outdir outputs
-```
+2) Invoke the pipeline
 
 Ideally, you should prepare a script to submit the pipeline using `sbatch`. The following template can be used as example:
 
@@ -58,14 +43,14 @@ nextflow run /project/alfredo/pipelines/nf-pipeline-regenie/main.nf \
    --master_outdir outputs
 ```
 
-## Set up configuration file
+## Prepare config files
 
-- To run a single project, copy the template file `templates/single_project.conf` and adapt the parameters.
-- To run multiple models, copy the template file `templates/shared_parameters.conf` and adapt the parameters.
+To run the pipeline, you need to prepare a config file. The following config file can be used as example:
 
-## Understand the inputs
+- To run a single project, copy the template file `templates/single_project.conf` and adapt the parameters according to your input files and preferences.
+- To run multiple models, copy the template file `templates/shared_parameters.conf` and adapt the parameters according to your input files and preferences..
 
-### Shared inputs
+## Required inputs
 
 1. A unique project id (`project`) that will be used to create output folder and reports
 2. A bgen file of your full genotype data (`genotypes_imputed`). Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on this file so ensure it is clean.
@@ -76,7 +61,11 @@ nextflow run /project/alfredo/pipelines/nf-pipeline-regenie/main.nf \
 
 **Other input formats.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that in case of a large dataset, this will add considerable time to the execution due to slow conversion so it is strongly suggested to pre-process your input dataset to generate the needed inputs (BGEN + BGI + SNPLIST).
 
-### Files for single project mode
+## Single project mode
+
+In this mode you run a single GWAS model on the provided genetic data given a table of phenotypes and a table of covars.
+
+### Additional inputs for single project mode
 
 7. A tab-separated file with header for phenotypes (`phenotypes_filename`) and the list of column names to process (`phenotypes_columns`). Note that quantitative and binary traits can not be mixed. Regenie will impute missing values when present.
 8. Set `phenotypes_binary_trait` to true or false according to the type of phenotypes.
@@ -84,6 +73,10 @@ nextflow run /project/alfredo/pipelines/nf-pipeline-regenie/main.nf \
 10. Set `regenie_test` to 'additive', 'dominant' or 'recessive' according to the genetic model you want to test.
 
 **NB.** The first two columns of phenotype and covariate files must the named `FID` and `IID` and contain ids matching those present in the genotype files. Only samples found in all tables will be processed.
+
+## Multi models mode
+
+In this mode you can specifify a general trait table and a model table that describes the models you want to test (pheno ~ covars). Given a missingness threshold, the pipeline will automatically generate a list of of inputs and run the corresponding GWAS analyses.
 
 ### Files for multi models mode
 
@@ -102,6 +95,51 @@ M2      QP2 ~ Q1+Q2+Q5  quant   additive
 M3      QP3 ~ Q1+Q2+Q5  quant   additive
 M4      QP4 ~ Q1+Q2+Q5  quant   additive
 ```
+
+### Multi models execution monitoring
+
+If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named `run-<chunk_id>-gwas`. 
+
+In the master output folder you will also see:
+- `master_config` folder containing logs, info and config about the master job
+- `execution_log` folder. This will contain the exection path and status for each job and eventually error log files. 
+  
+### Resume execution for a failed task
+
+When one of the task fails, the pipeline will report a warning, but continue to execute the remaining tasks. When the pipeline is finished, you can inspect `job_execution_summary.log` located in `<output_dir>/execution_log` and check which task have failed and the corresponding running directory. An `_error.log` file will be present in the same directory explainign the error.
+
+After fixing the error, you can resume execution of a specific task following these steps:
+1. move into the corresponding running directory and add the `-resume` flag to the command in the `.command.sh` file. 
+2. remove the setting folder from the directory (it is named `chunk_XX`)
+3. submit your job again by simply running `sbatch .command.run`. 
+
+### Note on unexpected exit from multi models execution
+
+At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.
+In this case, please verify if you have any running jobs using `squeue -u $USER` and terminate any job with name containing `nf-SETUP_MULTIPLE_RUNS_SUBMIT_GWAS_RUN` or `nf-NF_GWAS_REGENIE`.
+
+Normally, if one of the single run submission terminates with error, the master pipeline will go on and a warning is reported. This ensure the whole pipeline can gracefully terminate and all sub-jobs are properly cleaned up. You can see from the warning message which run has failed an eventually re-run this analysis as single GWAS.
+
+## Important notes on phenotypes
+
+- Samples listed in pheno file that are not in bgen/bed/pgen file are ignored. Genotyped samples that are not in this file are removed from the analysis.
+- With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
+- With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
+
+## Monitor execution on Nextflow tower
+
+To easily monitor pipeline execution, we suggest to use Nextflow tower. First, register to the [Nextflow tower](https://cloud.tower.nf/) using your GitHub or Google account. Then, click on your profile (upper right corner) and select `Your tokens`. Then click add token and follow the instructions to create a new token. Make sure to copy the generated token, since you were not able to see it again.
+
+Finally, add the following to `shared_parameters.conf` or `single_project.conf` file:
+
+```
+tower {
+  enabled = true
+  accessToken = 'your_token_here'
+}
+```
+
+Now when the pipeline is running you should be able to monitor progress in the [Nextflow tower](https://cloud.tower.nf/) under your runs.
 
 ## Outputs
 
@@ -131,20 +169,13 @@ By default the pipeline will generate all results in a folder named according to
 - logs from all operations are saved in `logs` for debugging. Note that more than a thousand log file may be generated when the input dataset is large.
 - when you are running in multi models mode, one folder will be created for each run_id under the `master_outdir` folder.
 
-## Monitor execution on Nextflow tower
+## DB function
 
-To easily monitor pipeline execution, we suggest to use Nextflow tower. First, register to the [Nextflow tower](https://cloud.tower.nf/) using your GitHub or Google account. Then, click on your profile (upper right corner) and select `Your tokens`. Then click add token and follow the instructions to create a new token. Make sure to copy the generated token, since you were not able to see it again.
+The pipeline include steps to generate a `bcf` based DB storing association results and models details. With default only results with P < 0.05 are stored, but you can adjust this by setting `db_pval_threshold` to the desired -LOG10P value.
 
-Finally, add the following to `shared_parameters.conf` or `single_project.conf` file:
+Once created DB from multiple runs can be merged easily and DB in this format allows fast access across results. In our test on ~10M SNPs, it can recover association values (P, EFFECT, SE) for a SNPs across 5000 traits (pheWAS) in few secs and recover all results in a 500kb window in 20-30 secs. The implementation is composed by a BCF file storing the actual association results and a SQLITE db file storing the SNPs informations (coordinate, unique marker ID and rsID).
 
-```
-tower {
-  enabled = true
-  accessToken = 'your_token_here'
-}
-```
-
-Now when the pipeline is running you should be able to monitor progress in the [Nextflow tower](https://cloud.tower.nf/) under your runs.
+However, generating the DB can add significant time to the overall execution so this function is disabled by default. You can activate it by setting `create_db` to true.
 
 ## Re-use Step 1 predictions
 
@@ -154,27 +185,6 @@ You can load level 1 preds from this folder in subsequent analyses by setting `r
 - A file named regenie_step1_out_pred.list must be present 
 - One file per phenotype is expected named `regenie_step1_out_1.loco.gz` `regenie_step1_out_2.loco.gz`, ...
 - phenotypes and covariates used in the new analyses must be exactly the same used to generate step1 predictions (both files and column designation must match exactly)
-
-## Important notes on handling phenos
-
-- Samples listed in pheno file that are not in bgen/bed/pgen file are ignored. Genotyped samples that are not in this file are removed from the analysis.
-- With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
-- With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
-
-## Multi models execution monitoring
-
-If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named `run-<chunk_id>-gwas`. 
-
-In the master output folder you will also see:
-- `master_config` folder containing logs, info and config about the master job
-- `execution_log` folder. This will contain the exection path and status for each job and eventually error log files. If one of the single tasks fails, you can move to the path reported here and after fixing the error, resume the single job using the command reported in `resume_command.sh` after adding the `-resume` flag. 
-
-## Note on unexpected exit from multi models execution
-
-At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.
-In this case, please verify if you have any running jobs using `squeue -u $USER` and terminate any job with name containing `nf-SETUP_MULTIPLE_RUNS_SUBMIT_GWAS_RUN` or `nf-NF_GWAS_REGENIE`.
-
-Normally, if one of the single run submission terminates with error, the master pipeline will go on and a warning is reported. This ensure the whole pipeline can gracefully terminate and all sub-jobs are properly cleaned up. You can see from the warning message which run has failed an eventually re-run this analysis as single GWAS.
 
 ## Documentation
 More detailed documentation of all parameters can be found --DOCS IN PROGRESS--.
