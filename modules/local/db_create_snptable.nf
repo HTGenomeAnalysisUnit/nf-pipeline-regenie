@@ -11,7 +11,7 @@ process DB_CREATE_SNPTABLE {
         file(min_header)
         
     output:
-        path "snps_index-${params.project}.db", emit: snps_db
+        path "gwas_db-${params.project}-snps_index.db", emit: snps_db
 
     script:
     def echtvar_sources = annotations.collect{ "-e $it" }.join(" ")
@@ -29,6 +29,6 @@ process DB_CREATE_SNPTABLE {
     bcftools query -f "%CHROM\t%POS\t%CHROM-%POS-%REF-%ALT\t%REF\t%ALT\trs%dbsnp_rs\n" snp.table.anno.vcf.gz > snp.table
 
     echo -e "\n== store db =="
-    cat $update_snps_sql | sqlite3 snps_index-${params.project}.db
+    cat $update_snps_sql | sqlite3 gwas_db-${params.project}-snps_index.db
     """    
 }
