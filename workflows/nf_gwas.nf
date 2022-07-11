@@ -21,6 +21,8 @@ if(params.outdir == null) {
 
 if (params.master_log_dir != null) {
   master_log_dir = "${params.master_log_dir}"
+} else {
+  master_log_dir = "${outdir}"
 }
 
 project_id = params.project
@@ -43,13 +45,22 @@ update_snptable_sql = file("$projectDir/bin/update_snp_table.sql", checkIfExists
 min_header = file("$projectDir/templates/min_header.txt", checkIfExists: true)
 
 //Annotation files
-if (params.genes) {
-  genes_hg19 = file(params.genes)
-  genes_hg38 = file(params.genes)
+if (params.genes_bed) {
+  genes_bed_hg19 = file(params.genes_bed)
+  genes_bed_hg38 = file(params.genes_bed)
 } else {
-  genes_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
-  genes_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
+  genes_bed_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
+  genes_bed_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
 }
+
+if (params.genes_ranges) {
+  genes_ranges_hg19 = file(params.genes_ranges)
+  genes_ranges_hg38 = file(params.genes_ranges)
+} else {
+  genes_ranges_hg19 = file("$projectDir/genes/glist-hg19", checkIfExists: true)
+  genes_ranges_hg38 = file("$projectDir/genes/glist-hg38", checkIfExists: true)
+}
+
 //Phenotypes
 phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
 phenotypes = Channel.from(phenotypes_array)
@@ -119,6 +130,9 @@ if (params.create_db) {
   include { DB_MERGE } from '../modules/local/db_merge_files' addParams(outdir: "$db_outdir")
   include { DB_CREATE_SNPTABLE } from '../modules/local/db_create_snptable' addParams(outdir: "$db_outdir")
 }
+if (params.clumping) {
+  include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "$outdir")
+}
 
 if (params.step2_split_by == 'chunk') {
   include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size)
@@ -136,7 +150,7 @@ workflow NF_GWAS {
     'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
     'covariates_filename','covariates_columns',
     'regenie_test','annotation_min_log10p',
-    'save_step1_predictions','db'
+    'save_step1_predictions','outdir','db'
     ]
     log_params_string = []
     for (p in log_params) {
@@ -192,12 +206,10 @@ or contact: edoardo.giacopuzzi@fht.org
           imputed_files
       )
       imputed_plink2_ch = IMPUTED_TO_BGEN.out.imputed_bgen
-      imputed_bgen_ch = IMPUTED_TO_BGEN.out.imputed_bgen
   
     } else {
     //Input is already BGEN  
       imputed_bgen_file = file(params.genotypes_imputed, checkIfExists: true)
-      imputed_bgen_ch = tuple(imputed_bgen_file.baseName, imputed_bgen_file, file('dummy_a'))
       
       bgen_index_file = file("${params.genotypes_imputed}.bgi")
       //Make BGI index if missing otherwise set channel directly
@@ -219,7 +231,7 @@ or contact: edoardo.giacopuzzi@fht.org
       if (params.imputed_snplist) {
         snplist_ch = file(params.imputed_snplist, checkIfExists: true)
       } else {
-        snplist_ch = MAKE_SNPLIST(imputed_bgen_ch)
+        snplist_ch = MAKE_SNPLIST(imputed_plink2_ch)
       }
     }
 
@@ -279,7 +291,7 @@ or contact: edoardo.giacopuzzi@fht.org
     //==== REGENIE STEP 2 ====
     //PARALLELIZE BY CHROM
     if (params.step2_split_by == 'chr') { 
-      chromosomes = Channel.of(1..23)
+      chromosomes = Channel.fromList(params.chromosomes)
       bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
@@ -317,25 +329,28 @@ or contact: edoardo.giacopuzzi@fht.org
     .map { it -> return tuple(it.simpleName, it) }
     .set { regenie_step2_by_phenotype }
 
-
-  //==== FILTER TOP HITS AND ANNOTATE GENES ====
-  //TODO CLUMP_RESULT(regenie_step2_by_phenotype, imputed_freq_file)
-  //TODO Create genelist in range format from the BED files
-
   FILTER_RESULTS (
     regenie_step2_by_phenotype
   )
   
   ANNOTATE_FILTERED (
     FILTER_RESULTS.out.results_filtered,
-    genes_hg19,
-    genes_hg38
+    genes_bed_hg19,
+    genes_bed_hg38
   )
   
   merged_results_and_annotated_filtered =  regenie_step2_by_phenotype.combine(
     ANNOTATE_FILTERED.out.annotated_ch, by: 0
   )
   
+  //==== PERFORM VARIANT CLUMPING ====
+  if (params.clumping) {
+    if (params.ld_panel == 'NO_LD_FILE') {
+      log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
+    } 
+    CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
+  }
+
   //==== GENERATE REPORTS ====
   REPORT (
     merged_results_and_annotated_filtered,

@@ -5,6 +5,7 @@ process QC_FILTER_GENOTYPED {
 
   input:
     tuple val(genotyped_plink_filename), path(genotyped_plink_file)
+    path phenos_tsv
 
   output:
     path "${genotyped_plink_filename}.qc.log"
@@ -14,8 +15,11 @@ process QC_FILTER_GENOTYPED {
 
 
   """
+  grep -v "FID" $phenos_tsv | cut -f1,2 > samples.list
+  
   plink2 \
     --bfile ${genotyped_plink_filename} \
+    --keep samples.list
     --maf ${params.qc_maf} \
     --mac ${params.qc_mac} \
     --geno ${params.qc_geno} \

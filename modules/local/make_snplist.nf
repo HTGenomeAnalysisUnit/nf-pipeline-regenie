@@ -1,5 +1,5 @@
 process MAKE_SNPLIST {
-    label 'process_plink2'
+    label 'process_bgenix'
     if (params.publish) {
         publishDir "${params.outdir}/snplist", mode: 'copy'
     }
@@ -12,13 +12,6 @@ process MAKE_SNPLIST {
 
     script:
     """
-    plink2 \
-        --bgen $bgen_file ref-first \
-        --memory ${task.memory.toMega()} \
-        --threads ${task.cpus} \
-        --make-just-bim \
-        --out temp
-    
-    cut -f1,4 temp.bim > ${filename}.snplist
+    bgenix -g $bgen_file -list | tail -n+3 | cut -f3,4 > ${filename}.snplist
     """
 }

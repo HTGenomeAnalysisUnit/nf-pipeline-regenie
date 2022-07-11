@@ -35,7 +35,7 @@ script:
 """
 plink2 \
   --vcf $imputed_vcf_file dosage=DS \
-  --export bgen-1.2 'bits=8' \
+  --export bgen-1.2 ref-first 'bits=8' \
   --double-id \
   --out ${imputed_vcf_file.baseName} \
   --threads ${task.cpus} \

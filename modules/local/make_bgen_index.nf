@@ -1,5 +1,5 @@
 process MAKE_BGEN_INDEX {
-  label 'process_plink2'
+  label 'process_bgenix'
   if (params.publish) {
     publishDir "${params.outdir}/bgen", mode: 'copy', pattern: '*.bgi'
   }
