@@ -108,6 +108,7 @@ process MERGE_CLUMP_RESULTS {
     sed '/^\$/d' toploci.tsv | sort -k5,5g >> ${phenotype}.toploci.tsv
 
     echo -e "CHR\tSNP\tP\tN\tPOS\tKB\tRANGES" > ${phenotype}.toploci.annot.tsv
+    for f in *.clumped.ranges
     do
         tail -n+2 \$f | tr -s " " "\\t" | sed 's/^\\t//g' >> toploci.annot.tsv
     done
