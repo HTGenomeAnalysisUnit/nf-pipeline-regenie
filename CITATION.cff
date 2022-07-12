@@ -1,10 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: "Schönherr"
-  given-names: "Sebastian"
-- family-names: "Forer"
-  given-names: "Lukas"
-title: "nf-gwas - A nextflow pipeline to perform GWAS."
-version: 0.3.4
-url: "https://github.com/genepi/nf-gwas"
+- family-names: "Giacopuzzi"
+  given-names: "Edoardo"
+title: "nf-pipeline-regenie - Perform regenie GWAS at high speed."
+version: 1.0
+url: "https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie"

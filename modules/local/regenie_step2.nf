@@ -29,14 +29,14 @@ process REGENIE_STEP2_BYCHR {
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${params.covariates_columns}" : ''
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
-    def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
+    def refFirst = params.regenie_ref_first_step2  ? "--ref-first" : ''
 
   """
   regenie \
     --step 2 \
     --bgen ${plink_bgen_file} \
     --phenoFile ${phenotypes_file} \
-    --phenoColList  ${params.phenotypes_columns} \
+    --phenoColList ${params.phenotypes_columns} \
     --bsize ${params.regenie_bsize_step2} \
     --pred regenie_step1_out_pred.list \
     --threads ${task.cpus} \

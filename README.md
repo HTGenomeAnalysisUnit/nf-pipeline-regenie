@@ -12,7 +12,7 @@ Two running modes are available: **single project mode** and **multi models mode
 
 1. Create a folder for your project (e.g. `yourproject`) and clone this pipeline version into the project folder using
 
-`git clone --depth 1 --branch v1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.0 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
 
@@ -73,7 +73,7 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
    ```bash
    bgenix -g input.bgen -list \
-   | tail -n+3 | cut -f3,4 > ${prefix}.snplist
+   | tail -n+3 | cut -f3,4 | sed '$d' > ${prefix}.snplist
    ```
 
 **Other input formats.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that in case of a large dataset, this will add considerable time to the execution due to slow conversion so it is strongly suggested to pre-process your input dataset to generate the needed inputs (BGEN + BGI + SNPLIST).
@@ -173,6 +173,8 @@ Note that the pipeline impose a MAC / MAF filter on genotyped data used for step
 
 This MAC filters are applied after subsetting the data to contain only samples seen in the phenotype table. FID/IID are extracted from the pheno file and used with `--keep` in genotyped data QC to generate a QCed dataset used in regenie step 1. Then in step 2, regenie automatically removes any sample not seen in step 1 predictions before applying the MAC filter.
 
+As a result of this process, if you use only a subset of samples present in the original imputed data, it is possible that some variants will be filtered out due to low MAC. Check log files and the results table to see exactly how many variants were considered in the analysis.
+
 ### Clumping
 
 When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that SNP IDs in these files are made from original IDs as follows: `[SNPID]_[A0]_[A1]` to avoid duplicate conflict when there are multiple SNPs with the same rsID, but different tested alleles.
@@ -235,16 +237,16 @@ However, generating the DB can add significant time to the overall execution so 
 
 ## Re-use Step 1 predictions
 
-If you set `save_step1_predictions` to true, the pipeline will save the step 1 predictions in `regenie_step1_preds` folder. This can be used to re-use the predictions for further analysis. 
+If you set `save_step1_predictions` to true, the pipeline will save the step 1 predictions in `regenie_step1_preds` folder. This can be used to re-use the predictions for further analysis.
 You can load level 1 preds from this folder in subsequent analyses by setting `regenie_premade_predictions` to a path like `/results/regenie_step1_preds/regenie_step1_out*`.
 
-- A file named regenie_step1_out_pred.list must be present 
+- A file named regenie_step1_out_pred.list must be present
 - One file per phenotype is expected named `regenie_step1_out_1.loco.gz` `regenie_step1_out_2.loco.gz`, ...
 - phenotypes and covariates used in the new analyses must be exactly the same used to generate step1 predictions (both files and column designation must match exactly)
 
-## Documentation
+## Full parameters explanation
 
-More detailed documentation of all parameters can be found --DOCS IN PROGRESS--.
+See the [project wiki](https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie/-/wikis/home) for detailed explanation of all configuration parameters
 
 ## License
 
