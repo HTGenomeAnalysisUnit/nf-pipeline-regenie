@@ -10,13 +10,14 @@ process MAKE_CHUNKS {
         path 'chunks.txt'
 
     script:
+    def chromosomes_list = params.chromosomes.join(" ")
     """
     awk '{print \$0 >> \$1".snps"}' $snps_list
-    for f in *.snps
+    for c in $chromosomes_list
     do 
-        awk 'NR == 1 {start=\$2}; NR > 1 && !(NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2; start = \$2+1}; END { if (NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2} }' \$f > \$f.intervals      
+        awk 'NR == 1 {start=\$2}; NR > 1 && !(NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2; start = \$2+1}; END { if (NR%${params.step2_chunk_size}) {print \$1":"start"-"\$2} }' \$c.snps > \$c.intervals 
     done
 
-    cat *.intervals > chunks.txt
+    cat *.intervals | sort -V > chunks.txt
     """
 }

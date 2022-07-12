@@ -65,6 +65,8 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 ## Required input files
 
+**NB.** All chromosome names must be numeric (1..22, X=23, Y=24, XY=25, MT=26) without 'chr' prefix.
+
 ### Full genotype data (from imputation)
 
 1. A bgen file of your full genotype data (`genotypes_imputed`). Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on this file so ensure it is clean.

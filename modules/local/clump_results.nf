@@ -104,12 +104,12 @@ process MERGE_CLUMP_RESULTS {
     do
         tail -n+2 \$f | tr -s " " "\\t" | sed 's/^\\t//g' >> toploci.tsv
     done
-    sed '/^$/d' toploci.tsv | sort -k5,5g >> ${phenotype}.toploci.tsv
+    sed '/^\$/d' toploci.tsv | sort -k5,5g >> ${phenotype}.toploci.tsv
 
     echo -e "CHR\tSNP\tP\tN\tPOS\tKB\tRANGES" > ${phenotype}.toploci.annot.tsv
     do
         tail -n+2 \$f | tr -s " " "\\t" | sed 's/^\\t//g' >> toploci.annot.tsv
     done
-    sed '/^$/d' toploci.annot.tsv | sort -k3,3g >> ${phenotype}.toploci.annot.tsv
+    sed '/^\$/d' toploci.annot.tsv | sort -k3,3g >> ${phenotype}.toploci.annot.tsv
     """
 }

@@ -19,7 +19,7 @@ process QC_FILTER_GENOTYPED {
   
   plink2 \
     --bfile ${genotyped_plink_filename} \
-    --keep samples.list
+    --keep samples.list \
     --maf ${params.qc_maf} \
     --mac ${params.qc_mac} \
     --geno ${params.qc_geno} \

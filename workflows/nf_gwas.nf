@@ -4,7 +4,8 @@ requiredParams = [
     'genotypes_imputed', 'genotypes_build',
     'genotypes_imputed_format', 'phenotypes_filename',
     'phenotypes_columns', 'phenotypes_binary_trait',
-    'regenie_test', 'step1_n_chunks', 'step2_split_by'
+    'regenie_test', 'step1_n_chunks', 'step2_split_by',
+    'chromosomes'
 ]
 
 for (param in requiredParams) {
@@ -149,6 +150,7 @@ workflow NF_GWAS {
     'genotypes_build','imputed_snplist',
     'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
     'covariates_filename','covariates_columns',
+    'chromosomes',
     'regenie_test','annotation_min_log10p',
     'save_step1_predictions','outdir','db'
     ]
@@ -236,7 +238,7 @@ or contact: edoardo.giacopuzzi@fht.org
     }
 
     QC_FILTER_GENOTYPED (
-      genotyped_plink_ch
+      genotyped_plink_ch, phenotypes_file
     )
 
     if(params.prune_enabled) {
