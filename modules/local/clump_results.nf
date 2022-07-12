@@ -16,7 +16,7 @@ workflow CLUMP_RESULTS {
         }
         clump_input_ch = results.combine(ld_panel_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
-        merge_input_ch = PLINK_CLUMPING.out.groupTuple()
+        merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple()
         MERGE_CLUMP_RESULTS(merge_input_ch)
     
     emit:
@@ -58,7 +58,8 @@ process PLINK_CLUMPING {
         path genes_hg38, stageAs: 'hg38_genes'
 
     output:
-        tuple val(phenotype), file("${chrom}.clumped"), file("${chrom}.clumped.ranges")
+        tuple val(phenotype), path("${chrom}.clumped"), path("${chrom}.clumped.ranges"), emit: chrom_clump_results
+        path "${chrom}.log", emit: logs
 
     script:
     def bfile_prefix = bfile[0].simpleName
@@ -71,7 +72,7 @@ process PLINK_CLUMPING {
     plink \
         --memory ${task.memory.toMega()} \
         --bfile $bfile_prefix \
-        --chr $chrom \
+        --chr ${chrom.replaceFirst('chr', '')} \
         --clump regenie.pval \
         --clump-p1 ${params.clump_p1} \
         --clump-p2 ${params.clump_p2} \
