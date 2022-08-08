@@ -27,18 +27,17 @@ process CONVERT_TO_BED {
     label 'process_plink2'
     
     input:
-        tuple val(bgen_prefix), file(imputed_bgen_file), file(dummy_sample)
+        tuple val(bgen_prefix), file(imputed_bgen_file), file(dummy_index)
         path sample_file
 
     output:
         path "${bgen_prefix}.{bed,bim,fam}"
 
     script:
-    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = bgen_sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
     """
     plink2 \
     --bgen imputed_bgen_file ref-first \
-    --keep samples_ld.tsv \
     --make-bed \
     --memory ${task.memory.toMega()} \
     --threads ${task.cpus} \
