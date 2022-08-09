@@ -34,7 +34,7 @@ process CONVERT_TO_BED {
         path "${bgen_prefix}.{bed,bim,fam}"
 
     script:
-    def bgen_sample = bgen_sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
     """
     plink2 \
     --bgen imputed_bgen_file ref-first \
