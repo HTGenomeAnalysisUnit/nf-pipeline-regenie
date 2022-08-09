@@ -9,7 +9,7 @@ workflow CLUMP_RESULTS {
     main:
         if (params.ld_panel == 'NO_LD_FILE') {
             CONVERT_TO_BED(imputed_bgen, sample_file)
-            chromosomes_ch = Channel.fromList(params.chromosomes)
+            chromosomes_ch = Channel.of(params.chromosomes)
             ld_panel_ch = chromosomes_ch.combine(CONVERT_TO_BED.out)
         } else {
             ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3)

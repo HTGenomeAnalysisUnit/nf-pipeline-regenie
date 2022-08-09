@@ -136,7 +136,7 @@ if (params.clumping) {
 }
 
 if (params.step2_split_by == 'chunk') {
-  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size)
+  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size, chromosomes: params.chromosomes)
   include { REGENIE_STEP2_BYCHUNK as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir", save_step2_logs: params.save_step2_logs)
 } else if (params.step2_split_by == 'chr') {
   include { REGENIE_STEP2_BYCHR as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir", save_step2_logs: params.save_step2_logs)
@@ -293,7 +293,7 @@ or contact: edoardo.giacopuzzi@fht.org
     //==== REGENIE STEP 2 ====
     //PARALLELIZE BY CHROM
     if (params.step2_split_by == 'chr') { 
-      chromosomes = Channel.fromList(params.chromosomes)
+      chromosomes = Channel.of(params.chromosomes)
       bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
@@ -445,5 +445,9 @@ workflow.onError {
     """
     .stripIndent()
     error_log.append(error_log_msg)
+
+    master_log = file("${master_log_dir}/job_execution_summary.log")
+    def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
+    master_log.append(master_log_msg)
   }
 }
