@@ -347,7 +347,7 @@ or contact: edoardo.giacopuzzi@fht.org
   
   //==== PERFORM VARIANT CLUMPING ====
   if (params.clumping) {
-    if (params.ld_panel == 'NO_LD_FILE') {
+    if (params.ld_panel == 'NO_FILE') {
       log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
     } 
     CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
