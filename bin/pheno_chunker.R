@@ -41,7 +41,7 @@ pheno.chunker=function(pheno_file="data/test_phenotype.tsv" #names of the phenot
      gsub(pattern = " ",replacement = "")|>unique()
    variables=variables[!(variables%in%1)]
       
-   pheno=fread(pheno_file,select = c("IID",variables))
+   pheno=fread(pheno_file,select = c("FID","IID",variables))
    if(all(variables%in%colnames(pheno))){
      print(paste("Loaded variables:",paste(variables,collapse=" ")))
    }else{
@@ -50,22 +50,25 @@ pheno.chunker=function(pheno_file="data/test_phenotype.tsv" #names of the phenot
      
    }
    row.names(pheno)=pheno$IID
-   if(!is.na(fam.file)){
+   
+  if(!("FID" %in% colnames(pheno))){
      
-     if(length(grep("\\.fam$",fam.file))>0){
-       fam=fread(fam.file,header=F)
-     }else if(length(grep("\\.sample$",fam.file))>0){
-       fam=fread(fam.file,header=F,skip=2)
-     }
-     names(fam)[1:2]=c("FID","IID")
-     fam=fam[match(pheno$IID,fam$IID),]
-     pheno=data.table(FID=fam$FID,pheno)
-   }else{
-     
-     pheno=data.table(FID=pheno$IID,pheno)
-     
-     
-   }
+    if(!is.na(fam.file)){
+      
+      if(length(grep("\\.fam$",fam.file))>0){
+        fam=fread(fam.file,header=F)
+      }else if(length(grep("\\.sample$",fam.file))>0){
+        fam=fread(fam.file,header=F,skip=2)
+      }
+      names(fam)[1:2]=c("FID","IID")
+      fam=fam[match(pheno$IID,fam$IID),]
+      pheno=data.table(FID=fam$FID,pheno)
+    }else{
+      
+      pheno=data.table(FID=pheno$IID,pheno)
+      
+    }
+  }
    ## Create chunks by model and covariates
    covariates=apply(t(models$model),2,extract.cov) 
    covariates=as.factor(covariates)|>as.numeric()|>as.character()
