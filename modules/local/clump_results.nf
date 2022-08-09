@@ -37,7 +37,7 @@ process CONVERT_TO_BED {
     def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
     """
     plink2 \
-    --bgen imputed_bgen_file ref-first \
+    --bgen $imputed_bgen_file ref-first \
     --make-bed \
     --memory ${task.memory.toMega()} \
     --threads ${task.cpus} \
