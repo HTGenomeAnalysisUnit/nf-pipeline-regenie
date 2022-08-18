@@ -103,9 +103,14 @@ public class RegenieLogParser implements Callable<Integer> {
 					writer.setString(0, "Samples total (*.fam)");
 					writer.setInteger(1, Integer.valueOf(value));
 					writer.next();
-				} else if (line.contains("* phenotypes")) {
+				} else if (line.contains("n_pheno")) {
 					String value = line.split("=")[1].trim();
 					writer.setString(0, "Number of defined phenotypes");
+					writer.setInteger(1, Integer.valueOf(value));
+					writer.next();
+				} else if (line.contains("n_cov")) {
+					String value = line.split("=")[1].trim();
+					writer.setString(0, "Number of defined covariates");
 					writer.setInteger(1, Integer.valueOf(value));
 					writer.next();
 				} else if (line.contains("-number of phenotyped individuals")) {
@@ -133,7 +138,11 @@ public class RegenieLogParser implements Callable<Integer> {
 					writer.setString(0, "Variants ignored (low MAC or low info score)");
 					writer.setInteger(1, Integer.valueOf(value));
 					writer.next();
-				}
+				} else if (line.contains("Number of ignored tests due to low MAC or info score")) {
+					String value = line.split(":")[1].trim();
+					writer.setString(0, "Variants ignored (low MAC or low info score)");
+					writer.setInteger(1, Integer.valueOf(value));
+					writer.next();
 			}
 			s.close();
 		}
