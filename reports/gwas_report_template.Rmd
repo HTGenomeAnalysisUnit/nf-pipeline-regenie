@@ -10,32 +10,32 @@ output:
 params:
   project: test-gwas
   date: 2021-08-09
-  version: v0.1.9
-  regenie_merged: ../output/test-gwas/results/Y1.regenie.gz
-  regenie_filename: test-gwas.Y1.regenie.all.gz
-  phenotype: Y1
-  covariates:
-  phenotype_file: ../output/test-gwas/validated_input/phenotype.validated.txt
-  regenie_step1_log: ../output/test-gwas/logs/test-gwas.step1.log
-  regenie_step2_log: ../output/test-gwas/logs/test-gwas.step2.log
-  phenotype_log: ../output/test-gwas/logs/phenotype.validated.log
-  covariate_log: NO_COV_LOG
+  version: v0.2
+  regenie_merged: Q1.regenie.gz
+  regenie_filename: Q1.regenie.gz
+  phenotype: Q1
+  covariates: SEX
+  phenotype_file: phenos_quant.pheno.validated.txt
+  regenie_step1_log: test-ukbb-quant.step1.log
+  regenie_step2_log: test-ukbb-quant.step2.log
+  phenotype_log: phenos_quant.pheno.validated.log
+  covariate_log: covars.cov.validated.log
   plot_ylimit: 0
-  manhattan_annotation_enabled: true
-  annotation_min_log10p: 5
-  annotated_tophits_filename: ../output/test-gwas/results/tophits/Y1.regenie.filtered.annotated.txt.gz
+  manhattan_annotation_enabled: TRUE
+  annotation_min_log10p: 6
+  annotated_tophits_filename: Q1.regenie.filtered.annotated.txt.gz
+  annotated_toploci_filename: Q1.toploci.annot.tsv
 ---
 
 ```{r setup, include=FALSE}
-library(qqman)
 library(DT)
 library(data.table)
 library(R.utils)
 library(ggplot2)
 library(skimr)
 library(kableExtra)
-library(ramwas)
 library(dplyr)
+library(ggfastman)
 ```
 
 ## Project Summary
@@ -69,62 +69,28 @@ ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
 
 ## Manhattan Plot
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, dpi=300}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, time_it=TRUE, dpi=300}
 #sources: https://www.r-graph-gallery.com/101_Manhattan_plot.html with modifications
 
 regenieTable <- fread(params$regenie_merged, select = c("CHROM","GENPOS","LOG10P","ID"), header=TRUE, tmpdir="$PWD")
-
+setnames(regenieTable, c("CHROM","GENPOS","LOG10P","ID"), c("chr","pos","pvalue","rsid")) 
+regenieTable <- regenieTable[, pvalue := 10^(-pvalue)]
 #source: https://www.r-graph-gallery.com/101_Manhattan_plot.html with modifications
 
 annotatedTopHits <- fread(params$annotated_tophits_filename, select = c("ID", "CLOSEST_GENE_NAME"), header=TRUE, tmpdir="$PWD")
+setnames(annotatedTopHits, "ID", "rsid")
 #merge gene names of tophits to regenieTable
 
 annotatedTopHits <- annotatedTopHits %>%  
-    mutate(ID = as.character(ID))
+    mutate(rsid = as.character(rsid))
 regenieTable <- regenieTable %>%  
-    mutate(ID = as.character(ID))
+    mutate(rsid = as.character(rsid))
 
-regenieTable_annotated <- left_join(regenieTable, annotatedTopHits, by = "ID")
+regenieTable_annotated <- left_join(regenieTable, annotatedTopHits, by = "rsid")
 
-#prepare for plotting
-don <- regenieTable_annotated %>%
-
-  # Compute chromosome size
-  group_by(CHROM) %>%
-  summarise(CHROM_len=max(GENPOS)) %>%
-
-  # Calculate cumulative start position of each chromosome
-  mutate(tot=cumsum(as.numeric(CHROM_len))-CHROM_len) %>%
-  select(-CHROM_len) %>%
-
-  # Add this info to the initial dataset
-  left_join(regenieTable_annotated, ., by=c("CHROM"="CHROM")) %>%
-
-  # Add a cumulative position of each SNP
-  arrange(CHROM, GENPOS) %>%
-  mutate( GENPOScum=GENPOS+tot)
-
-rm(regenieTable_annotated)
-
-# Prepare X axis
-axisdf = don %>% group_by(CHROM) %>% summarize(center=( max(GENPOScum) + min(GENPOScum) ) / 2 )
-
-p <- ggplot(don, aes(x=GENPOScum, y=LOG10P)) +
-
-    # Show all points
-    geom_point(aes(color=as.factor(CHROM))) +
-    scale_color_manual(values = rep(c("#779ECB", "#03254c"), 22 )) +
-
-    # custom X axis:
-    scale_x_continuous(label = axisdf$CHROM,
-                       breaks= axisdf$center,
-                       name = "Chromosome",
-                       expand = c(0,0),
-                       guide = guide_axis(check.overlap = TRUE)) +
-  # custom y step 1annotation_limit
-    scale_y_continuous(expand = c(0, 0),
-                       name=expression(-log[10](italic(p))),
-                       limits = c(0, sum(max(regenieTable$LOG10P), 0.5))) +
+p <-  fast_manhattan(regenieTable_annotated, build='hg19', speed = "f",
+                     color1 = "grey", color2 = "orange", pointsize = 2, 
+                     highlight = regenieTable_annotated[regenieTable_annotated$pvalue < 5e-8,]$rsid) +
   geom_hline(yintercept = -log10(5e-08),
              linetype ="longdash",
              color ="firebrick") + # genomewide significance
@@ -133,7 +99,7 @@ p <- ggplot(don, aes(x=GENPOScum, y=LOG10P)) +
              color ="darkgrey")  + # suggestive significance
 
     # Custom the theme:
-    theme_classic() +
+    theme_bw() +
     theme(
       legend.position="none",
       panel.border = element_blank(),
@@ -148,32 +114,34 @@ p <- ggplot(don, aes(x=GENPOScum, y=LOG10P)) +
  if(params$plot_ylimit == 0) {
   p2 <- p + scale_y_continuous(expand = c(0, 0),
                        name=expression(-log[10](italic(P))),
-                       limits = c(0, sum(max(regenieTable$LOG10P), 0.5)))
+                       limits = c(0, sum(max(-log10(regenieTable$pvalue)), 0.5)))
 } else {
   p2 <- p + scale_y_continuous(expand = c(0, 0),
                        name=expression(-log[10](italic(P))),
                        limits = c(0, params$plot_ylimit))
 }
 
+rm(p)
 
  if(!params$manhattan_annotation_enabled) {
-  p2
+  p3 <- p2
 } else {
-  p2 + ggrepel::geom_text_repel(data = don %>% group_by(CLOSEST_GENE_NAME) %>%
-                             top_n(1, LOG10P) %>%
-                               slice(1) %>%
-                             filter(LOG10P > params$annotation_min_log10p),
-                            aes(label=CLOSEST_GENE_NAME), color = 1)
+  p3 <- p2 + ggrepel::geom_text_repel(data = . %>% filter(pvalue <= 5e-08) %>%
+                                        group_by(CLOSEST_GENE_NAME) %>% 
+                             top_n(1, -pvalue) %>% # extract highest y values
+                             slice(1), # if there are ties, choose the first one
+                             aes(label=CLOSEST_GENE_NAME), color =1)
 }
-
+ rm(regenieTable_annotated)
+ rm(p2)
+ 
+ p3
 
 ```
 
 ## QQ Plot
 
-```{r, echo=FALSE, results='asis'}
-qqPrepare <- qqPlotPrepare(pvalues=regenieTable$LOG10P,ismlog10 = T)
-
+```{r, echo=FALSE, time_it = TRUE, results='asis'}
 if(params$plot_ylimit == 0) {
   limit = NULL
 } else {
@@ -181,13 +149,12 @@ if(params$plot_ylimit == 0) {
     cat(paste("Please note that the Y-axis limit has been set to '", params$plot_ylimit,"'. Please use the 'plot_ylimit' parameter to adapt this behaviour."))
 }
 
-qqPlotFast(qqPrepare, ylim = limit)
+fast_qq(regenieTable$pvalue, pointsize = 2)
 
-rm(qqPrepare)
 rm(regenieTable)
 ```
 
-## Top Loci
+## Top SNPs
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -201,6 +168,19 @@ topHitsGroupedByGene <-
 
 datatable(topHitsGroupedByGene)
 
+```
+
+## Top Loci
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+if (file.exists(params$annotated_toploci_filename)) {
+  annotatedTopLoci <- fread(params$annotated_toploci_filename, header=TRUE, tmpdir="$PWD")
+  annotatedTopLoci <- annotatedTopLoci[order(annotatedTopLoci$P),]
+  
+  datatable(annotatedTopLoci)
+} else {
+  cat("No clumping loci available")
+}
 ```
 
 ## Validation and Logs
@@ -247,5 +227,5 @@ kable(step2_log)
 ---
 
 <small>
-This report has been created with **[nf-gwas `r params$version`](https://github.com/genepi/nf-gwas)**, a nextflow pipeline developed by [Sebastian Schönherr](mailto:sebastian.schoenherr@i-med.ac.at), [Lukas Forer](mailto:lukas.forer@i-med.ac.at) and [Johanna Schachtl-Riess](mailto:johanna.schachtl-riess@i-med.ac.at), Institute of Genetic Epidemiology, Medical University of Innsbruck.
+This report has been created with **[nf-fast-regenie `r params$version`](https://github.com/genepi/nf-gwas)**, a nextflow pipeline developed by [Edoardo Giacopuzzi](mailto:edoardo.giacopuzzi@fht.org) at the Human Technopole Foundation, Milan, Italy. 
 </small>

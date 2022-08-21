@@ -67,7 +67,7 @@ process PLINK_CLUMPING {
     touch ${chrom}.clumped
     touch ${chrom}.clumped.ranges
 
-    zcat $pheno_results_gz | awk '{OFS="\t"}; NR == 1 {print \$0, "PVAL", "SNPID"}; NR > 1 {print \$0, 10^(-\$13), \$3"_"\$4"_"\$5}' > regenie.pval
+    zcat $pheno_results_gz | awk '{OFS="\t"}; NR == 1 {print \$0, "PVAL"}; NR > 1 {print \$0, 10^(-\$13)}' > regenie.pval
     plink \
         --memory ${task.memory.toMega()} \
         --bfile $bfile_prefix \
@@ -77,7 +77,7 @@ process PLINK_CLUMPING {
         --clump-p2 ${params.clump_p2} \
         --clump-kb ${params.clump_kb} \
         --clump-r2 0.5 \
-        --clump-snp-field SNPID \
+        --clump-snp-field ID \
         --clump-field PVAL \
         --clump-range $genes_ranges \
         --clump-range-border ${params.annotation_interval_kb} \

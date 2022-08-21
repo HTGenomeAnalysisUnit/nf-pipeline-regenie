@@ -40,10 +40,6 @@ gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",check
 regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
 regenie_filter_java = file("$projectDir/bin/RegenieFilter.java", checkIfExists: true)
 regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
-//update_db_sql = file("$projectDir/bin/new_table.sql", checkIfExists: true)
-//update_projects_sql = file("$projectDir/bin/update_projects.sql", checkIfExists: true)
-update_snptable_sql = file("$projectDir/bin/update_snp_table.sql", checkIfExists: true)
-min_header = file("$projectDir/templates/min_header.txt", checkIfExists: true)
 
 //Annotation files
 if (params.genes_bed) {
@@ -98,16 +94,6 @@ if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format 
 //Array genotypes
 Channel.fromFilePairs("${params.genotypes_array}.{bim,bed,fam}", size: 3).set {genotyped_plink_ch}
 
-//Check db related files if db is specified
-if (params.create_db) {
-  if (params.db_folder == null) {
-    db_outdir = "$outdir/gwas_db"
-  } else {
-    db_outdir = params.db_folder
-  }
-  snp_annotations = file(params.db_snp_annotations, checkIfExists: true)
-}
-
 //Include modules
 include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
@@ -126,11 +112,6 @@ include { MERGE_RESULTS               } from '../modules/local/merge_results'  a
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results' addParams(outdir: "$outdir")
-if (params.create_db) {
-  include { DB_MAKE_VCF_MULTI; DB_MAKE_VCF_SINGLE } from '../modules/local/db_make_vcf' addParams(pval_threshold: params.db_pval_threshold, outdir: "$db_outdir")
-  include { DB_MERGE } from '../modules/local/db_merge_files' addParams(outdir: "$db_outdir")
-  include { DB_CREATE_SNPTABLE } from '../modules/local/db_create_snptable' addParams(outdir: "$db_outdir")
-}
 if (params.clumping) {
   include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "$outdir")
 }
@@ -152,7 +133,7 @@ workflow NF_GWAS {
     'covariates_filename','covariates_columns',
     'chromosomes',
     'regenie_test','annotation_min_log10p',
-    'save_step1_predictions','outdir','db'
+    'save_step1_predictions','outdir'
     ]
     log_params_string = []
     for (p in log_params) {
@@ -364,30 +345,6 @@ or contact: edoardo.giacopuzzi@fht.org
     REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
   )
 
-  //==== SAVE SNP RESULTS INTO DB ====
-  //This store result in a bcf like file
-  //Only SNPs with LOG10P > 1.3 (pval ~< 0.05) are stored by default
-  if (params.create_db) {
-    covars_string = params.covariates_columns.replaceAll(',','+')
-    phenos_list = params.phenotypes_columns.split(",")
-    models_ch = Channel
-      .from(phenos_list)
-      .map{ it -> return tuple(it, "$it ~ $covars_string", "${params.phenotypes_binary_trait ? "log" : "quant"}", params.regenie_test) }
-    
-    db_input_ch = regenie_step2_by_phenotype.join(models_ch)
-
-    if (phenos_list.size() == 1) {
-      DB_MAKE_VCF_SINGLE (db_input_ch, min_header)
-      gwas_db = DB_MAKE_VCF_SINGLE.out.pheno_db
-    } else {
-      DB_MAKE_VCF_MULTI (db_input_ch, min_header)
-      merge_input_ch = DB_MAKE_VCF_MULTI.out.pheno_db.toList().transpose().toList()
-      DB_MERGE(merge_input_ch, min_header)
-      gwas_db = DB_MERGE.out.gwas_db
-    }
-
-    DB_CREATE_SNPTABLE(gwas_db, snp_annotations, update_snptable_sql, min_header)
-  }
 }
 
 workflow.onComplete {
