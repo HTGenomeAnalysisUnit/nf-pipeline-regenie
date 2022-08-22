@@ -1,14 +1,13 @@
-#This can help creating an appropriate R environment from scratch
-#Alternatively, you can use the renev.lock file and renv::restore()
 options(repos=structure(c(CRAN='https://cloud.r-project.org')))
+library("groundhog")
 
-install.packages('remotes','BiocManager')
-remotes::install_github('rstudio/renv@0.15.5')
+pkgs <- c("BiocManager", "remotes","DT","data.table","R.utils","ggplot2","skimr","kableExtra","dplyr")
+groundhog.library(pkgs, "2022-04-01")
 
-renv::install(c("DT","data.table","R.utils","ggplot2","skimr","kableExtra","dplyr"))
-renv::install("exaexa/scattermore")
-renv::install("bioc::ggbio")
-renv::install("bioc::Homo.sapiens")
-renv::install("roman-tremmel/ggfastman")
+bioc_version = Sys.getenv("BIOC_VERSION")
+BiocManager::install(version=bioc_version)
+BiocManager::install("bioc::ggbio")
+BiocManager::install("bioc::Homo.sapiens")
 
-renv::snapshot()
+remotes::install_github('exaexa/scattermore@v0.8')
+remotes::install_github('roman-tremmel/ggfastman@v1.2-9-g367d419')

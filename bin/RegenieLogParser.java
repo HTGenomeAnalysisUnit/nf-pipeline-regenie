@@ -143,6 +143,7 @@ public class RegenieLogParser implements Callable<Integer> {
 					writer.setString(0, "Variants ignored (low MAC or low info score)");
 					writer.setInteger(1, Integer.valueOf(value));
 					writer.next();
+				}
 			}
 			s.close();
 		}
