@@ -330,7 +330,7 @@ or contact: edoardo.giacopuzzi@fht.org
     CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
     clump_results_ch = CLUMP_RESULTS.out.annotloci
   } else {
-    clump_results_ch = Channel.empty()
+    clump_results_ch = regenie_step2_by_phenotype.map { it -> return tuple(it[0], file('NO_CLUMP_FILE'))}
   }
 
   merged_results_and_annotated_filtered = regenie_step2_by_phenotype
