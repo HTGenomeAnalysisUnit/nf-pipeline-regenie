@@ -5,7 +5,7 @@ process REPORT {
   label 'required_memory_report'
 
   input:
-    tuple val(phenotype), path(regenie_merged), path(annotated_tophits)
+    tuple val(phenotype), path(regenie_merged), path(annotated_tophits), path(annotated_toploci)
     path phenotype_file_validated
     path gwas_report_template
     path phenotype_log
@@ -36,6 +36,7 @@ process REPORT {
       regenie_step2_log='${step2_log}',
       plot_ylimit=${params.plot_ylimit},
       annotated_tophits_filename='${annotated_tophits}',
+      annotated_toploci_filename='${annotated_toploci}',
       manhattan_annotation_enabled = $annotation_as_string,
       annotation_min_log10p = ${params.annotation_min_log10p}
     ),

@@ -95,7 +95,7 @@ process MERGE_CLUMP_RESULTS {
 
     output:
         path "${phenotype}.toploci.tsv", emit: toploci
-        path "${phenotype}.toploci.annot.tsv", emit: annotloci
+        tuple val(phenotype), path("${phenotype}.toploci.annot.tsv"), emit: annotloci
 
     script:
     """

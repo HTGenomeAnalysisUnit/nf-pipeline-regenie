@@ -322,17 +322,20 @@ or contact: edoardo.giacopuzzi@fht.org
     genes_bed_hg38
   )
   
-  merged_results_and_annotated_filtered =  regenie_step2_by_phenotype.combine(
-    ANNOTATE_FILTERED.out.annotated_ch, by: 0
-  )
-  
   //==== PERFORM VARIANT CLUMPING ====
   if (params.clumping) {
     if (params.ld_panel == 'NO_LD_FILE') {
       log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
     } 
     CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
+    clump_results_ch = CLUMP_RESULTS.out.annotloci
+  } else {
+    clump_results_ch = Channel.empty()
   }
+
+  merged_results_and_annotated_filtered = regenie_step2_by_phenotype
+    .join(ANNOTATE_FILTERED.out.annotated_ch, by: 0)
+    .join(clump_results_ch, by: 0, remainder: true)
 
   //==== GENERATE REPORTS ====
   REPORT (
