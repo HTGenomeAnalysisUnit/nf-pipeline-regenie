@@ -328,7 +328,7 @@ or contact: edoardo.giacopuzzi@fht.org
       log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
     } 
     CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
-    clump_results_ch = CLUMP_RESULTS.out.annotloci
+    clump_results_ch = CLUMP_RESULTS.out.best_loci
   } else {
     clump_results_ch = regenie_step2_by_phenotype.map { it -> return tuple(it[0], file('NO_CLUMP_FILE'))}
   }
