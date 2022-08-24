@@ -1,4 +1,5 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL author="Edoardo Giacopuzzi"
 LABEL contact="edoardo.giacopuzzi@fht.org"
@@ -8,6 +9,7 @@ LABEL bgenix_version="1.1.7"
 LABEL R_version="4.1.0"
 
 # Install software
+WORKDIR "/opt"
 RUN apt-get update && \
     apt-get install -y \
     libcairo2-dev \
@@ -25,15 +27,18 @@ RUN apt-get update && \
     libx11-6 \
     openjdk-11-jdk \
     python3 \
+    libjpeg-dev \
     libpcre2-dev pcre2-utils \
     libxml2-dev \
     autoconf ca-certificates wget libbz2-dev \
-    libc6-dev libcurl4-gnutls-dev libfreetype6 libgsl-dev liblzma-dev \
+    libc6-dev libcurl4-openssl-dev libfreetype6 libgsl-dev liblzma-dev \
     libncurses5-dev libperl-dev libreadline-dev libssl-dev libz-dev \
 && ln -s /usr/bin/python3 /usr/bin/python \
+&& wget http://security.ubuntu.com/ubuntu/pool/main/i/icu/libicu60_60.2-3ubuntu3.2_amd64.deb \
+&& apt-get install ./libicu60_60.2-3ubuntu3.2_amd64.deb \
 && apt-get -y autoremove \
 && apt-get -y clean all \
-&& rm -rf /var/cache
+&& rm -rf /var/cache 
 
 # Install regenie (not as conda package available)
 WORKDIR "/opt"
@@ -89,25 +94,6 @@ RUN wget https://github.com/jbangdev/jbang/releases/download/v0.91.0/jbang-0.91.
     rm jbang*.zip
 ENV PATH="/opt/jbang/bin:${PATH}"
 
-# Install R
-WORKDIR "/opt"
-RUN wget https://cloud.r-project.org/src/base/R-4/R-4.1.0.tar.gz \
-    && tar -zxvf R-4.1.0.tar.gz \
-    && rm R-4.1.0.tar.gz \
-    && cd R-4.1.0 \
-    && ./configure \
-    && make \
-    && make install
-
-# Install R environment
-WORKDIR "/opt"
-RUN mkdir -p ~/R/x86_64-pc-linux-gnu-library/4.1 \
-    && mkdir -p /root/R_groundhog
-ENV BIOC_VERSION 3.14
-RUN R -e "install.packages('groundhog', repos = c(CRAN = 'https://cloud.r-project.org'))"
-COPY reports/install_R_pkgs.R .
-RUN Rscript install_R_pkgs.R
-
 # Install bgen tools
 WORKDIR "/opt"
 RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
@@ -118,3 +104,30 @@ RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
     ./waf install && \
     cd .. && \
     rm -rf bgen.tgz
+
+# Prepare R environment
+WORKDIR "/opt"
+ENV R_LIBS /opt/R/libs
+ENV R_LIBS_USER /opt/R/user_libs
+ENV BIOC_VERSION 3.14
+
+RUN mkdir -p /home/ruser/R/libs \
+    && mkdir -p /home/ruser/R/user_libs \
+    && mkdir -p /root/R_groundhog \
+    && mkdir -p /opt/R/user_libs
+
+# Install R from source
+RUN wget https://cloud.r-project.org/src/base/R-4/R-4.1.0.tar.gz \
+    && tar -zxvf R-4.1.0.tar.gz \
+    && rm R-4.1.0.tar.gz \
+    && cd R-4.1.0 \
+    && ./configure --enable-R-shlib \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -rf R-4.1.0
+
+# Install R packages
+RUN R -e "install.packages(c('BiocManager', 'groundhog'), repos = c(CRAN = 'https://cloud.r-project.org'))"
+COPY install_R_pkgs.R .
+RUN Rscript install_R_pkgs.R

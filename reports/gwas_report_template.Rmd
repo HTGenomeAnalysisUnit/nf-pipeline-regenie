@@ -33,9 +33,9 @@ library(data.table)
 library(R.utils)
 library(ggplot2)
 library(skimr)
-library(kableExtra)
 library(dplyr)
 library(ggfastman)
+options(DT.options = list(dom = 't'))
 ```
 
 ## Project Summary
@@ -56,9 +56,10 @@ library(ggfastman)
 
 ```{r, echo=FALSE}
 phenotypeTable <- read.table(params$phenotype_file, header=TRUE, sep="\t", dec = ".")
-kable(skim(phenotypeTable) %>%
-  dplyr::filter(skim_variable == params$phenotype)) %>%
-  kableExtra::scroll_box(width = "100%")
+dt <- as.data.frame(skim(phenotypeTable) %>%
+  dplyr::filter(skim_variable == params$phenotype))
+dt <- as.data.frame(as.matrix(dt), stringsAsFactors = F)
+datatable(dt)
 ```
 
 ### Histogram
@@ -69,7 +70,7 @@ ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
 
 ## Manhattan Plot
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, time_it=TRUE, dpi=300}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, dpi=300}
 #sources: https://www.r-graph-gallery.com/101_Manhattan_plot.html with modifications
 
 regenieTable <- fread(params$regenie_merged, select = c("CHROM","GENPOS","LOG10P","ID"), header=TRUE, tmpdir="$PWD")
@@ -141,7 +142,7 @@ rm(p)
 
 ## QQ Plot
 
-```{r, echo=FALSE, time_it = TRUE, results='asis'}
+```{r, echo=FALSE, results='asis'}
 if(params$plot_ylimit == 0) {
   limit = NULL
 } else {
@@ -190,7 +191,7 @@ if (file.exists(params$annotated_toploci_filename)) {
 ```{r, echo=FALSE}
 phenotype_log <- read.table(params$phenotype_log,
                       sep ="\t", header = TRUE, dec =".")
-kable(phenotype_log)
+datatable(phenotype_log)
 ```
 
 ### Covariate File Validation
@@ -198,7 +199,7 @@ kable(phenotype_log)
 ```{r, echo=FALSE, results='asis'}
 if(file.exists(params$covariate_log)) {
 step1_log <- read.table(params$covariate_log,sep ="\t", header = TRUE, dec =".")
-kable(step1_log)
+datatable(step1_log)
 } else {
     cat("*No covariates available.*")
 }
@@ -209,7 +210,7 @@ kable(step1_log)
 ```{r, echo=FALSE, results='asis'}
 if(file.exists(params$regenie_step1_log)) {
 step1_log <- read.table(params$regenie_step1_log,sep ="\t", header = TRUE, dec =".")
-kable(step1_log)
+datatable(step1_log)
 } else {
     cat("*Regenie step 1 skipped.*")
 }
@@ -220,7 +221,7 @@ kable(step1_log)
 ```{r, echo=FALSE}
 step2_log <- read.table(params$regenie_step2_log,
                       sep ="\t", header = TRUE, dec =".")
-kable(step2_log)
+datatable(step2_log)
 ```
 
 
