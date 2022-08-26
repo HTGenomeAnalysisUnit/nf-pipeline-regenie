@@ -40,7 +40,7 @@ RUN apt-get update && \
 && apt-get -y clean all \
 && rm -rf /var/cache 
 
-# Install regenie (not as conda package available)
+# Install regenie
 WORKDIR "/opt"
 RUN mkdir regenie && cd regenie && \
     wget https://github.com/rgcgithub/regenie/releases/download/v3.1.3/regenie_v3.1.3.gz_x86_64_Linux.zip && \

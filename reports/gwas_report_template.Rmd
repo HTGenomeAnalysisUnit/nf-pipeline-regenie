@@ -127,7 +127,7 @@ rm(p)
  if(!params$manhattan_annotation_enabled) {
   p3 <- p2
 } else {
-  p3 <- p2 + ggrepel::geom_text_repel(data = . %>% filter(pvalue <= 5e-08) %>%
+  p3 <- p2 + ggrepel::geom_text_repel(data = . %>% filter(pvalue <= params$annotation_min_log10p) %>%
                                         group_by(CLOSEST_GENE_NAME) %>% 
                              top_n(1, -pvalue) %>% # extract highest y values
                              slice(1), # if there are ties, choose the first one
