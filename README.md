@@ -12,7 +12,7 @@ Two running modes are available: **single project mode** and **multi models mode
 
 1. Create a folder for your project (e.g. `yourproject`) and clone this pipeline version into the project folder using
 
-`git clone --depth 1 --branch v1.0 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.5 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
 
@@ -63,7 +63,11 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - Set `regenie_test` to 'additive', 'dominant' or 'recessive' according to the genetic model you want to test.
 
-## Required input files
+- Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs. These SNPs are also annotated in the manhattan plot
+
+- Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
+
+## Required input files for genetic data
 
 **NB.** All chromosome names must be numeric (1..22, X=23, Y=24, XY=25, MT=26) without 'chr' prefix.
 
@@ -86,7 +90,7 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 ### LD panel
 
-5. LD panel files (`ld_panel` parameter). To speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. If clumping is not active this can be omitted. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 20k. You can generate LD files from input BGEN using plink2
+1. LD panel files (`ld_panel` parameter). If you are analysing a large dataset with more than 50k samples, to speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. This is only processed when `clumping` option is active. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 50k. You can generate LD files from input BGEN using plink2 and the `--keep` option to extract a subset of unrelated samples.
 
 ```bash
 chrom=1 #Chromosome id
@@ -101,22 +105,22 @@ plink2 \
 --out chr${chrom}_ld_panel
 ```
 
-## Single project mode
+## Run in single project mode
 
 In this mode you run a single GWAS model on the provided genetic data given a table of phenotypes and a table of covars.
 
-### Additional inputs for single project mode
+### Inputs for single project mode
 
 6. A tab-separated file with header for phenotypes (`phenotypes_filename`) and the list of column names to process (`phenotypes_columns`). Note that quantitative and binary traits can not be mixed. Regenie will impute missing values when present. Set `phenotypes_binary_trait` to true or false according to the type of phenotypes.
 7. A tab-separated file with header for covariates (`covariates_filename`) and the list of column names (`covariates_columns`) to process(can be omitted if no covars). Here it is fine to mix binary and quantitative covars. Binary covars must contain 0/1 values to be treated as binary. Note that **no missing values** are allowed in this table.
 
 **NB.** The first two columns of phenotype and covariate files must the named `FID` and `IID` and contain ids matching those present in the genotype files. Only samples found in all tables will be processed.
 
-## Multi models mode
+## Run in multi models mode
 
 In this mode you can specifify a general trait table and a model table that describes the models you want to test (pheno ~ covars). Given a missingness threshold, the pipeline will automatically generate a list of of inputs and run the corresponding GWAS analyses.
 
-### Files for multi models mode
+### Inputs for multi models mode
 
 6. A shared config file describing the input datasets and general config parameters (see `templates/shared_parameters.conf` for an example).
 7. A tab-separated file with header (`full_traits.csv` in the example above) and first column named `IID` containing all traits (phenotypes and covariates) that are needed for the analysis.
@@ -179,9 +183,9 @@ As a result of this process, if you use only a subset of samples present in the 
 
 ### Clumping
 
-When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that SNP IDs in these files are made from original IDs as follows: `[SNPID]_[A0]_[A1]` to avoid duplicate conflict when there are multiple SNPs with the same rsID, but different tested alleles.
+When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumpling will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
 
-**NB.** Please ensure that alleles order is concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data. See [LD panel](#ld-panel) section.
+**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data, otherwise SNPs that are not found will be dropped from clumping report.
 
 ## Monitor execution on Nextflow tower
 
