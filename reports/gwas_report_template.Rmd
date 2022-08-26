@@ -62,10 +62,16 @@ dt <- as.data.frame(as.matrix(dt), stringsAsFactors = F)
 datatable(dt)
 ```
 
-### Histogram
+### Phenotype distribution
+
 ```{r, echo=FALSE}
-ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
-  geom_histogram(color="black", fill="white",bins=30)
+if (length(unique(na.omit(phenotypeTable[[params$phenotype]]))) == 2) {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_bar(color="black", fill="white",bins=30) + theme_bw()
+} else {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_histogram(color="black", fill="white",bins=30) + theme_bw()
+}
 ```
 
 ## Manhattan Plot
@@ -155,7 +161,11 @@ fast_qq(regenieTable$pvalue, pointsize = 2)
 rm(regenieTable)
 ```
 
-## Top SNPs
+## Genes on top SNPs
+
+This table summarises the closest genes for top SNPs (SNPs with LOG10P above `r params$annotation_min_log10p`).
+It reports the list of genes overlapped by top SNPs and the number of such SNPs in the gene. 
+The lowest P-value and the minimum SNP-gene distance across top SNPs is also reported
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -164,14 +174,19 @@ annotatedTopHits <- fread(params$annotated_tophits_filename, select = c("CHROM",
 topHitsGroupedByGene <-
   annotatedTopHits %>%
   group_by(CLOSEST_GENE_NAME, CLOSEST_GENE_CHROMOSOME, CLOSEST_GENE_START, CLOSEST_GENE_END) %>%
-  summarise(GENE_LOG10P = max(LOG10P), VARIANTS = n()) %>%
+  summarise(GENE_LOG10P = max(LOG10P), VARIANTS = n(), MIN_DISTANCE=min(CLOSEST_GENE_DISTANCE)) %>%
   arrange(desc(GENE_LOG10P))
+
+colnames(topHitsGroupedByGene) <- c("GENE","CHROMOSOME","START","END","MAX_LOG10P","N_VARIANTS","MIN_DISTANCE")
 
 datatable(topHitsGroupedByGene)
 
 ```
 
 ## Top Loci
+
+This table lists top associated loci after clumping using plink. 
+The minimum log10 p-value for index SNPs is `r params$annotation_min_log10p`
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 if (file.exists(params$annotated_toploci_filename)) {
