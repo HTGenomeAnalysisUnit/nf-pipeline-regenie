@@ -84,7 +84,6 @@ process REGENIE_STEP2_BYCHUNK {
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  params.phenotypes_binary_trait ? "--bt $firth " : ""
-    def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${params.covariates_columns}" : ''
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
@@ -106,7 +105,6 @@ process REGENIE_STEP2_BYCHUNK {
     $binaryTrait \
     $test \
     $bgen_sample \
-    $range \
     $covariants \
     $deleteMissingData \
     $predictions \
@@ -115,7 +113,7 @@ process REGENIE_STEP2_BYCHUNK {
   """
 }
 
-process REGENIE_STEP2_BYCHR {
+process REGENIE_STEP2 {
   if (params.save_step2_logs) {
     publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
   }
