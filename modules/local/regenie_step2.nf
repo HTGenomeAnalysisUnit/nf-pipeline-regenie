@@ -15,7 +15,7 @@ process REGENIE_STEP2_BYCHR {
 
   output:
     tuple val(filename), val(chrom), path("*regenie.gz"), emit: regenie_step2_out
-    path "${chrom}_${filename}.log", emit: regenie_step2_out_log
+    path "${chrom}.log", emit: regenie_step2_out_log
 
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
@@ -74,7 +74,7 @@ process REGENIE_STEP2_BYCHUNK {
 
   output:
     tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
-    path "${chunk}_${filename}.log", emit: regenie_step2_out_log
+    path "${chunk}.log", emit: regenie_step2_out_log
 
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
