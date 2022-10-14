@@ -14,7 +14,7 @@ process REGENIE_STEP2_BYCHR {
     path covariates_file
 
   output:
-    tuple val(filename), path("*regenie.gz"), emit: regenie_step2_out
+    tuple val(filename), val(chrom), path("*regenie.gz"), emit: regenie_step2_out
     path "${chrom}_${filename}.log", emit: regenie_step2_out_log
 
   script:
@@ -52,7 +52,7 @@ process REGENIE_STEP2_BYCHR {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${chrom}_${filename}
+    --out ${chrom}
   """
 }
 
@@ -73,7 +73,7 @@ process REGENIE_STEP2_BYCHUNK {
     path covariates_file
 
   output:
-    tuple val(filename), path("*regenie.gz"), emit: regenie_step2_out
+    tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
     path "${chunk}_${filename}.log", emit: regenie_step2_out_log
 
   script:
@@ -109,7 +109,7 @@ process REGENIE_STEP2_BYCHUNK {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${chunk}_${filename}
+    --out ${chunk}
   """
 }
 
@@ -167,7 +167,5 @@ process REGENIE_STEP2 {
     $predictions \
     $refFirst \
     --out ${filename}
-
-    rename "${filename}_" "" *.gz
   """
 }

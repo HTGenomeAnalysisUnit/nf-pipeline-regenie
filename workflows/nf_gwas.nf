@@ -318,19 +318,19 @@ or contact: edoardo.giacopuzzi@fht.org
     
     if (params.step2_split_by == 'chr' || params.step2_split_by == 'chunk') {
       //concat by chromosome results into a single result file per pheno
-      concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
+      concat_input_ch = REGENIE_STEP2.out.regenie_step2_out
+        .map{ it -> return tuple(it[0], it[2].baseName.replace("${it[1]}_",'').replace('.regenie',''), it[2]) }
+        .groupTuple(by: [0,1]).map{ it -> return tuple(it[0], it[1], it[2].flatten())}
       CONCAT_STEP2_RESULTS(concat_input_ch)
 
       // generate a tuple of phenotype and corresponding result
-      CONCAT_STEP2_RESULTS.out.regenie_results_gz
-        .flatten()
-        .map { it -> return tuple(it.simpleName, it) }
-        .set { regenie_step2_by_phenotype }
+      regenie_step2_by_phenotype = CONCAT_STEP2_RESULTS.out.regenie_results_gz
     
     } else {
       REGENIE_STEP2.out.regenie_step2_out
         .flatten()
-        .map { it -> return tuple(it.simpleName, it) }
+        .map{ it -> return tuple(it[1].baseName.replace("${it[0]}_",'').replace('.regenie',''), it[1]) }
+        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
         .set { regenie_step2_by_phenotype }
     }
 
