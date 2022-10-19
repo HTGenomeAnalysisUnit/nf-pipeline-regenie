@@ -103,7 +103,7 @@ include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scrip
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
 include { IMPUTED_TO_BGEN             } from '../modules/local/imputed_to_plink2' addParams(outdir: "$outdir")
-include { MAKE_BGEN_INDEX             } from '../modules/local/make_bgen_index' addParams(outdir: "$outdir", publish: params.save_bgen_index)
+include { CHECK_BGEN_INDEX            } from '../modules/local/make_bgen_index' addParams(outdir: "$outdir", publish: params.save_bgen_index)
 include { MAKE_SNPLIST                } from '../modules/local/make_snplist' addParams(outdir: "$outdir", publish: params.save_snplist)
 include { PRUNE_GENOTYPED             } from '../modules/local/prune_genotyped' addParams(outdir: "$outdir")
 include { QC_FILTER_GENOTYPED         } from '../modules/local/qc_filter_genotyped' addParams(outdir: "$outdir")
@@ -111,8 +111,6 @@ include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_
 include { REGENIE_LOG_PARSER_STEP1    } from '../modules/local/regenie_log_parser_step1'  addParams(outdir: "$outdir")
 include { REGENIE_LOG_PARSER_STEP2    } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "$outdir")
 include { FILTER_RESULTS              } from '../modules/local/filter_results'
-include { MERGE_RESULTS_FILTERED      } from '../modules/local/merge_results_filtered'  addParams(outdir: "$outdir")
-include { MERGE_RESULTS               } from '../modules/local/merge_results'  addParams(outdir: "$outdir")
 include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results' addParams(outdir: "$outdir")
@@ -198,27 +196,21 @@ or contact: edoardo.giacopuzzi@fht.org
   
     } else {
     //Input is already BGEN  
-      imputed_bgen_file = file(params.genotypes_imputed, checkIfExists: true)
-      
-      bgen_index_file = file("${params.genotypes_imputed}.bgi")
+      imputed_bgen_file = Channel
+        .fromPath(params.genotypes_imputed, checkIfExists: true)
+        .map{ tuple(it.baseName, it, file("${it}.bgi"), file("${it.parent}/${it.baseName}.sample")) }
+
       //Make BGI index if missing otherwise set channel directly
-      if (bgen_index_file.exists()) {
-        channel.fromPath("${params.genotypes_imputed}")
-        .map { tuple(it.baseName, it, file(it+".bgi")) }
-        .set {imputed_plink2_ch}
-      } else {
-        MAKE_BGEN_INDEX(imputed_bgen_file)
-        MAKE_BGEN_INDEX.out
-        .map { tuple(it[0].baseName, it[0], it[1]) }
-        .set {imputed_plink2_ch}
-      }
+      CHECK_BGEN_INDEX(imputed_bgen_file)
+      imputed_plink2_ch = CHECK_BGEN_INDEX.out
     }
 
     //If a snplist is not provided create one from BGEN
     //Right now this is time consuming for large data since need to convert format
     if (params.step2_split_by == 'chunk') {
-      if (params.imputed_snplist) {
-        snplist_ch = file(params.imputed_snplist, checkIfExists: true)
+      if (params.imputed_snplist && params.genotypes_imputed_format == "bgen") {
+        snplist_ch = Channel.fromPath("${params.genotypes_imputed}", checkIfExists: true)
+          .map{ it -> return tuple(it.baseName, file("${it.parent}/${it.baseName}.snplist", checkIfExists: true)) }
       } else {
         snplist_ch = MAKE_SNPLIST(imputed_plink2_ch)
       }
@@ -271,8 +263,6 @@ or contact: edoardo.giacopuzzi@fht.org
       */
       regenie_step1_out_ch = Channel
         .fromPath(params.regenie_premade_predictions, checkIfExists: true)
-        .collect()
-
       regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
 
     }
@@ -280,25 +270,25 @@ or contact: edoardo.giacopuzzi@fht.org
     //==== REGENIE STEP 2 ====
     //PARALLELIZE BY CHROM
     if (params.step2_split_by == 'chr') { 
-      chromosomes = Channel.of(params.chromosomes)
+      chromosomes = Channel.of(params.chromosomes).flatten()
       bychr_imputed_ch = imputed_plink2_ch.combine(chromosomes)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
         bychr_imputed_ch,
         VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-        sample_file,
         covariates_file_validated
       )
     //PARALLELIZE BY CHUNK
     } else if (params.step2_split_by == 'chunk') {
       MAKE_CHUNKS(snplist_ch)
-      chunks_ch = MAKE_CHUNKS.out.splitText() { it.trim() }
-      bychunk_imputed_ch = imputed_plink2_ch.combine(chunks_ch)
+      chunks_ch = MAKE_CHUNKS.out
+        .map{ it -> return tuple(it[0], it[1].split('\n').flatten()) }
+        .transpose(by: 1)
+      bychunk_imputed_ch = imputed_plink2_ch.combine(chunks_ch, by: 0)
       REGENIE_STEP2 (
         regenie_step1_out_ch.collect(),
         bychunk_imputed_ch,
         VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-        sample_file,
         covariates_file_validated
       )
     } else {
@@ -306,7 +296,6 @@ or contact: edoardo.giacopuzzi@fht.org
         regenie_step1_out_ch.collect(),
         imputed_plink2_ch,
         VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-        sample_file,
         covariates_file_validated
       )
     }
@@ -315,24 +304,23 @@ or contact: edoardo.giacopuzzi@fht.org
       REGENIE_STEP2.out.regenie_step2_out_log.first(),
       CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
     )
-    
+
     if (params.step2_split_by == 'chr' || params.step2_split_by == 'chunk') {
       //concat by chromosome results into a single result file per pheno
-      concat_input_ch = REGENIE_STEP2.out.regenie_step2_out
-        .map{ it -> return tuple(it[0], it[2].baseName.replace("${it[1]}_",'').replace('.regenie',''), it[2]) }
-        .groupTuple(by: [0,1]).map{ it -> return tuple(it[0], it[1], it[2].flatten())}
-      CONCAT_STEP2_RESULTS(concat_input_ch)
-
-      // generate a tuple of phenotype and corresponding result
-      regenie_step2_by_phenotype = CONCAT_STEP2_RESULTS.out.regenie_results_gz
-    
+      concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.transpose()
+        .map{ it -> return tuple(it[2].baseName.replace("${it[0]}_${it[1]}_",'').replace('.regenie',''), it[2]) }
+        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten()) }
+      
     } else {
-      REGENIE_STEP2.out.regenie_step2_out
-        .flatten()
+      concat_input_ch = REGENIE_STEP2.out.regenie_step2_out
+        .transpose()
         .map{ it -> return tuple(it[1].baseName.replace("${it[0]}_",'').replace('.regenie',''), it[1]) }
-        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten())}
-        .set { regenie_step2_by_phenotype }
+        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten()) }
     }
+    CONCAT_STEP2_RESULTS(concat_input_ch)
+
+    // generate a tuple of phenotype and corresponding result
+    regenie_step2_by_phenotype = CONCAT_STEP2_RESULTS.out.regenie_results_gz
 
   FILTER_RESULTS (
     regenie_step2_by_phenotype
@@ -349,7 +337,7 @@ or contact: edoardo.giacopuzzi@fht.org
     if (params.ld_panel == 'NO_LD_FILE') {
       log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
     } 
-    CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch, sample_file)
+    CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch)
     clump_results_ch = CLUMP_RESULTS.out.best_loci
   } else {
     clump_results_ch = regenie_step2_by_phenotype.map { it -> return tuple(it[0], file('NO_CLUMP_FILE'))}

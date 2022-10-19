@@ -2,8 +2,10 @@ work
 .nextflow
 .nextflow.*
 tests/output
+tests/work
 /results/
 /output/
 .nf-test/
 nf-test
 .project
+gwas-pipeline_*.html*

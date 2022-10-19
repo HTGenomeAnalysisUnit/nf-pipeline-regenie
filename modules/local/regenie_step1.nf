@@ -95,8 +95,7 @@ process RUNL1 {
   
   publishDir "${params.outdir}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out*.gz'
-    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_offsets.list', saveAs: { 'regenie_step1_out_pred.list' }
+    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out_*'
   }
 
   input:
@@ -104,9 +103,8 @@ process RUNL1 {
     file(runl0_files)
 
   output:
-    path "regenie_step1_out*", emit: regenie_step1_out
+    path "regenie_step1_out_*", emit: regenie_step1_out
     path "regenie_step1_out.log", emit: regenie_step1_out_log
-    path "regenie_step1_offsets.list", emit: regenie_step1_list
 
   script:
   master_prefix = master_file.getSimpleName()
@@ -136,9 +134,8 @@ process RUNL1 {
     --run-l1 ${master_file} \
     --keep-l0 --gz --verbose \
     --out regenie_step1_out
-  
-  cp regenie_step1_out_pred.list regenie_step1_offsets.list
-  sed -i 's| .\\+/regenie_step1| ${params.outdir}/regenie_step1_preds/regenie_step1|g' regenie_step1_offsets.list
+
+    sed -i 's|\$PWD/||g' regenie_step1_out_pred.list
   """
 }
 
@@ -147,7 +144,7 @@ process REGENIE_STEP1 {
 
   publishDir "${params.outdir}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out*.gz'
+    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out*.{gz,list}'
   }
 
   input:
@@ -186,6 +183,8 @@ process REGENIE_STEP1 {
     --lowmem-prefix tmp_rg \
     --threads ${task.cpus} \
     --out regenie_step1_out
+
+    sed -i 's|\$PWD/||g' regenie_step1_out_pred.list
   """
 
 }

@@ -1,0 +1,25 @@
+PLINK v2.00a3LM AVX2 Intel (17 Dec 2021)
+Options in effect:
+  --chr 1
+  --export bgen-1.2 bits=8
+  --out example_chr1
+  --vcf example.vcf.gz
+
+Hostname: hnode02
+Working directory: /project/alfredo/pipelines/nf-pipeline-regenie/tests/input/pipeline
+Start time: Tue Oct 18 08:58:57 2022
+
+Random number seed: 1666076337
+385190 MiB RAM detected; reserving 192595 MiB for main workspace.
+Using up to 40 threads (change this with --threads).
+--vcf: 500 variants scanned (500 skipped).
+--vcf: example_chr1-temporary.pgen + example_chr1-temporary.pvar.zst +
+example_chr1-temporary.psam written.
+500 samples (0 females, 0 males, 500 ambiguous; 500 founders) loaded from
+example_chr1-temporary.psam.
+500 variants loaded from example_chr1-temporary.pvar.zst.
+Note: No phenotype data present.
+Writing example_chr1.bgen ... done.
+Writing example_chr1.sample ... done.
+
+End time: Tue Oct 18 08:58:57 2022

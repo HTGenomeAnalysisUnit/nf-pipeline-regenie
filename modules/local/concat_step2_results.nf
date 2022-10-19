@@ -2,7 +2,7 @@ process CONCAT_STEP2_RESULTS {
     publishDir "${params.outdir}/results", mode: 'copy'
     
     input:
-        tuple val(filename), val(pheno), file(regenie_gz)
+        tuple val(pheno), file(regenie_gz)
     
     output:
         tuple val(pheno), path("${pheno}.regenie.gz"), emit: regenie_results_gz

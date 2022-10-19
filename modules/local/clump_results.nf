@@ -3,17 +3,24 @@ workflow CLUMP_RESULTS {
         results //tuple val(phenotype), file(pheno_results_gz)
         genes_interval_hg19 //file
         genes_interval_hg38 //file
-        imputed_bgen //tuple(imputed_bgen_file.baseName, imputed_bgen_file, imputed_bgen_idx)
-        sample_file //file
+        imputed_bgen //tuple(imputed_bgen_file.baseName, imputed_bgen_file, imputed_bgen_idx, bgen_sample)
 
     main:
-        if (params.ld_panel == 'NO_LD_FILE') {
-            CONVERT_TO_BED(imputed_bgen, sample_file)
-            chromosomes_ch = Channel.of(params.chromosomes)
-            ld_panel_ch = chromosomes_ch.combine(CONVERT_TO_BED.out)
+        if (params.step2_split_by == 'no_split') {
+            CONVERT_TO_BED(imputed_bgen)
+            ld_panel_ch = CONVERT_TO_BED.out.collate(3)
+                    .map{ tuple('NO_SPLIT', it) }
+                    .transpose()
         } else {
-            ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3)
+            if (params.ld_panel == 'NO_LD_FILE') {
+                CONVERT_TO_BED(imputed_bgen)
+                chromosomes_ch = Channel.of(params.chromosomes).flatten()
+                ld_panel_ch = chromosomes_ch.combine(CONVERT_TO_BED.out.collate(3))
+            } else {
+                ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3)
+            }
         }
+        
         clump_input_ch = results.combine(ld_panel_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
         merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple()
@@ -27,14 +34,13 @@ process CONVERT_TO_BED {
     label 'process_plink2'
     
     input:
-        tuple val(bgen_prefix), file(imputed_bgen_file), file(dummy_index)
-        path sample_file
+        tuple val(bgen_prefix), file(imputed_bgen_file), file(dummy_index), file(sample_file)
 
     output:
         path "${bgen_prefix}.{bed,bim,fam}"
 
     script:
-    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
     """
     plink2 \
     --bgen $imputed_bgen_file ref-first \
@@ -57,21 +63,23 @@ process PLINK_CLUMPING {
         path genes_hg38, stageAs: 'hg38_genes'
 
     output:
-        tuple val(phenotype), path("${chrom}.clumped"), path("${chrom}.clumped.ranges"), emit: chrom_clump_results
-        path "${chrom}.log", emit: logs
+        tuple val(phenotype), path("${output_prefix}.clumped"), path("${output_prefix}.clumped.ranges"), emit: chrom_clump_results
+        path "${output_prefix}.log", emit: logs
 
     script:
     def bfile_prefix = bfile[0].simpleName
     def genes_ranges = params.genotypes_build == 'hg19' ? "hg19_genes" : "hg38_genes"
+    def target_chrom = chrom != 'NO_SPLIT' ? "--chr ${chrom}" : ''
+    output_prefix = chrom != 'NO_SPLIT' ? "${chrom}" : "${bfile_prefix}"
     """
-    touch ${chrom}.clumped
-    touch ${chrom}.clumped.ranges
+    touch ${output_prefix}.clumped
+    touch ${output_prefix}.clumped.ranges
 
     zcat $pheno_results_gz | awk '{OFS="\t"}; NR == 1 {print \$0, "PVAL"}; NR > 1 {print \$0, 10^(-\$13)}' > regenie.pval
     plink \
         --memory ${task.memory.toMega()} \
         --bfile $bfile_prefix \
-        --chr ${chrom.replaceFirst('chr', '')} \
+        $target_chrom \
         --clump regenie.pval \
         --clump-p1 ${params.clump_p1} \
         --clump-p2 ${params.clump_p2} \
@@ -81,7 +89,7 @@ process PLINK_CLUMPING {
         --clump-field PVAL \
         --clump-range $genes_ranges \
         --clump-range-border ${params.annotation_interval_kb} \
-        --out ${chrom}
+        --out ${output_prefix}
     """
 }
 

@@ -4,23 +4,22 @@ process REGENIE_STEP2_BYCHR {
   }
 
   label "regenie2_chr"
-  tag "${plink2_pgen_file.simpleName}"
+  tag "${plink_bgen_file.simpleName}"
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink_bgen_file), path(bgen_index), val(chrom)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file), val(chrom)
     path phenotypes_file
-    path sample_file
     path covariates_file
 
   output:
     tuple val(filename), val(chrom), path("*regenie.gz"), emit: regenie_step2_out
-    path "${chrom}.log", emit: regenie_step2_out_log
+    path "${filename}_${chrom}.log", emit: regenie_step2_out_log
 
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
     //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
-    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
@@ -52,7 +51,7 @@ process REGENIE_STEP2_BYCHR {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${chrom}
+    --out ${filename}_${chrom}
   """
 }
 
@@ -67,19 +66,18 @@ process REGENIE_STEP2_BYCHUNK {
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink_bgen_file), path(bgen_index), val(chunk)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file), val(chunk)
     path phenotypes_file
-    path sample_file
     path covariates_file
 
   output:
     tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
-    path "${chunk}.log", emit: regenie_step2_out_log
+    path "${filename}_${chunk}.log", emit: regenie_step2_out_log
 
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
     //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
-    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
@@ -109,7 +107,7 @@ process REGENIE_STEP2_BYCHUNK {
     $deleteMissingData \
     $predictions \
     $refFirst \
-    --out ${chunk}
+    --out ${filename}_${chunk}
   """
 }
 
@@ -119,13 +117,12 @@ process REGENIE_STEP2 {
   }
 
   label "regenie2_chr"
-  tag "${plink2_pgen_file.simpleName}"
+  tag "${plink_bgen_file.simpleName}"
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink_bgen_file), path(bgen_index)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file)
     path phenotypes_file
-    path sample_file
     path covariates_file
 
   output:
@@ -135,7 +132,7 @@ process REGENIE_STEP2 {
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
     //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
-    def bgen_sample = sample_file.name != 'NO_SAMPLE_FILE' ? "--sample $sample_file" : ''
+    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""

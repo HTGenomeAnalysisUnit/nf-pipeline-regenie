@@ -67,30 +67,51 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
 
-## Required input files for genetic data
+## Understand input files for genetic data
 
-**NB.** All chromosome names must be numeric (1..22, X=23, Y=24, XY=25, MT=26) without 'chr' prefix.
+**NB.** All chromosome names must be numeric (1..22, X=23) without 'chr' prefix.
 
-### Full genotype data (from imputation)
+### Full genotype data (from imputation) - MANDATORY
 
 1. A bgen file of your full genotype data (`genotypes_imputed`). Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on this file so ensure it is clean.
 2. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). A `bgen` module is available on our HPC to index your file if needed. You can use something like `bgenix -g my_data.bgen -index`
-3. A SNP list for your full genotype data. This is a tab-separated file without header containing 2 columns: chr, pos for all SNPs in your data. You can obtain it from bgi index using 
+3. A SNP list for your full genotype data. This is a tab-separated file without header containing 2 columns: chr, pos for all SNPs in your data. When `imputed_snplist = true`, given an inpute dataset named `my_dataset.bgen` the expected name of the snplist is `my_dataset.snplist`. You can generate a snplits it from bgi index using
 
    ```bash
    bgenix -g input.bgen -list \
    | tail -n+3 | cut -f3,4 | sed '$d' > ${prefix}.snplist
    ```
 
-**Other input formats.** The pipeline can also accept `vcf` file as input for full genotype data, and can generate `bgi` index and `snplist` file if missing. Note that in case of a large dataset, this will add considerable time to the execution due to slow conversion so it is strongly suggested to pre-process your input dataset to generate the needed inputs (BGEN + BGI + SNPLIST).
+**IMPORTANT FOR BGEN INPUT:** When using BGEN input, make sure that the sample ID in the BGEN can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. You can provide a `.sample` file to have better control on the sample IDs. 
 
-### QCed genotyped SNPs
+#### Use a single bgen / VCF as input
 
-4. A {bed,bim,fam} dataset containing independent SNPs used by regenie step 1 (`genotypes_array`). Ideally, this would contain ~500k QCed and pruned SNPs and MUST contain less than 1M SNPs. An additional QC will be automatically performed on this file since step1 requires strict filtering criteria. This need to be specified as prefix, so if you a dataset named `my_dataset.bed/bim/fam` you should specify `my_dataset` as input.
+- if the input is bgen (`genotypes_imputed_format = 'bgen`), given the input file `input.bgen`, the pipeline will automatically search for `input.bgen.bgi` index and `input.sample` file. The first is automatically generated when missing, the second is ignored when missing.
+- if the input is VCF (`genotypes_imputed_format = 'vcf`), the pipeline will automatically convert to bgen and generate all the needed files.
 
-### LD panel
+When using a single input file, step2 can eventually be parallelized by chunk (`step2_split = 'chunk'`) or by chromosome (`step2_split = 'chr'`), or the whole file can be analyzed in a single run (`step2_split = 'no_split'`).
 
-1. LD panel files (`ld_panel` parameter). If you are analysing a large dataset with more than 50k samples, to speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. This is only processed when `clumping` option is active. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 50k. You can generate LD files from input BGEN using plink2 and the `--keep` option to extract a subset of unrelated samples.
+When `step2_split = 'chunk'` the pipeline will check for `input.snplist` file if `imputed_snplist = true` or will generate the snplist when `imputed_snplist = false`.  
+
+Only chromosomes listed by `chromosome` parameters will be used. **NB** ALL chromosomes requested by `chromosome` parameter must be present in the dataset.
+  
+#### Use multiple bgen/vcf 
+
+If you imputed dataset is already splitted for example by single chromosomes and you have multiple bgen or VCF files, you can run association on all files using something like `genotypes_inputed = '/my/path/imputed_genotypes_chr*.bgen'`. **NB** The pipeline can not manage additional split on multiple files thus you have to set `step2_split = 'no_split'`.
+
+Each file is processed independently and `.sample`, `.bgi` files are checked for each single input file and managed automatically as explained above for single file input.
+
+#### Large datasets
+
+Note that in case of a large dataset, creating BGI indenc and SNPLIST on the fly can add significant time to the running process. In this case we suggest to prepare a single BGEN file, and the corresponding BGI and SNPLIST files and then use `step2_split = 'chunck'` mode letting the pipeline to parallelize by chunk automatically.
+
+### QCed genotyped SNPs - MANDATORY
+
+A {bed,bim,fam} dataset containing independent SNPs used by regenie step 1 (`genotypes_array`). Ideally, this would contain ~500k QCed and pruned SNPs and MUST contain less than 1M SNPs. An additional QC will be automatically performed on this file since step1 requires strict filtering criteria. This need to be specified as prefix, so if you a dataset named `my_dataset.bed/bim/fam` you should specify `my_dataset` as input.
+
+### LD panel - OPTIONAL (recommended for very large datasets)
+
+LD panel files (`ld_panel` parameter). If you are analysing a large dataset with more than 50k samples, to speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. This is only processed when `clumping` option is active. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 50k. You can generate LD files from input BGEN using plink2 and the `--keep` option to extract a subset of unrelated samples.
 
 ```bash
 chrom=1 #Chromosome id
@@ -124,7 +145,7 @@ In this mode you can specifify a general trait table and a model table that desc
 
 6. A shared config file describing the input datasets and general config parameters (see `templates/shared_parameters.conf` for an example).
 7. A tab-separated file with header (`full_traits.csv` in the example above) and first column named `IID` containing all traits (phenotypes and covariates) that are needed for the analysis.
-8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model. 
+8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model.
    - model_id: a unique identifier for the model.
    - model: model descrition using col names from `full_traits.csv` in the form `phenotype ~ covar1 + covar2 + ...`.
    - trait_type: 'log' or 'quant'.

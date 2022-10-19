@@ -29,18 +29,19 @@ process IMPUTED_TO_BGEN {
     path imputed_vcf_file
 
   output:
-    tuple val("${imputed_vcf_file.baseName}"), path("${imputed_vcf_file.baseName}.bgen"), path("${imputed_vcf_file.baseName}.bgen.bgi"), emit: imputed_bgen
+    tuple val("${output_prefix}"), path("${output_prefix}.bgen"), path("${output_prefix}.bgen.bgi"), path("${output_prefix}.sample"), emit: imputed_bgen
 
 script:
+output_prefix = imputed_vcf_file.name.replaceFirst('.vcf(.gz){0,1}$','')
 """
 plink2 \
   --vcf $imputed_vcf_file dosage=DS \
   --export bgen-1.2 ref-first 'bits=8' \
-  --double-id \
-  --out ${imputed_vcf_file.baseName} \
+  --const-fid 0 \
+  --out ${output_prefix} \
   --threads ${task.cpus} \
   --memory ${task.memory.toMega()}
 
-bgenix -g ${imputed_vcf_file.baseName}.bgen -index
+bgenix -g ${output_prefix}.bgen -index
 """
 }

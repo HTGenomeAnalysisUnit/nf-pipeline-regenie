@@ -5,10 +5,10 @@ process MAKE_SNPLIST {
     }
 
     input:
-        tuple val(filename), path(bgen_file), path(bgi_index)
+        tuple val(filename), path(bgen_file), path(bgi_index), path(sample_file)
 
     output:
-        file "${filename}.snplist"
+        tuple val(filename), file("${filename}.snplist")
 
     script:
     """

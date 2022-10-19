@@ -29,6 +29,7 @@ process ANNOTATE_FILTERED {
   rm ${regenie_merged.baseName}.sorted.bed
   # generate an interval around SNPs to annotate genes
   awk '{OFS="\t"};{\$4=\$3"_%SEP%_"\$4; \$2=\$2-${params.annotation_interval_kb * 1000}; \$3=\$3+${params.annotation_interval_kb * 1000}}; {print \$0}' ${regenie_merged.baseName}.annotated.bed \
+    | awk '{OFS="\t"}; \$2 < 0 {\$2 = 0}; {print ;}' \
     | bedtools intersect -a stdin -b $genes -loj \
     | cut -f1,4- | sed 's/_%SEP%_/\t/' \
     | awk '{\$2 = \$2-1 OFS \$2} 1' OFS='\t' \

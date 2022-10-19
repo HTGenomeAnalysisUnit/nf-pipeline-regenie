@@ -9,5 +9,5 @@ do
   echo "---------------------------------------------------------"
   echo "Execute Test $config_file..."
   echo "---------------------------------------------------------"
-  nextflow run main.nf -c $config_file -profile docker -resume
+  nextflow run main.nf -c $config_file -profile test -resume
 done
