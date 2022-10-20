@@ -95,6 +95,13 @@ if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format 
   exit 1, "File format ${params.genotypes_imputed_format} not supported."
 }
 
+// Check n files for imputed input
+// n_input_files = Channel.fromPath("${params.genotypes_imputed}").count().value()
+// println "N file: $n_input_files"
+//if (n_input_files > 1 && params.step2_split_by != 'no_split') {
+//  exit 1, "Only no_split accepted for step2_split_by when you use multiple input files for imputed genotypes"
+//}
+
 //Array genotypes
 Channel.fromFilePairs("${params.genotypes_array}.{bim,bed,fam}", size: 3).set {genotyped_plink_ch}
 
@@ -187,8 +194,8 @@ or contact: edoardo.giacopuzzi@fht.org
 
     //convert vcf files to BGEN format and make BGI index
     if (params.genotypes_imputed_format == "vcf"){
-      imputed_files =  channel.fromPath("${params.genotypes_imputed}", checkIfExists: true)
-
+      imputed_files =  Channel.fromPath("${params.genotypes_imputed}", checkIfExists: true)
+      
       IMPUTED_TO_BGEN (
           imputed_files
       )
@@ -196,13 +203,17 @@ or contact: edoardo.giacopuzzi@fht.org
   
     } else {
     //Input is already BGEN  
-      imputed_bgen_file = Channel
+      imputed_bgen_and_index = Channel
         .fromPath(params.genotypes_imputed, checkIfExists: true)
-        .map{ tuple(it.baseName, it, file("${it}.bgi"), file("${it.parent}/${it.baseName}.sample")) }
+        .map{ tuple(it.baseName, it, file("${it}.bgi")) }
 
-      //Make BGI index if missing otherwise set channel directly
-      CHECK_BGEN_INDEX(imputed_bgen_file)
-      imputed_plink2_ch = CHECK_BGEN_INDEX.out
+      imputed_bgen_and_sample = Channel
+        .fromPath(params.genotypes_imputed, checkIfExists: true)
+        .map{ tuple(it.baseName, file("${it.parent}/${it.baseName}.sample")) }
+      
+      //Check BGI index and make it if missing
+      CHECK_BGEN_INDEX(imputed_bgen_and_index)
+      imputed_plink2_ch = CHECK_BGEN_INDEX.out.join(imputed_bgen_and_sample)
     }
 
     //If a snplist is not provided create one from BGEN

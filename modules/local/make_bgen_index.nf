@@ -23,10 +23,10 @@ process CHECK_BGEN_INDEX {
   }
 
   input:
-    tuple val(bgen_basename), path(imputed_bgen_file), path(bgi_index), path(sample_file)
+    tuple val(bgen_basename), path(imputed_bgen_file), path(bgi_index)
 
   output:
-    tuple val(bgen_basename), path("${imputed_bgen_file}"), path("${imputed_bgen_file}.bgi"), path(sample_file)
+    tuple val(bgen_basename), path("${imputed_bgen_file}"), path("${imputed_bgen_file}.bgi")
 
 script:
 def has_bgi = bgi_index.exists() ? "1" : "0"
