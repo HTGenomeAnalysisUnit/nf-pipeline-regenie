@@ -184,7 +184,7 @@ process REGENIE_STEP1 {
     --threads ${task.cpus} \
     --out regenie_step1_out
 
-    sed -i 's|\$PWD/||g' regenie_step1_out_pred.list
+    sed -i "s|\$PWD/||g" regenie_step1_out_pred.list
   """
 
 }
