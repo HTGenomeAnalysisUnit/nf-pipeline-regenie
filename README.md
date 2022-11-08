@@ -16,11 +16,11 @@ Two running modes are available: **single project mode** and **multi models mode
 
 This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
 
-2. Prepare the [required genetic data](#required-inputs) and the additional input tables needed for [single project](#single-project-mode) or [multi models](#multi-models-mode).
+1. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
-3. Prepare the [config files](#prepare-config-files) for your project.
+2. Prepare the [config files](#prepare-config-files) for your project.
 
-4. Invoke the pipeline
+3. Invoke the pipeline
 
    Ideally, you should prepare a script to submit the pipeline in your project folder using `sbatch`. The following template can be used as example:
 
@@ -95,7 +95,7 @@ When `step2_split = 'chunk'` the pipeline will check for `input.snplist` file if
 
 Only chromosomes listed by `chromosome` parameters will be used. **NB** ALL chromosomes requested by `chromosome` parameter must be present in the dataset.
   
-#### Use multiple bgen/vcf 
+#### Use multiple bgen/vcf
 
 If you imputed dataset is already splitted for example by single chromosomes and you have multiple bgen or VCF files, you can run association on all files using something like `genotypes_inputed = '/my/path/imputed_genotypes_chr*.bgen'`. **NB** The pipeline can not manage additional split on multiple files thus you have to set `step2_split = 'no_split'`.
 
@@ -103,7 +103,7 @@ Each file is processed independently and `.sample`, `.bgi` files are checked for
 
 #### Large datasets
 
-Note that in case of a large dataset, creating BGI indenc and SNPLIST on the fly can add significant time to the running process. In this case we suggest to prepare a single BGEN file, and the corresponding BGI and SNPLIST files and then use `step2_split = 'chunck'` mode letting the pipeline to parallelize by chunk automatically.
+Note that in case of a large dataset, creating BGI index and SNPLIST on the fly can add significant time to the running process. In this case we suggest to prepare a single BGEN file, and the corresponding BGI and SNPLIST files and then use `step2_split = 'chunck'` mode letting the pipeline to parallelize by chunk automatically.
 
 ### QCed genotyped SNPs - MANDATORY
 
@@ -147,7 +147,7 @@ In this mode you can specifify a general trait table and a model table that desc
 7. A tab-separated file with header (`full_traits.csv` in the example above) and first column named `IID` containing all traits (phenotypes and covariates) that are needed for the analysis.
 8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model.
    - model_id: a unique identifier for the model.
-   - model: model descrition using col names from `full_traits.csv` in the form `phenotype ~ covar1 + covar2 + ...`.
+   - model: model descrition using col names from `full_traits.csv` in the form `phenotype ~ covar1 + covar2 + ...`. Use `phenotype ~ 1` if you don't have any covariate
    - trait_type: 'log' or 'quant'.
    - genetic_model: 'additive', 'dominant' or 'recessive'.
 
@@ -156,7 +156,7 @@ model_id        model   trait_type      genetic_model
 M1      QP1 ~ Q1+Q2+Q5  quant   additive
 M2      QP2 ~ Q1+Q2+Q5  quant   additive
 M3      QP3 ~ Q1+Q2+Q5  quant   additive
-M4      QP4 ~ Q1+Q2+Q5  quant   additive
+M4      QP4 ~ 1  quant   additive
 ```
 
 ### Multi models execution monitoring
