@@ -80,8 +80,8 @@ if (length(unique(na.omit(phenotypeTable[[params$phenotype]]))) == 2) {
 #sources: https://www.r-graph-gallery.com/101_Manhattan_plot.html with modifications
 
 regenieTable <- fread(params$regenie_merged, select = c("CHROM","GENPOS","LOG10P","ID"), header=TRUE, tmpdir="$PWD")
-setnames(regenieTable, c("CHROM","GENPOS","LOG10P","ID"), c("chr","pos","pvalue","rsid")) 
-regenieTable <- regenieTable[, pvalue := 10^(-pvalue)]
+setnames(regenieTable, c("CHROM","GENPOS","LOG10P","ID"), c("chr","pos","log10p","rsid")) 
+regenieTable <- regenieTable[, pvalue := 10^(-log10p)]
 #source: https://www.r-graph-gallery.com/101_Manhattan_plot.html with modifications
 
 annotatedTopHits <- fread(params$annotated_tophits_filename, select = c("ID", "CLOSEST_GENE_NAME"), header=TRUE, tmpdir="$PWD")
@@ -121,7 +121,7 @@ p <-  fast_manhattan(regenieTable_annotated, build='hg19', speed = "f",
  if(params$plot_ylimit == 0) {
   p2 <- p + scale_y_continuous(expand = c(0, 0),
                        name=expression(-log[10](italic(P))),
-                       limits = c(0, sum(max(-log10(regenieTable$pvalue)), 0.5)))
+                       limits = c(0, sum(max(regenieTable_annotated$log10p), 0.5)))
 } else {
   p2 <- p + scale_y_continuous(expand = c(0, 0),
                        name=expression(-log[10](italic(P))),
@@ -133,9 +133,9 @@ rm(p)
  if(!params$manhattan_annotation_enabled) {
   p3 <- p2
 } else {
-  p3 <- p2 + ggrepel::geom_text_repel(data = . %>% filter(pvalue <= params$annotation_min_log10p) %>%
+  p3 <- p2 + ggrepel::geom_text_repel(data = . %>% filter(log10p >= params$annotation_min_log10p) %>%
                                         group_by(CLOSEST_GENE_NAME) %>% 
-                             top_n(1, -pvalue) %>% # extract highest y values
+                             top_n(1, log10p) %>% # extract highest y values
                              slice(1), # if there are ties, choose the first one
                              aes(label=CLOSEST_GENE_NAME), color =1)
 }

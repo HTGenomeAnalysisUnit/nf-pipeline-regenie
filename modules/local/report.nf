@@ -1,5 +1,5 @@
 process REPORT {
-
+  errorStrategy 'ignore'
   publishDir "${params.outdir}", mode: 'copy'
 
   label 'required_memory_report'
