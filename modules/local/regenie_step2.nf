@@ -83,6 +83,7 @@ process REGENIE_STEP2_BYCHUNK {
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  params.phenotypes_binary_trait ? "--bt $firth " : ""
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${params.covariates_columns}" : ''
+    def cat_covariates = params.covariates_cat_columns != '' ? "--catCovarList ${params.covariates_cat_columns}" : ''
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
@@ -104,6 +105,7 @@ process REGENIE_STEP2_BYCHUNK {
     $test \
     $bgen_sample \
     $covariants \
+    $cat_covariates \
     $deleteMissingData \
     $predictions \
     $refFirst \
