@@ -145,18 +145,19 @@ In this mode you can specifify a general trait table and a model table that desc
 
 6. A shared config file describing the input datasets and general config parameters (see `templates/shared_parameters.conf` for an example).
 7. A tab-separated file with header (`full_traits.csv` in the example above) and first column named `IID` containing all traits (phenotypes and covariates) that are needed for the analysis.
-8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model.
+8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model, cat_var.
    - model_id: a unique identifier for the model.
    - model: model descrition using col names from `full_traits.csv` in the form `phenotype ~ covar1 + covar2 + ...`. Use `phenotype ~ 1` if you don't have any covariate
-   - trait_type: 'log' or 'quant'.
+   - trait_type: 'log' (for binary phenotype) or 'quant' (for quantitative phenotype).
    - genetic_model: 'additive', 'dominant' or 'recessive'.
+   - cat_var: comma-separated list of categorical covariates. Use NA if none is present. Note that a max of 10 levels are accepted for a catagorical covariates
 
 ```bash
-model_id        model   trait_type      genetic_model
-M1      QP1 ~ Q1+Q2+Q5  quant   additive
-M2      QP2 ~ Q1+Q2+Q5  quant   additive
-M3      QP3 ~ Q1+Q2+Q5  quant   additive
-M4      QP4 ~ 1  quant   additive
+model_id        model   trait_type      genetic_model cat_var
+M1      QP1 ~ Q1+Q2+Q5  quant   additive  NA
+M2      QP2 ~ Q1+Q2+Q5  quant   additive  Q1,Q2
+M3      QP3 ~ Q1+Q2+Q5  quant   additive  NA
+M4      QP4 ~ 1  quant   additive   NA
 ```
 
 ### Multi models execution monitoring

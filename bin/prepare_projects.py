@@ -28,6 +28,10 @@ def update_conf(template, tag, value):
     template = template.replace(tag, f"{tag} = {config_value}")
     return template
 
+def find_not_overlap(lst1, lst2):
+    lst3 = [value for value in lst1 if value not in lst2]
+    return lst3
+
 with open(config_file) as f:
     conf_template = f.read()
 
@@ -39,10 +43,18 @@ for row in read_tsv(input_file):
     run_template = update_conf(run_template, 'covariates_filename', row['cov_file'])
     run_template = update_conf(run_template, 'phenotypes_filename', row['pheno_file'])
     run_template = update_conf(run_template, 'regenie_test', row['genetic_model'])
+    
+    run_template = update_conf(run_template, 'covariates_cat_columns', row['cat_var'])
+    if row['cat_var'] != 'NA':
+        cat_covars = row['cat_var'].split(",")
+    else:
+        cat_covars = []
+
     run_template = update_conf(run_template, 'phenotypes_binary_trait', row['trait_type'] == "log")
     with open(row['cov_file']) as f:
         first_line = tokenize(f.readline())
         covars = ",".join(first_line[2:])
+        covars = find_not_overlap(covars, cat_covars)
         run_template = update_conf(run_template, 'covariates_columns', covars)
     
     with open(row['pheno_file']) as f:

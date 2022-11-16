@@ -196,7 +196,7 @@ pheno.chunker=function(pheno_file="data/test_phenotype.tsv" #names of the phenot
      fwrite(pheno.matr,file=paste("chunk_",i,"/chunk_",i,".pheno",sep=""),sep="\t")
      
    }
-   master.table=unique(models[,c("run_group","trait_type")])
+   master.table=unique(models[,c("run_group","trait_type","cat_var")])
    master.table$pheno_file=paste("chunk_",master.table$run_group,"/chunk_",master.table$run_group,".pheno",sep="")
    master.table$cov_file=cov_file
    master.table$genetic_model=chunk.genetic.model
