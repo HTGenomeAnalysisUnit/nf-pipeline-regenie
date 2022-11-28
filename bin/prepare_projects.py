@@ -1,6 +1,7 @@
 #!/usr/env python
 import csv
 import sys
+import os
 
 input_file = sys.argv[1] # master table from phenotyper script
 config_file = sys.argv[2] # template of config file
@@ -51,12 +52,16 @@ for row in read_tsv(input_file):
         cat_covars = []
 
     run_template = update_conf(run_template, 'phenotypes_binary_trait', row['trait_type'] == "log")
-    with open(row['cov_file']) as f:
-        first_line = tokenize(f.readline())
-        covars = ",".join(first_line[2:])
-        covars = find_not_overlap(covars, cat_covars)
-        run_template = update_conf(run_template, 'covariates_columns', covars)
     
+    if row['cov_file'] == "NO_COV_FILE":
+        run_template = update_conf(run_template, 'covariates_columns', 'NO_COV_FILE')    
+    else:
+        with open(row['cov_file']) as f:
+            first_line = tokenize(f.readline())
+            covars = ",".join(first_line[2:])
+            covars = find_not_overlap(covars, cat_covars)
+            run_template = update_conf(run_template, 'covariates_columns', covars)
+
     with open(row['pheno_file']) as f:
         first_line = tokenize(f.readline())
         phenos = ",".join(first_line[2:])
