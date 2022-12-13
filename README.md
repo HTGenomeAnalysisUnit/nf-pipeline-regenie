@@ -10,9 +10,9 @@ Two running modes are available: **single project mode** and **multi models mode
 
 ## Quick Start
 
-1. Create a folder for your project (e.g. `yourproject`) and clone this pipeline version into the project folder using
+1. Create a folder for your project (e.g. `yourproject`) and clone the latest pipeline version into the project folder using
 
-`git clone --depth 1 --branch v1.5 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
 
