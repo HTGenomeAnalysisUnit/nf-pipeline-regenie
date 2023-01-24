@@ -16,11 +16,15 @@ Two running modes are available: **single project mode** and **multi models mode
 
 This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
 
-1. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
+You can eventually chose a specific version of the pipeline using the `--branch` option
 
-2. Prepare the [config files](#prepare-config-files) for your project.
+`git clone --depth 1 --branch v1.6.1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
-3. Invoke the pipeline
+2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
+
+3. Prepare the [config files](#prepare-config-files) for your project.
+
+4. Invoke the pipeline
 
    Ideally, you should prepare a script to submit the pipeline in your project folder using `sbatch`. The following template can be used as example:
 
@@ -66,6 +70,8 @@ To run the pipeline, you need to prepare a config file. The following config fil
 - Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs. These SNPs are also annotated in the manhattan plot
 
 - Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
+
+- If you are analyzing many phenotypes, it may be useful to set `make_report` to false. Generating the HTML graphical report can add a considerable amount of time for large datasets with many millions SNPs thus slowing down the overall execution.
 
 ## Understand input files for genetic data
 
@@ -207,7 +213,7 @@ As a result of this process, if you use only a subset of samples present in the 
 
 When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumpling will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
 
-**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data, otherwise SNPs that are not found will be dropped from clumping report.
+**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data, otherwise SNPs that are not found will be dropped from clumping report.
 
 ## Monitor execution on Nextflow tower
 
@@ -254,14 +260,6 @@ By default the pipeline will generate all results in a folder named according to
 - step 1 predictions in `regenie_step1_preds` can be reused for further analyses on the same dataset as long as the input bgen, phenotype file and covars file are exactly the same and phenotypes and covars list are provided in the same order.
 - logs from all operations are saved in `logs` for debugging. Note that more than a thousand log file may be generated when the input dataset is large.
 - when you are running in multi models mode, one folder will be created for each run_id under the `master_outdir` folder.
-
-## DB function
-
-The pipeline include steps to generate a `bcf` based DB storing association results and models details. With default only results with P < 0.05 are stored, but you can adjust this by setting `db_pval_threshold` to the desired -LOG10P value.
-
-Once created DB from multiple runs can be merged easily and DB in this format allows fast access across results. In our test on ~10M SNPs, it can recover association values (P, EFFECT, SE) for a SNPs across 5000 traits (pheWAS) in few secs and recover all results in a 500kb window in 20-30 secs. The implementation is composed by a BCF file storing the actual association results and a SQLITE db file storing the SNPs informations (coordinate, unique marker ID and rsID).
-
-However, generating the DB can add significant time to the overall execution so this function is disabled by default. You can activate it by setting `create_db` to true.
 
 ## Re-use Step 1 predictions
 
