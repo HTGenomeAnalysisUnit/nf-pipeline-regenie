@@ -30,6 +30,7 @@ process REGENIE_STEP2_BYCHR {
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2  ? "--ref-first" : ''
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
 
   """
   regenie \
@@ -53,6 +54,7 @@ process REGENIE_STEP2_BYCHR {
     $deleteMissingData \
     $predictions \
     $refFirst \
+    $maxCatLevels \
     --out ${filename}_${chrom}
   """
 }
@@ -89,6 +91,7 @@ process REGENIE_STEP2_BYCHUNK {
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
 
   """
   regenie \
@@ -111,6 +114,7 @@ process REGENIE_STEP2_BYCHUNK {
     $deleteMissingData \
     $predictions \
     $refFirst \
+    $maxCatLevels \
     --out ${filename}_${chunk}
   """
 }
@@ -144,9 +148,10 @@ process REGENIE_STEP2 {
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${params.covariates_columns}" : ''
     def cat_covariates = params.covariates_cat_columns == '' || params.covariates_cat_columns == 'NA' ? '' : "--catCovarList ${params.covariates_cat_columns}"
-    def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
-    def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
-    def refFirst = params.regenie_ref_first_step2  ? "--ref-first" : ''
+    def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
+    def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
+    def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
 
   """
   regenie \
@@ -169,6 +174,7 @@ process REGENIE_STEP2 {
     $deleteMissingData \
     $predictions \
     $refFirst \
+    $maxCatLevels \
     --out ${filename}
   """
 }

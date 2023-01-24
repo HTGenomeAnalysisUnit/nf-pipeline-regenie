@@ -359,16 +359,17 @@ or contact: edoardo.giacopuzzi@fht.org
     .join(clump_results_ch, by: 0, remainder: true)
 
   //==== GENERATE REPORTS ====
-  REPORT (
-    merged_results_and_annotated_filtered,
-    VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-    gwas_report_template,
-    VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-    covariates_file_validated_log.collect(),
-    regenie_step1_parsed_logs_ch.collect(),
-    REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
-  )
-
+  if (params.make_report) {
+    REPORT (
+      merged_results_and_annotated_filtered,
+      VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+      gwas_report_template,
+      VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
+      covariates_file_validated_log.collect(),
+      regenie_step1_parsed_logs_ch.collect(),
+      REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
+    )
+  }
 }
 
 workflow.onComplete {

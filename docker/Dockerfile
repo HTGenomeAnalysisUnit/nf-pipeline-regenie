@@ -43,7 +43,7 @@ RUN apt-get update && \
 # Install regenie
 WORKDIR "/opt"
 RUN mkdir regenie && cd regenie && \
-    wget https://github.com/rgcgithub/regenie/releases/download/v3.1.3/regenie_v3.1.3.gz_x86_64_Linux.zip && \
+    wget https://github.com/rgcgithub/regenie/releases/download/v3.2.5/regenie_v3.2.5.gz_x86_64_Linux.zip && \
     unzip -q regenie_v3.*.gz_x86_64_Linux.zip && \
     rm regenie_v3.*.gz_x86_64_Linux.zip && \
     mv regenie_v3.*.gz_x86_64_Linux regenie && \

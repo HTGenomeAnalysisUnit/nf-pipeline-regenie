@@ -34,6 +34,8 @@ process SPLITL0 {
   def cat_covariates = params.covariates_cat_columns == '' || params.covariates_cat_columns == 'NA' ? '' : "--catCovarList ${params.covariates_cat_columns}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -47,6 +49,7 @@ process SPLITL0 {
     $cat_covariates \
     $deleteMissings \
     $refFirst \
+    $maxCatLevels \
     --bsize ${params.regenie_bsize_step1} \
     --split-l0 regenie_step1,${params.step1_n_chunks} \
     --out regenie_step1_splitl0
@@ -70,6 +73,8 @@ process RUNL0 {
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -85,6 +90,7 @@ process RUNL0 {
     $forceStep1 \
     $refFirst \
     $useLoocv \
+    $maxCatLevels \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
@@ -118,6 +124,8 @@ process RUNL1 {
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -133,6 +141,7 @@ process RUNL1 {
     $forceStep1 \
     $refFirst \
     $useLoocv \
+    $maxCatLevels \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     --niter ${params.niter} \
@@ -170,6 +179,8 @@ process REGENIE_STEP1 {
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first_step1  ? "--ref-first" : ''
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+  
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
@@ -184,6 +195,7 @@ process REGENIE_STEP1 {
     $deleteMissings \
     $forceStep1 \
     $refFirst \
+    $maxCatLevels \
     --bsize ${params.regenie_bsize_step1} \
     ${params.phenotypes_binary_trait == true ? '--bt' : ''} \
     --lowmem \
