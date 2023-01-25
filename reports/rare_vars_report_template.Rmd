@@ -1,0 +1,100 @@
+---
+title: "Report: `r params$project`"
+output:
+  rmdformats::robobook:
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: false
+    highlight: tango
+params:
+  project: test-gwas
+  date: 2021-08-09
+  version: v0.2
+  regenie_merged: Q1.regenie.gz
+  regenie_filename: Q1.regenie.gz
+  phenotype: Q1
+  covariates: SEX
+  phenotype_file: phenos_quant.pheno.validated.txt
+  regenie_step1_log: test-ukbb-quant.step1.log
+  regenie_step2_log: test-ukbb-quant.step2.log
+  phenotype_log: phenos_quant.pheno.validated.log
+  covariate_log: covars.cov.validated.log
+  plot_ylimit: 0
+  manhattan_annotation_enabled: TRUE
+  annotation_min_log10p: 6
+  annotated_tophits_filename: Q1.regenie.filtered.annotated.txt.gz
+  annotated_toploci_filename: Q1.toploci.annot.tsv
+---
+
+```{r}
+library(DT)
+library(data.table)
+library(R.utils)
+library(ggplot2)
+library(skimr)
+library(dplyr)
+library(tidyr)
+library(ggfastman)
+options(DT.options = list(dom = 't'))
+```
+
+## Project Summary
+
+| Parameter     | Value                                      |
+| ------------- |--------------------------------------------|
+| Project       | `r params$project`                         |
+| Pipeline Version       | `r params$version`                |
+| Date       | `r params$date`                         |
+| Phenotype File      | `r params$phenotype_file`            |
+| Phenotype       | `r params$phenotype`                     |
+| Covariates       | `r params$covariates`                     |
+| Regenie Output      | `r params$regenie_filename`             |
+
+## Phenotype Statistics
+
+### Overview
+
+```{r, echo=FALSE}
+phenotypeTable <- read.table(params$phenotype_file, header=TRUE, sep="\t", dec = ".")
+dt <- as.data.frame(skim(phenotypeTable) %>%
+  dplyr::filter(skim_variable == params$phenotype))
+dt <- as.data.frame(as.matrix(dt), stringsAsFactors = F)
+datatable(dt)
+```
+
+### Phenotype distribution
+
+```{r, echo=FALSE}
+if (length(unique(na.omit(phenotypeTable[[params$phenotype]]))) == 2) {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_bar(color="black", fill="white",bins=30) + theme_bw()
+} else {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_histogram(color="black", fill="white",bins=30) + theme_bw()
+}
+```
+
+## Manhattan plot
+
+```{r, echo=FALSE}
+setnames(dt, c("CHROM", "GENPOS", "LOG10P"), c("chr","pos","pvalue"))
+
+dt_clean <- dt %>% 
+  mutate(
+    ID=gsub("(.+)\\((ENSG[0-9]+)\\)\\.([^.]+)\\.(.+)","\\1@\\2@\\3@\\4", dt$ID) 
+  ) %>% 
+  separate(ID,c("GENE_NAME", "GENE_ID", "MASK","AFBIN"),sep = '@',extra = "merge")
+
+fast_manhattan(
+  dt_clean,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2,
+  highlight = dt_clean[dt_clean$pvalue > 7,]$GENE,
+    
+) +
+  facet_grid(MASK ~ AFBIN) +
+  geom_hline(yintercept = 7, linetype ="longdash", color ="firebrick") +
+  theme_bw()
+
+```
