@@ -8,7 +8,7 @@ BiocManager::install(version=bioc_version)
 BiocManager::install(c("biovizBase", "ggbio", "Homo.sapiens"))
 
 pkgs <- c(
-    "optparse"
+    "optparse",
     "stringi",
     "RCurl",
     "rmdformats",
