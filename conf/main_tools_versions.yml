@@ -1,0 +1,34 @@
+regenie: v3.2.5
+plink: 20220402 
+plink2: 20220814
+htslib: v1.16
+bedtools: v2.30 
+R: 4.1.0
+R_packages: 
+  CRAN:
+    date: 20220401
+    pkgs:
+      - groundhog 
+      - optparse
+      - stringi
+      - RCurl
+      - rmdformats
+      - knitr
+      - rmarkdown
+      - DT
+      - data.table
+      - R.utils
+      - ggplot2
+      - skimr
+      - dplyr
+      - remotes
+  github:
+    pksgs:
+      - exaexa/scattermore@v0.8
+      - roman-tremmel/ggfastman@v.1.2
+  bioconductore:
+    version: 3.14
+    pkgs:
+      - biovizBase
+      - ggbio
+      - Homo.sapiens

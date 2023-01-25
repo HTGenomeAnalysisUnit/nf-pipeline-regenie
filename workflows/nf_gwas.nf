@@ -405,6 +405,9 @@ workflow.onComplete {
   nextflow_log = file("${workflow.launchDir}/.nextflow.log")
   nextflow_log.copyTo("${pipeline_log_dir}/nextflow.log")
 
+  versions_yml = file("${projectDir}/conf/main_tools_versions.yml")
+  versions_yml.copyTo("${pipeline_log_dir}/main_tools_versions.yml")
+
   //if (params.master_log_dir != null) {
     master_log = file("${master_log_dir}/job_execution_summary.log")
     def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
