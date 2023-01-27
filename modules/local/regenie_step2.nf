@@ -30,7 +30,7 @@ process REGENIE_STEP2_BYCHR {
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2  ? "--ref-first" : ''
-    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   regenie \
@@ -91,7 +91,7 @@ process REGENIE_STEP2_BYCHUNK {
     def deleteMissingData = params.phenotypes_delete_missings  ? "--strict" : ''
     def predictions = params.regenie_skip_predictions  ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
-    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   regenie \
@@ -151,7 +151,7 @@ process REGENIE_STEP2 {
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
-    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+    def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   regenie \
