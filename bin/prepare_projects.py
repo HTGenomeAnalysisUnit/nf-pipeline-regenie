@@ -58,8 +58,8 @@ for row in read_tsv(input_file):
     else:
         with open(row['cov_file']) as f:
             first_line = tokenize(f.readline())
-            covars = ",".join(first_line[2:])
             covars = find_not_overlap(covars, cat_covars)
+            covars = ",".join(first_line[2:])
             run_template = update_conf(run_template, 'covariates_columns', covars)
 
     with open(row['pheno_file']) as f:

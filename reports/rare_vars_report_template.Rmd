@@ -36,6 +36,7 @@ library(skimr)
 library(dplyr)
 library(tidyr)
 library(ggfastman)
+library(patchwork)
 options(DT.options = list(dom = 't'))
 ```
 
@@ -97,4 +98,15 @@ fast_manhattan(
   geom_hline(yintercept = 7, linetype ="longdash", color ="firebrick") +
   theme_bw()
 
+```
+
+```{r, fig.height=600, fig.width=600}
+df <- dt_clean %>% filter(TEST == "ADD")
+p1 <- ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ AFBIN, scales="free") + labs(title="QQ plot for ADD burden test", subtitle="AF BIN x MASK", x="-log10(expected P)", y="-log10(observed P)")
+
+afbin <- unique(dt_clean %>% filter(TEST != "ADD") %>% pull(AFBIN))
+df <- dt_clean %>% filter(TEST != "ADD")
+p2 <- ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ TEST, scales="free") + labs(title="QQ plot for other burden tests", subtitle="TEST x MASK",x="-log10(expected P)", y="-log10(observed P)")
+
+p1 / p2
 ```
