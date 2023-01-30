@@ -34,7 +34,7 @@ process SPLITL0 {
   def cat_covariates = params.covariates_cat_columns == '' || params.covariates_cat_columns == 'NA' ? '' : "--catCovarList ${params.covariates_cat_columns}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
-  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -73,7 +73,7 @@ process RUNL0 {
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
-  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -124,7 +124,7 @@ process RUNL1 {
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
-  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -179,7 +179,7 @@ process REGENIE_STEP1 {
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first_step1  ? "--ref-first" : ''
-  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}"
+  def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   
   """
   # qcfiles path required for keep and extract (but not actually set below)
