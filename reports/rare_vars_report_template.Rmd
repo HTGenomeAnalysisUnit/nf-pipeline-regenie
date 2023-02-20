@@ -11,9 +11,9 @@ params:
   project: test-gwas
   date: 2021-08-09
   version: v0.2
-  regenie_merged: Q1.regenie.gz
-  regenie_filename: Q1.regenie.gz
-  phenotype: Q1
+  regenie_merged: caucasians_bmi_age_sex_pcs_cov_chr22_p21001_i0.regenie.gz
+  regenie_filename: caucasians_bmi_age_sex_pcs_cov_chr22_p21001_i0.regenie.gz
+  phenotype: p21001
   covariates: SEX
   phenotype_file: phenos_quant.pheno.validated.txt
   regenie_step1_log: test-ukbb-quant.step1.log
@@ -36,7 +36,6 @@ library(skimr)
 library(dplyr)
 library(tidyr)
 library(ggfastman)
-library(patchwork)
 options(DT.options = list(dom = 't'))
 ```
 
@@ -78,35 +77,101 @@ if (length(unique(na.omit(phenotypeTable[[params$phenotype]]))) == 2) {
 
 ## Manhattan plot
 
+This summarises results across all tests and AF bins by plotting only the most significant result for each gene. Note that in case of ties all results with the same pvalue are plotted.
+
 ```{r, echo=FALSE}
+dt <- fread(params$regenie_merged)
 setnames(dt, c("CHROM", "GENPOS", "LOG10P"), c("chr","pos","pvalue"))
 
 dt_clean <- dt %>% 
   mutate(
     ID=gsub("(.+)\\((ENSG[0-9]+)\\)\\.([^.]+)\\.(.+)","\\1@\\2@\\3@\\4", dt$ID) 
   ) %>% 
-  separate(ID,c("GENE_NAME", "GENE_ID", "MASK","AFBIN"),sep = '@',extra = "merge")
+  separate(ID,c("GENE_NAME", "GENE_ID", "MASK","AFBIN"),sep = '@',extra = "merge") %>%
+  mutate(rsid = GENE_NAME)
+```
 
-fast_manhattan(
-  dt_clean,
+```{r, fig.height=600, fig.width=600}
+dt_top_per_gene <- dt_clean %>%
+  group_by(GENE_ID) %>% slice_max(pvalue, n=1)
+
+p1 <- fast_manhattan(
+  dt_top_per_gene,log10p = F,
   build='hg19', speed = "f", 
   color1 = "grey", color2 = "orange", pointsize = 2,
-  highlight = dt_clean[dt_clean$pvalue > 7,]$GENE,
+  highlight = dt_top_per_gene[dt_top_per_gene$pvalue > 3,]$GENE_NAME,
     
 ) +
-  facet_grid(MASK ~ AFBIN) +
+  geom_hline(yintercept = 3, linetype ="longdash", color ="firebrick") +
+  theme_bw() +
+  theme(
+      legend.position="none",
+      panel.border = element_blank(),
+      axis.text = element_text(size = 12,
+                               color = "black"),
+      axis.title = element_text(size = 14),
+      axis.ticks = element_line(color = "black")
+      )
+
+if(!params$manhattan_annotation_enabled) {
+  p2 <- p1
+} else {
+  p2 <- p1 + ggrepel::geom_text_repel(data = . %>% filter(pvalue >= 3) %>% 
+                                        group_by(GENE_ID) %>% slice(1), 
+                             aes(label=GENE_NAME), color =1)
+}
+p2
+```
+
+## Top hits
+
+```{r}
+datatable(dt_top_per_gene, options=list(scrollX=T))
+```
+
+## Detailed results per model
+
+This section contains detailed results with manhattan plots and QQ plots for each test, mask and AF bin.
+
+<details>
+  <summary>Click to see detailed results</summary>
+
+### Manhattan plot
+
+Results are showed separately for each mask and test. All the AF bin levels are shown together for standard burden test.
+
+```{r, fig.height=600, fig.width=600}
+fast_manhattan(
+  dt_clean,log10p = F,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2,
+  highlight = dt_clean[dt_clean$pvalue > 7,]$GENE_NAME,
+) +
+  facet_grid(MASK ~ TEST) +
   geom_hline(yintercept = 7, linetype ="longdash", color ="firebrick") +
   theme_bw()
 
 ```
 
+### QQ plot
+
+#### Standard burden test
+
+Results for standard burden test are showed separately for each mask and AF bin.
+
 ```{r, fig.height=600, fig.width=600}
-df <- dt_clean %>% filter(TEST == "ADD")
-p1 <- ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ AFBIN, scales="free") + labs(title="QQ plot for ADD burden test", subtitle="AF BIN x MASK", x="-log10(expected P)", y="-log10(observed P)")
-
-afbin <- unique(dt_clean %>% filter(TEST != "ADD") %>% pull(AFBIN))
-df <- dt_clean %>% filter(TEST != "ADD")
-p2 <- ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ TEST, scales="free") + labs(title="QQ plot for other burden tests", subtitle="TEST x MASK",x="-log10(expected P)", y="-log10(observed P)")
-
-p1 / p2
+df <- dt_clean[!grepl('-', dt_clean$TEST),]
+ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ AFBIN, scales="free") + labs(title="QQ plot for ADD burden test", subtitle="AF BIN x MASK", x="-log10(expected P)", y="-log10(observed P)")
 ```
+
+#### Other gene tests
+
+Results for other gene tests (SKAT, ACAT, ...) are showed separately for test and mask.
+
+```{r, fig.height=600, fig.width=600}
+afbin <- unique(dt_clean %>% filter(TEST != "ADD") %>% pull(AFBIN))
+df <- dt_clean[grepl('-', dt_clean$TEST),]
+ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ TEST, scales="free") + labs(title="QQ plot for other gene tests", subtitle="TEST x MASK",x="-log10(expected P)", y="-log10(observed P)")
+```
+
+</details>
