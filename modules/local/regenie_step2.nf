@@ -129,17 +129,19 @@ process REGENIE_STEP2 {
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file)
+    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file), val(chunk)
     path phenotypes_file
     path covariates_file
 
   output:
-    tuple val(filename), path("*regenie.gz"), emit: regenie_step2_out
-    path "${filename}.log", emit: regenie_step2_out_log
+    tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
+    path "${filename}_${chunk}.log", emit: regenie_step2_out_log
 
   script:
     //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
     //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
+    def split_region = params.step2_split_by == 'chunk' ? "--range $chunk" : ''
+    def split_region = params.step2_split_by == 'chr' ? "--chr $chunk" : ''
     def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
     def test = "--test $params.regenie_test"
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
@@ -165,6 +167,7 @@ process REGENIE_STEP2 {
     --minMAC ${params.regenie_min_mac} \
     --minINFO ${params.regenie_min_imputation_score} \
     --gz \
+    $split_region \
     $binaryTrait \
     $test \
     $bgen_sample \
@@ -175,6 +178,31 @@ process REGENIE_STEP2 {
     $predictions \
     $refFirst \
     $maxCatLevels \
-    --out ${filename}
+    --out ${filename}_${chunk}
   """
 }
+
+
+
+/*
+- read from bed / bim / fam, bgen or VCF
+- additional inputs: mask file, annotation file, set list file, 
+- optional inputs: external aaf file, extract-sets file
+- separate minMAC for rare
+- options: --aaf-bins, --vs-test, --vc-maxAAF
+- optional output mask snp list: --write-mask-snplist
+
+- split by chr based on file glob pattern
+- split by gene --> with a single file we can use range
+                --> with multiple files by chr we must join by chr first
+- use 2 separate input dataset for common step2 and rare step2
+- split present workflow into sub-workflows 
+        --> processing of pheno and covars remain the same
+        --> a common step1 sub-workflow 
+        --> common vars step2 sub-wf 
+        --> rare vars step2 sub-wf
+
+- eventually collect results by chr, or by gene 
+- prepare rare vars report 
+
+*/
