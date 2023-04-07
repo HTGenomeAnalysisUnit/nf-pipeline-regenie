@@ -4,7 +4,7 @@ process MAKE_CHUNKS {
     }
 
     input:
-        tuple val(filename), file(snps_list) //sorted tab-separated file with contig, snp pos
+        tuple val(filename), file(snps_list) //sorted tab-separated bim file with chr in the first column and position in the 4th column
 
     output:
         tuple val(filename), stdout
@@ -12,7 +12,7 @@ process MAKE_CHUNKS {
     script:
     def chromosomes_list = params.chromosomes.join(" ")
     """
-    awk '{print \$0 >> \$1".snps"}' $snps_list
+    awk '{print \$1, \$4 >> \$1".snps"}' $snps_list
     for c in $chromosomes_list
     do 
         if [ -f \$c.snps ]

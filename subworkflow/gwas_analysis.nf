@@ -1,5 +1,6 @@
 workflow GWAS_ANALYSIS {
     take:
+        snplist_ch
         imputed_plink2_ch
         regenie_step1_out_ch
         phenotypes_file_validated
@@ -7,7 +8,7 @@ workflow GWAS_ANALYSIS {
         regenie_log_parser_jar
 
     main:
-    //==== REGENIE STEP 2 - COMMON VARS ====
+    //==== REGENIE STEP 2 FOR COMMON VARS ====
     if (params.step2_split_by == 'chr') { 
         //PARALLELIZE BY CHROM
         chromosomes = Channel.of(params.chromosomes).flatten()
@@ -37,21 +38,7 @@ workflow GWAS_ANALYSIS {
         regenie_log_parser_jar
     )
 
-    /*
-    if (params.step2_split_by == 'chr' || params.step2_split_by == 'chunk') {
-        //concat by chromosome results into a single result file per pheno
-        concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.transpose()
-        .map{ it -> return tuple(it[2].baseName.replace("${it[0]}_${it[1]}_",'').replace('.regenie',''), it[2]) }
-        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten()) }
-        
-    } else {
-        concat_input_ch = REGENIE_STEP2.out.regenie_step2_out
-        .transpose()
-        .map{ it -> return tuple(it[2].baseName.replace("${it[0]}_",'').replace('.regenie',''), it[1]) }
-        .groupTuple().map{ it -> return tuple(it[0], it[1].flatten()) }
-    }
-    */
-
+    //==== CONCATENATE RESULTS ====
     concat_input_ch = REGENIE_STEP2.out.regenie_step2_out.transpose()
         .map{ it -> return tuple(it[2].baseName.replace("${it[0]}_${it[1]}_",'').replace('.regenie',''), it[2]) }
         .groupTuple().map{ it -> return tuple(it[0], it[1].flatten()) }

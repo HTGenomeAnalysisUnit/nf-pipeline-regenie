@@ -193,7 +193,8 @@ or contact: edoardo.giacopuzzi@fht.org
     covariates_file_validated_log = Channel.fromPath("NO_COV_LOG")
   }
 
-  PREPARE_IMPUTED_DATA()
+  //==== PROCESS IMPUTED DATA ====
+  PREPARE_GENETIC_DATA()
 
   //==== STEP 1 ====
   REGENIE_STEP1_WF (
@@ -205,7 +206,17 @@ or contact: edoardo.giacopuzzi@fht.org
   
   //==== STEP 2 ====
   GWAS_ANALYSIS(
-    PREPARE_IMPUTED_DATA.out.imputed_plink2_ch,
+    PREPARE_IMPUTED_DATA.out.snplist_out,
+    PREPARE_IMPUTED_DATA.out.processed_genotypes_out,
+    REGENIE_STEP1_WF.out.regenie_step1_out,
+    VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+    covariates_file_validated
+    CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
+  )
+
+  RARE_VARIANT_ANALYSIS(
+    PREPARE_IMPUTED_DATA.out.snplist_out,
+    PREPARE_IMPUTED_DATA.out.processed_genotypes_out,
     REGENIE_STEP1_WF.out.regenie_step1_out,
     VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
     covariates_file_validated
