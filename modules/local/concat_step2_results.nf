@@ -19,7 +19,7 @@ process CONCAT_STEP2_RESULTS {
     
     headerfile=\$(ls *${pheno}.regenie.gz | head -1)
     zcat \$headerfile | head -1 | sed 's/ /\t/g' > header.txt
-    (cat header.txt && sed 's/ /\t/g' ${pheno}.tmp | sort -k1,1V -k2,2n -T tmp_sort) | bgzip -c > ${pheno}.regenie.gz 
+    (cat header.txt && sed 's/ /\t/g' ${pheno}.tmp | sort -S ${task.memory.toGiga()}G -k1,1V -k2,2n -T tmp_sort) | bgzip -c > ${pheno}.regenie.gz 
     tabix -f -b 2 -e 2 -s 1 -S 1 ${pheno}.regenie.gz
     """
 }
