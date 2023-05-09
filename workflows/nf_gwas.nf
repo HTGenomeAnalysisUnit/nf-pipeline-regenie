@@ -78,13 +78,6 @@ if (params.covariates_filename != 'NO_COV_FILE' && !covariates_file.exists()){
   exit 1, "Covariate file ${params.covariates_filename} not found."
 }
 
-
-//Optional sample file
-sample_file = file(params.regenie_sample_file)
-if (params.regenie_sample_file != 'NO_SAMPLE_FILE' && !sample_file.exists()){
-  exit 1, "Sample file ${params.regenie_sample_file} not found."
-}
-
 //Check specified test
 if (params.regenie_test != 'additive' && params.regenie_test != 'recessive' && params.regenie_test != 'dominant'){
   exit 1, "Test ${params.regenie_test} not supported."
@@ -206,10 +199,17 @@ or contact: edoardo.giacopuzzi@fht.org
       imputed_bgen_and_index = Channel
         .fromPath(params.genotypes_imputed, checkIfExists: true)
         .map{ tuple(it.baseName, it, file("${it}.bgi")) }
-
-      imputed_bgen_and_sample = Channel
-        .fromPath(params.genotypes_imputed, checkIfExists: true)
-        .map{ tuple(it.baseName, file("${it.parent}/${it.baseName}.sample")) }
+      
+      //Optional sample file
+      if (params.regenie_sample_file != 'NO_SAMPLE_FILE'){
+        imputed_bgen_and_sample = Channel
+          .fromPath(params.genotypes_imputed, checkIfExists: true)
+          .map{ tuple(it.baseName, file(params.regenie_sample_file, checkIfExists: true)) }
+      } else {
+        imputed_bgen_and_sample = Channel
+          .fromPath(params.genotypes_imputed, checkIfExists: true)
+          .map{ tuple(it.baseName, file("${it.parent}/${it.baseName}.sample")) }
+      }
       
       //Check BGI index and make it if missing
       CHECK_BGEN_INDEX(imputed_bgen_and_index)

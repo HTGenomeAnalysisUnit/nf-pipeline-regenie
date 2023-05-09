@@ -88,7 +88,9 @@ To run the pipeline, you need to prepare a config file. The following config fil
    | tail -n+3 | cut -f3,4 | sed '$d' > ${prefix}.snplist
    ```
 
-**IMPORTANT FOR BGEN INPUT:** When using BGEN input, make sure that the sample ID in the BGEN can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. You can provide a `.sample` file to have better control on the sample IDs. 
+**IMPORTANT FOR BGEN INPUT:** When using BGEN input, make sure that the sample ID in the BGEN can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. You can provide a `.sample` file to have better control on the sample IDs.
+
+Given the input file `my_dataset.bgen` if a file named `my_dataset.sample` is present, this will be used automatically by the pipeline. Otherwise, the user can provide an alternative sample file using the parameter `regenie_sample_file`.
 
 #### Use a single bgen / VCF as input
 
@@ -103,9 +105,11 @@ Only chromosomes listed by `chromosome` parameters will be used. **NB** ALL chro
   
 #### Use multiple bgen/vcf
 
-If you imputed dataset is already splitted for example by single chromosomes and you have multiple bgen or VCF files, you can run association on all files using something like `genotypes_inputed = '/my/path/imputed_genotypes_chr*.bgen'`. **NB** The pipeline can not manage additional split on multiple files thus you have to set `step2_split = 'no_split'`.
+If you imputed dataset is already splitted for example by single chromosomes and you have multiple bgen or VCF files, you can run association on all files using something like `genotypes_imputed = '/my/path/imputed_genotypes_chr*.bgen'`. **NB** The pipeline can not manage additional split on multiple files thus you have to set `step2_split = 'no_split'`.
 
 Each file is processed independently and `.sample`, `.bgi` files are checked for each single input file and managed automatically as explained above for single file input.
+
+If the parameter `regenie_sample_file` is specified then this sample file is used for all bgen files.
 
 #### Large datasets
 
