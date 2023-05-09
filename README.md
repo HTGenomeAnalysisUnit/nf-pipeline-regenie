@@ -34,11 +34,13 @@ You can eventually chose a specific version of the pipeline using the `--branch`
    #SBATCH --output nf-regenie_master_%A.log
    #SBATCH --partition cpuq
    #SBATCH --cpus-per-task 1
+   #SBATCH --mem 4G
    #SBATCH --time 15-00:00:00
 
    module load nextflow/21.10.6 singularity/3.6.3
 
    ###  For a single project  ###
+   export NXF_OPTS="-Xms1G -Xmx4G" 
    nextflow run nf-pipeline-regenie \
       -profile slurm -c your_project.conf
 

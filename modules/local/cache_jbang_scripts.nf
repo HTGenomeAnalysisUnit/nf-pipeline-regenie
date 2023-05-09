@@ -11,7 +11,7 @@ process CACHE_JBANG_SCRIPTS {
     path "RegenieValidateInput.jar", emit: regenie_validate_input_jar
 
   """
-  mkdir jbang_cache
+  mkdir -p jbang_cache
   export JBANG_CACHE_DIR=jbang_cache
   jbang export portable -O=RegenieLogParser.jar ${regenie_log_parser_java}
   jbang export portable -O=RegenieFilter.jar ${regenie_filter_java}

@@ -10,7 +10,7 @@ process CONCAT_STEP2_RESULTS {
     
     script:
     """
-    mkdir tmp_sort
+    mkdir -p tmp_sort
 
     for f in *${pheno}.regenie.gz;
     do
