@@ -3,14 +3,14 @@
 process MAKE_SNPLIST {
     label 'process_bgenix'
     if (params.publish) {
-        publishDir "${params.outdir}/snplist", mode: 'copy'
+        publishDir "${params.outdir}", mode: 'copy'
     }
 
     input:
-        tuple val(filename), path(bgen_file), path(bgi_index), path(sample_file)
+        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom)
 
     output:
-        tuple val(filename), file("${filename}.snplist")
+        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), file("${filename}.snplist")
 
     script:
     """

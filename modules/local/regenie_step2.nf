@@ -1,6 +1,6 @@
-process REGENIE_STEP2 {
+process REGENIE_STEP2_GWAS {
   if (params.save_step2_logs) {
-    publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+    publishDir "${params.outdir}", mode: 'copy', pattern: '*.log'
   }
 
   label "regenie2_chr"
@@ -8,21 +8,21 @@ process REGENIE_STEP2 {
 
   input:
 	  path(step1_out)
-    tuple val(filename), path(plink_bgen_file), path(bgen_index), path(sample_file), val(chunk)
+    tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk)
     path phenotypes_file
     path covariates_file
 
   output:
-    tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
-    path "${filename}_${chunk}.log", emit: regenie_step2_out_log
+    tuple val(filename), val(chrom), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
+    path "${filename}_${chrom}_${chunk}.log", emit: regenie_step2_out_log
 
   script:
-    //def format = params.genotypes_imputed_format == 'bgen' ? "--bgen" : '--pgen'
-    //def extension = params.genotypes_imputed_format == 'bgen' ? ".bgen" : ''
-    def split_region = params.step2_split_by == 'chunk' ? "--range $chunk" : ''
-    def split_region = params.step2_split_by == 'chr' ? "--chr $chunk" : ''
-    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
-    def test = "--test $params.regenie_test"
+    def format = params.genotypes_imputed_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
+    def fileprefix = bed_bgen_pgen.simpleName
+    def extension = params.genotypes_imputed_format == 'bgen' ? 'bgen' : ''
+    def split_region = chunk == 'SINGLE_CHUNK' ? '' : "--range $chunk"
+    def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def test = params.regenie_gwas_test != 'additive' ? "--test ${params.regenie_gwas_test}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  params.phenotypes_binary_trait ? "--bt $firth " : ""
@@ -33,23 +33,26 @@ process REGENIE_STEP2 {
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
     def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
+    def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
 
   """
   regenie \
     --step 2 \
-    --bgen ${plink_bgen_file} \
+    --${format} ${fileprefix}.${extension} \
+    --chrList ${params.chromosomes.join(',')} \
     --phenoFile ${phenotypes_file} \
     --phenoColList ${params.phenotypes_columns} \
     --bsize ${params.regenie_bsize_step2} \
     --pred regenie_step1_out_pred.list \
     --threads ${task.cpus} \
-    --minMAC ${params.regenie_min_mac} \
+    --minMAC ${params.regenie_gwas_min_mac} \
     --minINFO ${params.regenie_min_imputation_score} \
     --gz \
     $split_region \
     $binaryTrait \
     $test \
     $bgen_sample \
+    $chromosome \
     $range \
     $covariants \
     $cat_covariates \
@@ -57,7 +60,7 @@ process REGENIE_STEP2 {
     $predictions \
     $refFirst \
     $maxCatLevels \
-    --out ${filename}_${chunk}
+    --out ${filename}_${chrom}_${chunk}
   """
 }
 
@@ -71,7 +74,7 @@ process REGENIE_STEP2_RAREVARS {
 
   input:
 	  path(step1_out)
-    tuple val(filename), file(bed_or_bgen_file), file(bim_or_bgi_file), file(fam_or_sample_file), val(gene_name)
+    tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvam), file(fam_sample_psam), val(chrom), val(gene)
     path phenotypes_file
     path covariates_file
     path rarevars_anno_file
@@ -79,14 +82,17 @@ process REGENIE_STEP2_RAREVARS {
     path rarevars_mask_file
 
   output:
-    tuple val(filename), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
+    tuple val(filename), val(chrom), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
     path "${filename}_${chunk}.log", emit: regenie_step2_out_log
 
   script:
-    def format = params.sequencing_data_format in ['vcf', 'bgen'] ? "--bgen" : '--bed'
-    def extension = params.sequencing_data_format in ['vcf', 'bgen'] ? '.bgen' : ''
-    def bgen_sample = params.sequencing_data_format in ['vcf', 'bgen'] && fam_or_sample_file.exists() ? "--sample $fam_or_sample_file" : ''
-    def test = "--test $params.regenie_test"
+    def format = params.genotypes_rarevar_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
+    def fileprefix = bed_bgen_pgen.simpleName
+    def extension = params.genotypes_rarevar_format == 'bgen' ? 'bgen' : ''
+    def split_genes = chunk == 'SINGLE_CHUNK' ? '' : "--extract-sets $gene"
+    def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
+    def bgen_sample = params.genotypes_rarevar_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def build_mask = params.regenie_build_mask ? "--build-mask ${params.regenie_build_mask}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  params.phenotypes_binary_trait ? "--bt $firth " : ""
@@ -97,12 +103,14 @@ process REGENIE_STEP2_RAREVARS {
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
     def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
     def vc_tests = params.rarevars_vc_test ? "--vc-tests ${params.rarevars_vc_test}" : ''
-    def vc_maxAAF = params.rarevars_vc_test ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
+    def vc_maxAAF = params.rarevars_vc_maxAAF ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
+    def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
+
   """
   regenie \
     --step 2 \
-    ${format} ${filename}${extension} \
+    --${format} ${fileprefix}.${extension} \
     --anno-file $rarevars_anno_file \
     --set-list $rarevars_set_list \
     --mask-def $rarevars_mask_file \
@@ -113,10 +121,12 @@ process REGENIE_STEP2_RAREVARS {
     --threads ${task.cpus} \
     --gz \
     --aaf-bins ${params.rarevars_aaf_bins} \
+    --minMAC ${params.regenie_rarevar_min_mac} \
+    $chromosome \
+    $split_genes \
     $vc_tests \
     $vc_maxAAF \
     $binaryTrait \
-    $test \
     $bgen_sample \
     $range \
     $covariants \
@@ -125,8 +135,9 @@ process REGENIE_STEP2_RAREVARS {
     $predictions \
     $refFirst \
     $maxCatLevels \
+    $build_mask \
     $write_mask_snplist \
-    --out ${filename}_${gene_name}
+    --out ${filename}_${chrom}_${gene}
   """
 }
 

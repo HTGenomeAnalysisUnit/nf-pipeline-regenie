@@ -1,12 +1,15 @@
-process CONVERT_TO_PLINK2 {
-
+process CONVERT_TO_PGEN {
   label 'process_plink2'
-
+  if (params.publish) {
+    publishDir "${params.outdir}", mode: 'copy'
+  }
+  
   input:
-    path vcf_file
+    tuple val(filename), path(vcf_file), val(chrom)
 
   output:
-    tuple val("${vcf_file.baseName}"), path("${vcf_file.baseName}.pgen"), path("${vcf_file.baseName}.psam"),path("${vcf_file.baseName}.pvar"), emit: imputed_plink2
+    tuple val(filename), path("${vcf_file.baseName}.pgen"), path("${vcf_file.baseName}.pvar"),path("${vcf_file.baseName}.psam"), val(chrom), emit: genotypes_data
+    path("${vcf_file.baseName}.pvar"), emit: variants_pvar
 
 script:
 """

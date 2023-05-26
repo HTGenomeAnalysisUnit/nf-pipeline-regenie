@@ -1,23 +1,90 @@
-
+//Check general required parameters
 requiredParams = [
-    'project', 'genotypes_array',
-    'genotypes_imputed', 'genotypes_build',
-    'genotypes_imputed_format', 'phenotypes_filename',
-    'phenotypes_columns', 'phenotypes_binary_trait',
-    'regenie_test', 'step1_n_chunks',
-    'chromosomes'
+  'project', 'genotypes_array', 'genotypes_build',
+  'phenotypes_filename', 'phenotypes_columns', 'phenotypes_binary_trait',
+  'chromosomes', 
+  'prune_enabled',         
+  'prune_maf',            
+  'prune_window_kbsize',  
+  'prune_step_size',     
+  'prune_r2_threshold',  
+  'qc_maf',                 
+  'qc_mac',                
+  'qc_geno',                
+  'qc_hwe',                  
+  'qc_mind',
+  'regenie_bsize_step1',
+  'step1_n_chunks',
+  'regenie_bsize_step2',
+  'annotation_min_log10p',
+  'annotation_interval_kb'
 ]
 
 for (param in requiredParams) {
-    if (params[param] == null) {
+    if (params[param] == null || params[param] == '') {
       exit 1, "Parameter ${param} is required."
     }
 }
 
-if (params.regenie_range != '' && params.step2_split_by != null) {
-  exit 1, "You cannot set regenie_range when step2_split_by is active"
+//Check required parameters for GWAS analysis
+if (params.genotypes_imputed) {
+  requiredParams = [
+    'regenie_gwas_test',
+    'regenie_min_imputation_score',
+    'regenie_gwas_min_mac',
+    'regenie_min_imputation_score'
+  ]
+
+  for (param in requiredParams) {
+      if (params[param] == null || params[param] == '') {
+        exit 1, "Parameter ${param} is required when running GWAS analysis."
+      }
+  }
+
+  //Check specified regenie test is allowed
+  def allowed_tests = ['additive', 'dominant', 'recessive']
+  if (!(params.regenie_test in allowed_tests)){
+    exit 1, "Test ${params.regenie_test} not supported. Allowed tests are $allowed_tests."
+  }
+
+  //Check imputed file format is allwed
+  def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
+  if (!(params.genotypes_imputed_format in allowed_input_formats)){
+    exit 1, "File format ${params.genotypes_imputed_format} not supported. Allowed formats are $allowed_input_formats."
+  }
 }
 
+//Check required parameters for rare variants analysis
+if (params.genotypes_rarevar) {
+  requiredParams = [
+    'rarevar_set_list_file',
+    'rarevar_anno_file',
+    'rarevar_mask_file',
+    'regenie_rarevar_min_mac',
+    'rarevars_aaf_bins',
+    'rarevars_vc_test',
+    'rarevars_vc_maxAAF',
+    'regenie_build_mask'
+  ]
+
+  for (param in requiredParams) {
+      if (params[param] == null || params[param] == '') {
+        exit 1, "Parameter ${param} is required when running rare variant analysis."
+      }
+  }
+
+  //Check imputed file format is allwed
+  def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
+  if (!(params.genotypes_rarevar_format in allowed_input_formats)){
+    exit 1, "File format ${params.genotypes_rarevar_format} not supported. Allowed formats are $allowed_input_formats."
+  }
+}
+
+if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {
+  exit 1, "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
+}
+
+//Set output and logs directories
 if(params.outdir == null) {
   outdir = "${params.project}"
 } else {
@@ -38,29 +105,10 @@ if(!params.covariates_columns.isEmpty()){
   covariates_array = params.covariates_columns.trim().split(',')
 }
 
-gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
-
-//Check scripts and resources
+//Check accessory scripts
 regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
 regenie_filter_java = file("$projectDir/bin/RegenieFilter.java", checkIfExists: true)
 regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
-
-//Annotation files
-if (params.genes_bed) {
-  genes_bed_hg19 = file(params.genes_bed)
-  genes_bed_hg38 = file(params.genes_bed)
-} else {
-  genes_bed_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
-  genes_bed_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
-}
-
-if (params.genes_ranges) {
-  genes_ranges_hg19 = file(params.genes_ranges)
-  genes_ranges_hg38 = file(params.genes_ranges)
-} else {
-  genes_ranges_hg19 = file("$projectDir/genes/glist-hg19", checkIfExists: true)
-  genes_ranges_hg38 = file("$projectDir/genes/glist-hg38", checkIfExists: true)
-}
 
 //Phenotypes
 phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
@@ -78,61 +126,40 @@ if (params.covariates_filename != 'NO_COV_FILE' && !covariates_file.exists()){
   exit 1, "Covariate file ${params.covariates_filename} not found."
 }
 
-
-//Optional sample file
-sample_file = file(params.regenie_sample_file)
-if (params.regenie_sample_file != 'NO_SAMPLE_FILE' && !sample_file.exists()){
-  exit 1, "Sample file ${params.regenie_sample_file} not found."
+//Make chromosomes list
+def chromosomes = []
+params.chromosomes.split(',').each { element ->
+    if (element.contains('-')) {
+        def limits = element.split('-').collect { it.toInteger() }
+        def range = limits[0] .. limits[1]
+        chromosomes.addAll(range)
+    } else {
+        chromosomes << element
+    }
 }
+chromosomes = chromosomes*.toString()
 
-//Check specified test
-if (params.regenie_test != 'additive' && params.regenie_test != 'recessive' && params.regenie_test != 'dominant'){
-  exit 1, "Test ${params.regenie_test} not supported."
-}
-
-//Check imputed file format
-if (params.genotypes_imputed_format != 'vcf' && params.genotypes_imputed_format != 'bgen'){
-  exit 1, "File format ${params.genotypes_imputed_format} not supported."
-}
-
-// Check n files for imputed input
-// n_input_files = Channel.fromPath("${params.genotypes_imputed}").count().value()
-// println "N file: $n_input_files"
-//if (n_input_files > 1 && params.step2_split_by != 'no_split') {
-//  exit 1, "Only no_split accepted for step2_split_by when you use multiple input files for imputed genotypes"
-//}
-
-//Array genotypes
+//Set input channel for step 1
 Channel.fromFilePairs("${params.genotypes_array}.{bim,bed,fam}", size: 3).set {genotyped_plink_ch}
 
 //Include modules
 include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
-include { IMPUTED_TO_BGEN             } from '../modules/local/imputed_to_plink2' addParams(outdir: "$outdir")
-include { CHECK_BGEN_INDEX            } from '../modules/local/make_bgen_index' addParams(outdir: "$outdir", publish: params.save_bgen_index)
-include { MAKE_SNPLIST                } from '../modules/local/make_snplist' addParams(outdir: "$outdir", publish: params.save_snplist)
-include { PRUNE_GENOTYPED             } from '../modules/local/prune_genotyped' addParams(outdir: "$outdir")
-include { QC_FILTER_GENOTYPED         } from '../modules/local/qc_filter_genotyped' addParams(outdir: "$outdir")
-include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1' addParams(outdir: "$outdir", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
-include { REGENIE_LOG_PARSER_STEP1    } from '../modules/local/regenie_log_parser_step1'  addParams(outdir: "$outdir")
-include { REGENIE_LOG_PARSER_STEP2    } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "$outdir")
-include { FILTER_RESULTS              } from '../modules/local/filter_results'
-include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
+include { REGENIE_STEP1_WF            } from '../subworkflow/regenie_step1' addParams(outdir: "$outdir", chromosomes: chromosomes)
+include { REGENIE_STEP2_WF            } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
-include { CONCAT_STEP2_RESULTS        } from '../modules/local/concat_step2_results' addParams(outdir: "$outdir")
-if (params.clumping) {
-  include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "$outdir")
-}
 
-if (params.step2_split_by == 'chunk') {
-  include { MAKE_CHUNKS               } from '../modules/local/make_chunks.nf' addParams(publish: true, outdir: "$outdir", step2_chunk_size: params.step2_chunk_size, chromosomes: params.chromosomes)
-  include { REGENIE_STEP2_BYCHUNK as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
-} else if (params.step2_split_by == 'chr') {
-  include { REGENIE_STEP2_BYCHR as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
-} else {
-  include { REGENIE_STEP2 as REGENIE_STEP2     } from '../modules/local/regenie_step2' addParams(outdir: "$outdir", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
-}
+
+//if (params.run_gwas) {
+  include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file)
+  include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes)
+//}
+//if (params.run_rare_variants) {
+  include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file)
+  include { SPLIT_RAREVARIANT_DATA_WF        } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes)
+//}
+
 
 //==== WORKFLOW ====
 workflow NF_GWAS {   
@@ -193,8 +220,30 @@ or contact: edoardo.giacopuzzi@fht.org
     covariates_file_validated_log = Channel.fromPath("NO_COV_LOG")
   }
 
-  //==== PROCESS IMPUTED DATA ====
-  PREPARE_GENETIC_DATA()
+  //==== PREPARE STEP2 INPUT DATA ====
+  gwas_data_input_ch = Channel.empty()
+  if (params.genotypes_imputed) {
+    PREPARE_GWAS_DATA(chromosomes)
+    if (params.step2_gwas_split) {
+      SPLIT_GWAS_DATA_WF(PREPARE_GWAS_DATA.out.processed_genotypes)
+      gwas_data_input_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
+    } else {
+      gwas_data_input_ch = PREPARE_GWAS_DATA.out.processed_genotypes
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+    }
+  }
+  
+  rare_variants_input_ch = Channel.empty()
+  if (params.genotypes_rarevar) {
+    PREPARE_RAREVARIANT_DATA(chromosomes)
+    if (params.step2_rarevar_split) {
+      SPLIT_RAREVARIANT_DATA_WF(PREPARE_RAREVARIANT_DATA.out.processed_genotypes)
+      rare_variants_input_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
+    } else {
+      rare_variants_input_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+    }
+  }
 
   //==== STEP 1 ====
   REGENIE_STEP1_WF (
@@ -205,23 +254,19 @@ or contact: edoardo.giacopuzzi@fht.org
   )
   
   //==== STEP 2 ====
-  GWAS_ANALYSIS(
-    PREPARE_IMPUTED_DATA.out.snplist_out,
-    PREPARE_IMPUTED_DATA.out.processed_genotypes_out,
+  REGENIE_STEP2_WF(
+    gwas_data_input_ch,
+    rare_variants_input_ch,
     REGENIE_STEP1_WF.out.regenie_step1_out,
     VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-    covariates_file_validated
+    covariates_file_validated,
     CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
   )
 
-  RARE_VARIANT_ANALYSIS(
-    PREPARE_IMPUTED_DATA.out.snplist_out,
-    PREPARE_IMPUTED_DATA.out.processed_genotypes_out,
-    REGENIE_STEP1_WF.out.regenie_step1_out,
-    VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-    covariates_file_validated
-    CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
-  )
+  //==== PROCESS STEP2 RESULTS ====
+  //Concatenate results, select top hits. For GWAS also annotate and clumping
+  PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_gwas_out)
+  PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_rarevar_out)
 }
 
 workflow.onComplete {

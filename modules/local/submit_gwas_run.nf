@@ -13,6 +13,7 @@ process SUBMIT_GWAS_RUN {
 
   script:
   """
+  export NXF_OPTS="-Xms1G -Xmx${task.memory.toGiga()}G"
   nextflow run $projectDir/main.nf \
     -profile ${params.gwas_submit_profile} \
     -c $shared_config \

@@ -17,14 +17,12 @@ workflow RARE_VARIANTS_ANALYSIS {
         // Here we expect the file name to contain a {CHROM} placeholder that will be replaced by the chromosome number		
         // SCENARIO 1: input data is a single file
         // SCENARIO 2: input data is a set of files, one per chromosome: use the {CHROM} placeholder in the file name
-        // SCENARIO 3: input data is a generic set of files 
 
-        // SCENARIO 1 accept split by chrom or gene
-        // SCENARIO 2 only accept split by gene
-        // SCENARIO 3 does not accept any split
+        // SCENARIO 1 accept split by gene
+        // SCENARIO 2 accept split by gene
 
         // tuple(filename.base, chrom(or all), bed_file, bim_file, fam_file), val(chunk/gene or all)
-        hromosomes = params.chromosomes + params.sex_chromosomes.split(',')
+        chromosomes = params.chromosomes + params.sex_chromosomes.split(',')
     
         if (params.ld_panel =~ /\{CHROM\}/) 
             ld_panel_ch = Channel.of("${params.ld_panel}").combine(chromosomes.flatten())

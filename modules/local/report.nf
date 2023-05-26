@@ -14,7 +14,7 @@ process REPORT {
     path step2_log
 
   output:
-    path "*.html"
+    path "${params.project}.${regenie_merged.baseName}.html"
 
   script:
       def annotation_as_string = params.manhattan_annotation_enabled.toString().toUpperCase()
