@@ -20,16 +20,17 @@ if (params.genes_ranges) {
 }
 
 //Inclusion statements
-include { FILTER_RESULTS              } from '../modules/local/filter_results'
-include { ANNOTATE_FILTERED           } from '../modules/local/annotate_filtered'  addParams(outdir: "$outdir", annotation_interval_kb: params.annotation_interval_kb)
+include { FILTER_RESULTS    } from '../modules/local/filter_results'
+include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}/results", annotation_interval_kb: params.annotation_interval_kb)
 if (params.clumping) {
-  include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "$outdir")
+  include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "${params.outdir}/results", logdir: "${params.outdir}/log", chromosomes: params.chromosomes)
 }
 
 workflow PROCESS_GWAS_RESULTS_WF {
 	take:
     regenie_step2_by_phenotype
-    imputed_plink2_ch
+    processed_gwas_genotypes
+    regenie_step2_parsed_logs
 
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
@@ -48,7 +49,7 @@ workflow PROCESS_GWAS_RESULTS_WF {
         if (params.ld_panel == 'NO_LD_FILE') {
             log.warn "No ld_panel provided, clumping will be performed using the whole genomic dataset"
         } 
-        CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, imputed_plink2_ch)
+        CLUMP_RESULTS(regenie_step2_by_phenotype, genes_ranges_hg19, genes_ranges_hg38, processed_gwas_genotypes)
         clump_results_ch = CLUMP_RESULTS.out.best_loci
     } else {
         clump_results_ch = regenie_step2_by_phenotype.map { it -> return tuple(it[0], file('NO_CLUMP_FILE'))}
@@ -69,7 +70,7 @@ workflow PROCESS_GWAS_RESULTS_WF {
             VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
             covariates_file_validated_log.collect(),
             regenie_step1_parsed_logs_ch.collect(),
-            REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
+            regenie_step2_parsed_logs.collect()
         )
         html_reports_ch = REPORT.out
     }
@@ -82,6 +83,7 @@ workflow PROCESS_GWAS_RESULTS_WF {
 workflow PROCESS_RAREVAR_RESULTS_WF {
     take:
     regenie_step2_by_phenotype
+    regenie_step2_parsed_logs
     
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
@@ -113,7 +115,7 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
             VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
             covariates_file_validated_log.collect(),
             regenie_step1_parsed_logs_ch.collect(),
-            REGENIE_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
+            regenie_step2_parsed_logs.collect()
         )
         html_reports_ch = REPORT.out
     }

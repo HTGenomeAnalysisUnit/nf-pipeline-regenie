@@ -1,7 +1,8 @@
 //Given a bgen file, use bgenix to extract the snp list and save it as a tab delimited file
 //The output file is a 6 column file using the same format as the .bim file
 process MAKE_SNPLIST {
-    label 'process_bgenix'
+    label 'split_data'
+    
     if (params.publish) {
         publishDir "${params.outdir}", mode: 'copy'
     }

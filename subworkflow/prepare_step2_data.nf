@@ -8,13 +8,11 @@ def check_size(file_glob, max_size) {
 }
 
 include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_PGEN", publish: params.save_pgen)
-include { MAKE_BGEN_INDEX  } from '../modules/local/make_bgen_index' addParams(outdir: "${params.outdir}/bgi_index", publish: params.save_bgen_index)
-include { MAKE_SNPLIST      } from '../modules/local/make_snplist' addParams(outdir: "${params.outdir}/snplist", publish: params.save_snplist)
+include { MAKE_BGEN_INDEX   } from '../modules/local/make_bgen_index'   addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_index)
+include { MAKE_BGEN_SAMPLE  } from '../modules/local/make_bgen_sample'  addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_sample)
+include { MAKE_SNPLIST      } from '../modules/local/make_snplist'      addParams(outdir: "${params.outdir}/snplist", publish: params.save_snplist)
 
 workflow PREPARE_GENETIC_DATA {
-    take:
-    chromosomes //a list of chromosome names to process
-    
     main:
     //First we check in which way input data is provided 
     //In the end we want to have a channel of tuples 
@@ -26,27 +24,28 @@ workflow PREPARE_GENETIC_DATA {
         switch(params.input_format) {
         case "vcf":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
-                .map { tuple(it[0], it[1], ("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]) }
+                .map { tuple(it[0], it[1], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.vcf.gz','')) }
+            genotypes_files = input_ch.filter { it[2] in params.chromosomes }
             break
         case "bgen":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
-                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), ("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]) }
+                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bgen','')) }
+            genotypes_files = input_ch.filter { it[3] in params.chromosomes }
             break
         case "bed":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{bed,bim,fam}", size:3, flat: true)
-                .map { tuple(it[0], it[1], it[2], it[3], ("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]) }
+                .map { tuple(it[0], it[1], it[2], it[3], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bed','')) }
+            genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         case "pgen":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{pgen,pvar,psam}", size:3, flat: true)
-                .map { tuple(it[0], it[1], it[2], it[3], ("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]) }
+                .map { tuple(it[0], it[1], it[3], it[2], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.pgen','')) }
+            genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         default:
             println "Unknown input format: ${params.input_format}"
             exit 1
         } 
-
-        //Now we filter out chromosomes that are not in the list
-        genotypes_files = input_ch.filter { it[2] in chromosomes }
     
     } else {
     //==== INPUT DATA IS PROVIDED IN A SINGLE FILE ====
@@ -76,14 +75,14 @@ workflow PREPARE_GENETIC_DATA {
         }
     }
     
+    //==== SET OUTPUT CHANNEL ====
+    genotypes_plink2_ch = genotypes_files
+
     //==== CONVERT TO PGEN IF INPUT IS VCF ====
     if (params.input_format == "vcf") {
         CONVERT_TO_PGEN ( genotypes_files )
         genotypes_plink2_ch = CONVERT_TO_PGEN.out.genotypes_data
-    } else {
-        genotypes_plink2_ch = genotypes_files
-    }
-
+    } 
     
     if (params.input_format == "bgen") {
         //==== MAKE BGI INDEX IF MISSING ====
@@ -96,10 +95,9 @@ workflow PREPARE_GENETIC_DATA {
         
         MAKE_BGEN_INDEX(check_bgi_ch.missing.map { tuple(it[0], it[1], it[3]) } )
         bgen_bgi_ch = check_bgi_ch.found
-            .mix(MAKE_BGEN_INDEX.out.bgen_with_index)
+            .mix(MAKE_BGEN_INDEX.out)
 
         //==== CHECK SAMPLE FILE FOR BGEN ====
-        file("${it[1].parent}/${it[1].baseName}.sample")
         //If a sample file is provided in params, this is used for all bgen files
         if (params.bgen_sample_file != 'NO_SAMPLE_FILE') {
             genotypes_bgen_and_sample = bgen_bgi_ch
@@ -117,7 +115,7 @@ workflow PREPARE_GENETIC_DATA {
 
         MAKE_BGEN_SAMPLE(check_sample_ch.missing.map { tuple(it[0], it[1], it[2], it[4]) } )
         genotypes_plink2_ch = check_sample_ch.found
-            .mix(MAKE_BGEN_SAMPLE.out.bgen_with_sample)
+            .mix(MAKE_BGEN_SAMPLE.out)
     }
 
     emit:

@@ -1,7 +1,7 @@
-include { QC_FILTER_GENOTYPED         } from '../modules/local/qc_filter_genotyped' addParams(logdir: "${params.outdir}/logs")
-include { PRUNE_GENOTYPED             } from '../modules/local/prune_genotyped' addParams(logdir: "${params.outdir}/logs")
-include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1' addParams(outdir: "${params.outdir}/regenie_step1_preds", logdir: "${params.outdir}/logs", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
-include { REGENIE_LOG_PARSER_STEP1    } from '../modules/local/regenie_log_parser_step1'  addParams(logdir: "${params.outdir}/logs")
+include { QC_FILTER_GENOTYPED                  } from '../modules/local/qc_filter_genotyped'        addParams(logdir: "${params.outdir}/logs")
+include { PRUNE_GENOTYPED                      } from '../modules/local/prune_genotyped'            addParams(logdir: "${params.outdir}/logs")
+include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1'              addParams(outdir: "${params.outdir}/regenie_step1_preds", logdir: "${params.outdir}/logs", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
+include { REGENIE_LOG_PARSER_STEP1             } from '../modules/local/regenie_log_parser_step1'   addParams(logdir: "${params.outdir}/logs")
 
 workflow REGENIE_STEP1_WF {
     take:

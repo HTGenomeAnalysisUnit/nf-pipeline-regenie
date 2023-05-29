@@ -2,16 +2,16 @@
 requiredParams = [
   'project', 'genotypes_array', 'genotypes_build',
   'phenotypes_filename', 'phenotypes_columns', 'phenotypes_binary_trait',
-  'chromosomes', 
-  'prune_enabled',         
-  'prune_maf',            
-  'prune_window_kbsize',  
-  'prune_step_size',     
-  'prune_r2_threshold',  
-  'qc_maf',                 
-  'qc_mac',                
-  'qc_geno',                
-  'qc_hwe',                  
+  'chromosomes',
+  'prune_enabled',
+  'prune_maf',
+  'prune_window_kbsize',
+  'prune_step_size',
+  'prune_r2_threshold',
+  'qc_maf',
+  'qc_mac',
+  'qc_geno',
+  'qc_hwe',
   'qc_mind',
   'regenie_bsize_step1',
   'step1_n_chunks',
@@ -147,17 +147,20 @@ include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scrip
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
 include { REGENIE_STEP1_WF            } from '../subworkflow/regenie_step1' addParams(outdir: "$outdir", chromosomes: chromosomes)
-include { REGENIE_STEP2_WF            } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes)
 include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
 
 
 //if (params.run_gwas) {
-  include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file)
-  include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes)
+  include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file, chromosomes: chromosomes)
+  include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
+  include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
+  include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 //}
 //if (params.run_rare_variants) {
-  include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file)
+  include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file, chromosomes: chromosomes)
   include { SPLIT_RAREVARIANT_DATA_WF        } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes)
+  include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes)
+  include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 //}
 
 
@@ -167,7 +170,7 @@ workflow NF_GWAS {
   //==== INITIAL LOGGING OF PARAMETERS ====
   log_params = [ 
   'genotypes_array','genotypes_imputed','genotypes_imputed_format',
-  'genotypes_build','imputed_snplist',
+  'genotypes_build',
   'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
   'covariates_filename','covariates_columns',
   'chromosomes',
@@ -220,31 +223,6 @@ or contact: edoardo.giacopuzzi@fht.org
     covariates_file_validated_log = Channel.fromPath("NO_COV_LOG")
   }
 
-  //==== PREPARE STEP2 INPUT DATA ====
-  gwas_data_input_ch = Channel.empty()
-  if (params.genotypes_imputed) {
-    PREPARE_GWAS_DATA(chromosomes)
-    if (params.step2_gwas_split) {
-      SPLIT_GWAS_DATA_WF(PREPARE_GWAS_DATA.out.processed_genotypes)
-      gwas_data_input_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
-    } else {
-      gwas_data_input_ch = PREPARE_GWAS_DATA.out.processed_genotypes
-        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
-    }
-  }
-  
-  rare_variants_input_ch = Channel.empty()
-  if (params.genotypes_rarevar) {
-    PREPARE_RAREVARIANT_DATA(chromosomes)
-    if (params.step2_rarevar_split) {
-      SPLIT_RAREVARIANT_DATA_WF(PREPARE_RAREVARIANT_DATA.out.processed_genotypes)
-      rare_variants_input_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
-    } else {
-      rare_variants_input_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
-        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
-    }
-  }
-
   //==== STEP 1 ====
   REGENIE_STEP1_WF (
     genotyped_plink_ch,
@@ -252,21 +230,62 @@ or contact: edoardo.giacopuzzi@fht.org
     covariates_file_validated,
     CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
   )
+
+  //==== STEP2 - GWAS ====
+  if (params.genotypes_imputed) {
+    //Prepare data for step 2
+    PREPARE_GWAS_DATA()
+    if (params.step2_gwas_split) {
+      SPLIT_GWAS_DATA_WF(PREPARE_GWAS_DATA.out.processed_genotypes)
+      gwas_data_input_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
+    } else {
+      gwas_data_input_ch = PREPARE_GWAS_DATA.out.processed_genotypes
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+    }
+
+    //Run regenie step 2
+    REGENIE_STEP2_GWAS_WF(
+      gwas_data_input_ch,
+      REGENIE_STEP1_WF.out.regenie_step1_out,
+      VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+      covariates_file_validated,
+      CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
+    )
+  }
   
-  //==== STEP 2 ====
-  REGENIE_STEP2_WF(
-    gwas_data_input_ch,
-    rare_variants_input_ch,
-    REGENIE_STEP1_WF.out.regenie_step1_out,
-    VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-    covariates_file_validated,
-    CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
-  )
+  //==== STEP2 - RARE VARIANTS ====
+  if (params.genotypes_rarevar) {
+    //Prpare data for step 2
+    PREPARE_RAREVARIANT_DATA()
+    if (params.step2_rarevar_split) {
+      SPLIT_RAREVARIANT_DATA_WF(PREPARE_RAREVARIANT_DATA.out.processed_genotypes)
+      rare_variants_input_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
+    } else {
+      rare_variants_input_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+    }
+
+    //Run regenie step 2
+    REGENIE_STEP2_RAREVAR_WF(
+      rare_variants_input_ch,
+      REGENIE_STEP1_WF.out.regenie_step1_out,
+      VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+      covariates_file_validated,
+      CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
+    )
+  }
 
   //==== PROCESS STEP2 RESULTS ====
+  REGENIE_STEP2_GWAS_WF.out.regenie_results.view()
   //Concatenate results, select top hits. For GWAS also annotate and clumping
-  PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_gwas_out)
-  PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_rarevar_out)
+  /*
+  if (params.genotypes_imputed) {
+    PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_gwas_out, PREPARE_GWAS_DATA.out.processed_genotypes, REGENIE_STEP2_WF.out.regenie_gwas_log)
+  }
+  if (params.genotypes_rarevar) {
+    PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_rarevar_out, REGENIE_STEP2_WF.out.regenie_rarevar_log)
+  }
+  */
 }
 
 workflow.onComplete {

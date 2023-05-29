@@ -3,24 +3,30 @@ workflow CLUMP_RESULTS {
         results //tuple val(phenotype), file(pheno_results_gz)
         genes_interval_hg19 //file
         genes_interval_hg38 //file
-        imputed_bgen //tuple(imputed_bgen_file.baseName, imputed_bgen_file, imputed_bgen_idx, bgen_sample)
+        processed_gwas_genotypes //[val(filename), file(bed_bgen_pgen), file(bim_bgi_pvam), file(fam_sample_psam), val(chrom)]
 
     main:
-        if (params.step2_split_by == 'no_split') {
-            CONVERT_TO_BED(imputed_bgen)
-            ld_panel_ch = CONVERT_TO_BED.out.collate(3)
-                    .map{ tuple('NO_SPLIT', it) }
-                    .transpose()
-        } else {
-            if (params.ld_panel == 'NO_LD_FILE') {
-                CONVERT_TO_BED(imputed_bgen)
-                chromosomes_ch = Channel.of(params.chromosomes).flatten()
-                ld_panel_ch = chromosomes_ch.combine(CONVERT_TO_BED.out.collate(3))
+        if (params.ld_panel == 'NO_LD_FILE') {
+            if (params.genotypes_imputed_format != 'bed') {
+                CONVERT_TO_BED(processed_gwas_genotypes)
+                bed_files_ch = CONVERT_TO_BED.out
             } else {
-                ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3)
+                bed_files_ch = processed_gwas_genotypes
+                    .map { tuple(it[4], it[1], it[2], it[3]) }
             }
+
+            bed_files_ch.branch { 
+                single_file: it[0] == 'ONE_FILE'
+                split_by_chr: true
+            } 
+            chromosomes_ch = Channel.of(params.chromosomes)
+            ld_panel_part1_ch = chromosomes_ch.combine(bed_files_ch.single_file)
+            ld_panel_ch = ld_panel_part1_ch.mix(bed_files_ch.split_by_chr)
+        } else {
+            ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3, flat: true)
+                .map { tuple(("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ], it[1], it[2], it[3]) }
         }
-        
+                
         clump_input_ch = results.combine(ld_panel_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
         merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple()
@@ -34,31 +40,34 @@ process CONVERT_TO_BED {
     label 'process_plink2'
     
     input:
-        tuple val(bgen_prefix), file(imputed_bgen_file), file(dummy_index), file(sample_file)
+        tuple val(filename), file(bgen_pgen), file(bgi_pvar), file(sample_psam), val(chrom)
 
     output:
-        path "${bgen_prefix}.{bed,bim,fam}"
+        tuple val(chrom), file("${filename}.bed"), file("${filename}.bim"), file("${filename}.fam")
 
     script:
-    def bgen_sample = sample_file.exists() ? "--sample $sample_file" : ''
+    def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def format = params.genotypes_imputed_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
+    def fileprefix = bed_bgen_pgen.simpleName
+    def extension = params.genotypes_imputed_format == 'bgen' ? 'bgen ref-first' : ''
     """
     plink2 \
-    --bgen $imputed_bgen_file ref-first \
+    --${format} ${fileprefix}.${extension} \
     --make-bed \
     --memory ${task.memory.toMega()} \
     --threads ${task.cpus} \
     $bgen_sample \
-    --out ${bgen_prefix} 
+    --out ${filename} 
     """
 }
 
 process PLINK_CLUMPING {
-    publishDir "${params.outdir}/logs/${phenotype}_clump", mode: 'copy', pattern: '*.log'
+    publishDir "${params.logdir}/${phenotype}_clump", mode: 'copy', pattern: '*.log'
     label 'plink_clump'
     tag "${phenotype}_${chrom}"
 
     input:
-        tuple val(phenotype), file(pheno_results_gz), val(chrom), file(bfile)
+        tuple val(phenotype), file(pheno_results_gz), val(chrom), file(bed), file(bim), file(fam)
         path genes_hg19, stageAs: 'hg19_genes'
         path genes_hg38, stageAs: 'hg38_genes'
 
@@ -67,7 +76,7 @@ process PLINK_CLUMPING {
         path "${output_prefix}.log", emit: logs
 
     script:
-    def bfile_prefix = bfile[0].simpleName
+    def bfile_prefix = bed.simpleName
     def genes_ranges = params.genotypes_build == 'hg19' ? "hg19_genes" : "hg38_genes"
     def target_chrom = chrom != 'NO_SPLIT' ? "--chr ${chrom}" : ''
     output_prefix = chrom != 'NO_SPLIT' ? "${chrom}" : "${bfile_prefix}"
@@ -94,7 +103,7 @@ process PLINK_CLUMPING {
 }
 
 process MERGE_CLUMP_RESULTS {
-    publishDir "${params.outdir}/results/toploci", mode: 'copy'
+    publishDir "${params.outdir}/toploci", mode: 'copy'
     label 'merge_clump'
     tag "${phenotype}"
 

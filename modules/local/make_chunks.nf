@@ -1,19 +1,21 @@
 process MAKE_VARIANTS_CHUNKS {
+    label 'split_data'
+    
     if (params.publish) {
-        publishDir "${params.outdir}", mode: 'copy', pattern: "${filename}.GWAS-chunks.txt"
+        publishDir "${params.outdir}", mode: 'copy', pattern: "*.GWAS-chunks.txt"
     }
 
     input:
-        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), file(snplist_file)
+        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(snplist_file, stageAs: 'snplist.tsv')
 
     output:
-        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), file("${filename}.GWAS-chunks.txt")
+        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path("${filename}.GWAS-chunks.txt")
 
     script:
     def pos_idx = snplist_file.extension == "pvar" ? 2 : 4
     def chromosomes_list = chrom == "ONE_FILE" ? params.chromosomes.join(" ") : "$chrom"
     """
-    grep -v "#"  $snplist_file | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'
+    grep -v "#"  snplist.tsv | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'
     for c in $chromosomes_list
     do 
         if [ -f \$c.snps ]
@@ -27,21 +29,23 @@ process MAKE_VARIANTS_CHUNKS {
 }
 
 process MAKE_GENES_CHUNKS {
+    label 'split_data'
+    
     if (params.publish) {
-        publishDir "${params.outdir}", mode: 'copy', pattern: "${filename}.rarevar-chunks.chr*"
+        publishDir "${params.outdir}", mode: 'copy', pattern: "*.rarevar-chunks.chr*"
     }
 
     input:
-        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), file(set_list_file)
+        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(set_list_file)
         //set list file according to regenie specs: gene_name, chrom, start_pos, list of vars
 
     output:
-        tuple val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), file("${filename}.rarevar-chunks.chr*")
+        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path("${filename}.rarevar-chunks.chr*")
 
     script:
     def chromosomes_list = chrom == "ONE_FILE" ? params.chromosomes.join(" ") : "$chrom"
     """
-    grep -v "#"  $set_list_file | awk '{print \$1 >> \$2".genes"}'
+    grep -v "#" $set_list_file | awk '{print \$1 >> \$2".genes"}'
     for c in $chromosomes_list
     do 
         if [ -f \$c.genes ]

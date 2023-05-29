@@ -1,7 +1,6 @@
-include { MAKE_SNPLIST          } from '../modules/local/make_snplist' addParams(outdir: "${params.outdir}/snplist")
-include { MAKE_VARIANTS_CHUNKS  } from '../modules/local/make_chunkxs' addParams(outdir: "${params.outdir}/step2_chunks", chromosomes: params.chromosome, publish: params.save_chunks_file)
-include { MAKE_GENES_CHUNKS  } from '../modules/local/make_chunkxs' addParams(outdir: "${params.outdir}/step2_chunks", chromosomes: params.chromosome, publish: params.save_chunks_file)
-
+include { MAKE_SNPLIST          } from '../modules/local/make_snplist'  addParams(outdir: "${params.outdir}/snplist")
+include { MAKE_VARIANTS_CHUNKS  } from '../modules/local/make_chunks'   addParams(outdir: "${params.outdir}/step2_chunks", chromosomes: params.chromosomes, publish: params.save_chunks_file)
+include { MAKE_GENES_CHUNKS     } from '../modules/local/make_chunks'   addParams(outdir: "${params.outdir}/step2_chunks", chromosomes: params.chromosomes, publish: params.save_chunks_file)
 
 workflow SPLIT_GWAS_DATA_WF {
     take:
