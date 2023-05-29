@@ -150,7 +150,7 @@ process RUNL1 {
     --keep-l0 --gz --verbose \
     --out regenie_step1_out
 
-    sed -i 's|\$PWD/||g' regenie_step1_out_pred.list
+    sed -i "s|\$PWD/||g" regenie_step1_out_pred.list
   """
 }
 

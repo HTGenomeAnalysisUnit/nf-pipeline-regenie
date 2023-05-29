@@ -3,8 +3,8 @@ process REGENIE_STEP2_GWAS {
     publishDir "${params.outdir}", mode: 'copy', pattern: '*.log'
   }
 
-  label "regenie2_chr"
-  tag "${plink_bgen_file.simpleName}"
+  label "step2_bychunk" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  tag "${filename}_${chrom}_${chunk}"
 
   input:
 	  path(step1_out)
@@ -19,7 +19,7 @@ process REGENIE_STEP2_GWAS {
   script:
     def format = params.genotypes_imputed_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
     def fileprefix = bed_bgen_pgen.simpleName
-    def extension = params.genotypes_imputed_format == 'bgen' ? 'bgen' : ''
+    def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen' : ''
     def split_region = chunk == 'SINGLE_CHUNK' ? '' : "--range $chunk"
     def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
     def test = params.regenie_gwas_test != 'additive' ? "--test ${params.regenie_gwas_test}" : ''
@@ -38,7 +38,7 @@ process REGENIE_STEP2_GWAS {
   """
   regenie \
     --step 2 \
-    --${format} ${fileprefix}.${extension} \
+    --${format} ${fileprefix}${extension} \
     --chrList ${params.chromosomes.join(',')} \
     --phenoFile ${phenotypes_file} \
     --phenoColList ${params.phenotypes_columns} \
@@ -69,8 +69,8 @@ process REGENIE_STEP2_RAREVARS {
     publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
   }
 
-  label "regenie2_chr"
-  tag "${plink_bgen_file.simpleName}"
+  label "step2_bychunk" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  tag "${filename}_${chrom}_${chunk}"
 
   input:
 	  path(step1_out)

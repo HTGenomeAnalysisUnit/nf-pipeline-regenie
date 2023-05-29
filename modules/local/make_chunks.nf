@@ -12,7 +12,7 @@ process MAKE_VARIANTS_CHUNKS {
         tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path("${filename}.GWAS-chunks.txt")
 
     script:
-    def pos_idx = snplist_file.extension == "pvar" ? 2 : 4
+    def pos_idx = params.snplist_type == "pgen" ? 2 : 4
     def chromosomes_list = chrom == "ONE_FILE" ? params.chromosomes.join(" ") : "$chrom"
     """
     grep -v "#"  snplist.tsv | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'

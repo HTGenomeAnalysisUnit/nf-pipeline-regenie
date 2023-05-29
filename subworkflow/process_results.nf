@@ -23,7 +23,7 @@ if (params.genes_ranges) {
 include { FILTER_RESULTS    } from '../modules/local/filter_results'
 include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}/results", annotation_interval_kb: params.annotation_interval_kb)
 if (params.clumping) {
-  include { CLUMP_RESULTS } from '../modules/local/clump_results' addParams(outdir: "${params.outdir}/results", logdir: "${params.outdir}/log", chromosomes: params.chromosomes)
+  include { CLUMP_RESULTS } from './clump_results' addParams(outdir: "${params.outdir}/results", logdir: "${params.outdir}/log", chromosomes: params.chromosomes)
 }
 
 workflow PROCESS_GWAS_RESULTS_WF {
@@ -60,7 +60,6 @@ workflow PROCESS_GWAS_RESULTS_WF {
         .join(clump_results_ch, by: 0, remainder: true)
 
     //==== GENERATE HTML REPORTS ====
-    //Ideally we can mix filtered_annotated channels for both rare vars and gwas and run reports for all
     html_reports_ch = Channel.empty()
     if (params.make_report) {
         REPORT (
@@ -105,7 +104,8 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
        //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
 
     //==== GENERATE HTML REPORTS ====
-    //Ideally we can mix filtered_annotated channels for both rare vars and gwas and run reports for all
+    //TODO: completes rarevar_report_template so we can test this
+    /*
     html_reports_ch = Channel.empty()
     if (params.make_report) {
         REPORT (
@@ -119,6 +119,7 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
         )
         html_reports_ch = REPORT.out
     }
+    */
 
     emit:
     processed_results = merged_results_and_annotated_filtered
