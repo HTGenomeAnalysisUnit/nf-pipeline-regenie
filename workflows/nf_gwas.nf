@@ -153,13 +153,13 @@ include { REPORT                      } from '../modules/local/report'  addParam
 //if (params.run_gwas) {
   include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file, chromosomes: chromosomes)
   include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-  include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
+  include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false)
   include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 //}
 //if (params.run_rare_variants) {
   include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file, chromosomes: chromosomes)
   include { SPLIT_RAREVARIANT_DATA_WF        } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-  include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes)
+  include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(outdir: "$outdir", chromosomes: chromosomes, rarevar_results: true)
   include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 //}
 
@@ -169,13 +169,15 @@ workflow NF_GWAS {
 
   //==== INITIAL LOGGING OF PARAMETERS ====
   log_params = [ 
-  'genotypes_array','genotypes_imputed','genotypes_imputed_format',
+  'genotypes_array',
+  'genotypes_imputed', 'genotypes_imputed_format',
+  'genotypes_rarevar', 'genotypes_rarevar_format',
   'genotypes_build',
   'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
   'covariates_filename','covariates_columns',
   'chromosomes',
   'regenie_test','annotation_min_log10p',
-  'save_step1_predictions','outdir'
+  'save_step1_predictions'
   ]
   log_params_string = []
   for (p in log_params) {
@@ -187,6 +189,7 @@ log.info"""\
   REGENIE GWAS - PROJECT ${params.project} - NF PIPELINE    
 ==========================================================
 PROJECT ID      : ${params.project}
+OUTDIR          : ${outdir}
 
 ${log_params_string.join('\n')}
 ==========================================================
@@ -255,8 +258,10 @@ or contact: edoardo.giacopuzzi@fht.org
   
   //==== STEP2 - RARE VARIANTS ====
   if (params.genotypes_rarevar) {
+    println "Entering rare vars"
     //Prpare data for step 2
     PREPARE_RAREVARIANT_DATA()
+    PREPARE_RAREVARIANT_DATA.out.processed_genotypes.view()
     if (params.step2_rarevar_split) {
       SPLIT_RAREVARIANT_DATA_WF(PREPARE_RAREVARIANT_DATA.out.processed_genotypes)
       rare_variants_input_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
@@ -276,14 +281,14 @@ or contact: edoardo.giacopuzzi@fht.org
   }
 
   //==== PROCESS STEP2 RESULTS ====
-  REGENIE_STEP2_GWAS_WF.out.regenie_results.view()
+  //REGENIE_STEP2_GWAS_WF.out.regenie_results.view()
   //Concatenate results, select top hits. For GWAS also annotate and clumping
-  /*
   if (params.genotypes_imputed) {
-    PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_gwas_out, PREPARE_GWAS_DATA.out.processed_genotypes, REGENIE_STEP2_WF.out.regenie_gwas_log)
+    PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_GWAS_WF.out.regenie_results, PREPARE_GWAS_DATA.out.processed_genotypes)
   }
+  /*
   if (params.genotypes_rarevar) {
-    PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_WF.out.regenie_rarevar_out, REGENIE_STEP2_WF.out.regenie_rarevar_log)
+    PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_RAREVAR_WF.out.regenie_results)
   }
   */
 }

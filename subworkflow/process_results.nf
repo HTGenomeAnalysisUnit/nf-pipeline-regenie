@@ -30,7 +30,6 @@ workflow PROCESS_GWAS_RESULTS_WF {
 	take:
     regenie_step2_by_phenotype
     processed_gwas_genotypes
-    regenie_step2_parsed_logs
 
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
@@ -60,6 +59,7 @@ workflow PROCESS_GWAS_RESULTS_WF {
         .join(clump_results_ch, by: 0, remainder: true)
 
     //==== GENERATE HTML REPORTS ====
+    /*
     html_reports_ch = Channel.empty()
     if (params.make_report) {
         REPORT (
@@ -67,16 +67,17 @@ workflow PROCESS_GWAS_RESULTS_WF {
             VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
             gwas_report_template,
             VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-            covariates_file_validated_log.collect(),
-            regenie_step1_parsed_logs_ch.collect(),
-            regenie_step2_parsed_logs.collect()
+            covariates_file_validated_log,
+            regenie_step1_parsed_logs,
+            regenie_step2_parsed_logs
         )
         html_reports_ch = REPORT.out
     }
+    */
 
     emit:
     processed_results = merged_results_and_annotated_filtered
-    html_reports = html_reports_ch
+    //html_reports = html_reports_ch
 }
 
 workflow PROCESS_RAREVAR_RESULTS_WF {

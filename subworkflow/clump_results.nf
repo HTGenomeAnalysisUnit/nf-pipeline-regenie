@@ -27,8 +27,9 @@ workflow CLUMP_RESULTS {
             ld_panel_part1_ch = chromosomes_ch.combine(bed_files_ch.single_file)
             ld_panel_ch = ld_panel_part1_ch.mix(bed_files_ch.split_by_chr)
         } else {
+            def pattern = "${params.ld_panel.replace('{CHROM}', '(.+)').replace('/', '\\/')}"
             ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3, flat: true)
-                .map { tuple(("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ], it[1], it[2], it[3]) }
+                .map { tuple((("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bed',''), it[1], it[2], it[3]) }
         }
                 
         clump_input_ch = results.combine(ld_panel_ch)
