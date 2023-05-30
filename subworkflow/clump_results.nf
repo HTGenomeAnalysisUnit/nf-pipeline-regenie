@@ -1,6 +1,7 @@
 include { CONVERT_TO_BED        } from '../modules/local/variant_clumping'
 include { PLINK_CLUMPING        } from '../modules/local/variant_clumping'
 include { MERGE_CLUMP_RESULTS   } from '../modules/local/variant_clumping'
+include { CHECK_CHANNEL_SIZE    } from '../modules/local/check_channel_size'
 
 workflow CLUMP_RESULTS {
     take:
@@ -31,7 +32,8 @@ workflow CLUMP_RESULTS {
             ld_panel_ch = Channel.fromFilePairs("${params.ld_panel.replace('{CHROM}','*')}.{bed,bim,fam}", size:3, flat: true)
                 .map { tuple((("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bed',''), it[1], it[2], it[3]) }
         }
-                
+        
+        CHECK_CHANNEL_SIZE(ld_panel_ch.count(), params.chromosomes.size(), "LD panel files")
         clump_input_ch = results.combine(ld_panel_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
         merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple()

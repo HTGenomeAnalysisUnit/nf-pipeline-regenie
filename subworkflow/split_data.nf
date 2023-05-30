@@ -41,7 +41,6 @@ workflow SPLIT_RAREVARIANT_DATA_WF {
     take:
     genotypes_files //[val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom)]
                     // chrom = "ONE_FILE" if we don't split by chromosome
-    set_list_file //set list file according to regenie specs: gene_name, chrom, start_pos, list of vars
     
     main:
     genotypes_set_list = genotypes_files

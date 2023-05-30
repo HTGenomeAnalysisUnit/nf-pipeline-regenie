@@ -1,16 +1,8 @@
-def check_size(file_glob, max_size) {
-    def files = file(file_glob)
-    def size = files.size()
-    if (size > max_size) {
-        println "ERROR: ${file_glob} returns ${size} files, but only ${max_size} are allowed"
-        exit 1
-    }
-}
-
 include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_PGEN", publish: params.save_pgen)
 include { MAKE_BGEN_INDEX   } from '../modules/local/make_bgen_index'   addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_index)
 include { MAKE_BGEN_SAMPLE  } from '../modules/local/make_bgen_sample'  addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_sample)
 include { MAKE_SNPLIST      } from '../modules/local/make_snplist'      addParams(outdir: "${params.outdir}/snplist", publish: params.save_snplist)
+include { CHECK_MAX_CHANNEL_SIZE } from '../modules/local/check_channel_size'
 
 workflow PREPARE_GENETIC_DATA {
     main:
@@ -48,10 +40,7 @@ workflow PREPARE_GENETIC_DATA {
         } 
     
     } else {
-    //==== INPUT DATA IS PROVIDED IN A SINGLE FILE ====
-        //Check we have a single input file
-        check_size(params.genotypes_data, 1)
-       
+    //==== INPUT DATA IS PROVIDED IN A SINGLE FILE ==== 
         switch(params.input_format) {
         case "vcf":
             genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
@@ -73,6 +62,8 @@ workflow PREPARE_GENETIC_DATA {
             println "Unknown input format: ${params.input_format}"
             exit 1
         }
+        //Check we have a single input file
+        CHECK_MAX_CHANNEL_SIZE(genotypes_files.count(), 1, "genotypes_files")
     }
     
     //==== SET OUTPUT CHANNEL ====
