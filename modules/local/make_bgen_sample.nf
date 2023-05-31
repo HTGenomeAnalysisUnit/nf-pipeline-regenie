@@ -8,10 +8,10 @@ process MAKE_BGEN_SAMPLE {
     tuple val(filename), file(bgen_file), file(bgi_file), val(chrom)
 
   output:
-    tuple val(filename), path(bgen_file), path(bgi_file), file("${bgen_file.simpleName}.sample"), val(chrom)
+    tuple val(filename), path(bgen_file), path(bgi_file), file("${bgen_file.baseName}.sample"), val(chrom)
 
 script:
 """
-qctool -g ${bgen_file} -os ${bgen_file.simpleName}.sample
+qctool -g ${bgen_file} -os ${bgen_file.baseName}.sample
 """
 }

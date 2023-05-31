@@ -28,7 +28,23 @@ workflow REGENIE_STEP1_WF {
     }
 
     //==== REGENIE STEP 1 ====
-    if (!params.regenie_premade_predictions){
+    if (params.regenie_skip_predictions) {
+        //skip step 1 predictions completely
+        regenie_step1_out_ch = Channel.fromPath("NO_PREDICTIONS")
+        regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
+    } else if (params.regenie_premade_predictions) {
+        /* 
+        You can load pre-made regenie level 1 preds. 
+        You must specify a path of /my/path/regenie_step1_out* 
+        A file named regenie_step1_out_pred.list must be present together with files like
+        regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ... (one per phenotype)
+        These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
+        used to generate step1 predictions (both files and column designation must match exactly)
+        */
+        regenie_step1_out_ch = Channel
+            .fromPath(params.regenie_premade_predictions, checkIfExists: true)
+        regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
+    } else {
         REGENIE_STEP1 (
             genotyped_final_ch,
             QC_FILTER_GENOTYPED.out.genotyped_filtered_snplist_ch,
@@ -44,18 +60,6 @@ workflow REGENIE_STEP1_WF {
 
         regenie_step1_out_ch = REGENIE_STEP1.out.regenie_step1_out
         regenie_step1_parsed_logs_ch = REGENIE_LOG_PARSER_STEP1.out.regenie_step1_parsed_logs
-    } else {
-        /* 
-        You can load pre-made regenie level 1 preds. 
-        You must specify a path of /my/path/regenie_step1_out* 
-        A file named regenie_step1_out_pred.list must be present together with files like
-        regenie_step1_out_1.loco.gz, regenie_step1_out_2.loco.gz, ... (one per phenotype)
-        These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
-        used to generate step1 predictions (both files and column designation must match exactly)
-        */
-        regenie_step1_out_ch = Channel
-            .fromPath(params.regenie_premade_predictions, checkIfExists: true)
-        regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
     }
 
     emit:

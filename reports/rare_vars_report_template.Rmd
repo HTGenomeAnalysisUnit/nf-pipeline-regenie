@@ -11,11 +11,11 @@ params:
   project: test-gwas
   date: 2021-08-09
   version: v0.2
-  regenie_merged: caucasians_bmi_age_sex_pcs_cov_chr22_p21001_i0.regenie.gz
+  regenie_merged: /ssu/gassu/shared/regenie_burden_example/caucasians_bmi_age_sex_pcs_cov_chr22_p21001_i0.regenie.gz
   regenie_filename: caucasians_bmi_age_sex_pcs_cov_chr22_p21001_i0.regenie.gz
-  phenotype: p21001
-  covariates: SEX
-  phenotype_file: phenos_quant.pheno.validated.txt
+  phenotype: p21001_i0
+  covariates: p21022,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10,PC11,PC12,PC13,PC14,PC15,PC16,PC17,PC18,PC19,PC20
+  phenotype_file: /ssu/gassu/shared/test_new_gwas_pipe/regenie_pheno_input_withPCs.tabsep.tsv
   regenie_step1_log: test-ukbb-quant.step1.log
   regenie_step2_log: test-ukbb-quant.step2.log
   phenotype_log: phenos_quant.pheno.validated.log
@@ -84,22 +84,22 @@ dt <- fread(params$regenie_merged)
 setnames(dt, c("CHROM", "GENPOS", "LOG10P"), c("chr","pos","pvalue"))
 
 dt_clean <- dt %>% 
-  mutate(
-    ID=gsub("(.+)\\((ENSG[0-9]+)\\)\\.([^.]+)\\.(.+)","\\1@\\2@\\3@\\4", dt$ID) 
-  ) %>% 
-  separate(ID,c("GENE_NAME", "GENE_ID", "MASK","AFBIN"),sep = '@',extra = "merge") %>%
-  mutate(rsid = GENE_NAME)
+  #mutate(
+  #  ID=gsub("(.+)\\((ENSG[0-9]+)\\)\\.([^.]+)\\.(.+)","\\1@\\2@\\3@\\4", dt$ID) 
+  #) %>% 
+  separate(ID,c("GENE", "MASK","AFBIN"),sep = '\\.',extra = "merge") %>%
+  mutate(rsid = GENE)
 ```
 
-```{r, fig.height=600, fig.width=600}
+```{r, fig.height=400, fig.width=400}
 dt_top_per_gene <- dt_clean %>%
-  group_by(GENE_ID) %>% slice_max(pvalue, n=1)
+  group_by(GENE) %>% slice_max(pvalue, n=1)
 
 p1 <- fast_manhattan(
   dt_top_per_gene,log10p = F,
   build='hg19', speed = "f", 
   color1 = "grey", color2 = "orange", pointsize = 2,
-  highlight = dt_top_per_gene[dt_top_per_gene$pvalue > 3,]$GENE_NAME,
+  highlight = dt_top_per_gene[dt_top_per_gene$pvalue > 3,]$GENE,
     
 ) +
   geom_hline(yintercept = 3, linetype ="longdash", color ="firebrick") +
@@ -113,14 +113,14 @@ p1 <- fast_manhattan(
       axis.ticks = element_line(color = "black")
       )
 
-if(!params$manhattan_annotation_enabled) {
-  p2 <- p1
-} else {
-  p2 <- p1 + ggrepel::geom_text_repel(data = . %>% filter(pvalue >= 3) %>% 
-                                        group_by(GENE_ID) %>% slice(1), 
-                             aes(label=GENE_NAME), color =1)
-}
-p2
+# if(!params$manhattan_annotation_enabled) {
+#   p2 <- p1
+# } else {
+#   p2 <- p1 + ggrepel::geom_text_repel(data = . %>% filter(pvalue >= 3) %>% 
+#                                         group_by(GENE) %>% slice(1), 
+#                              aes(label=GENE), color =1)
+# }
+p1
 ```
 
 ## Top hits

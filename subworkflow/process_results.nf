@@ -1,7 +1,3 @@
-//Rmd template files
-gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
-//rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.Rmd",checkIfExists: true)
-
 //Annotation files
 if (params.genes_bed) {
   genes_bed_hg19 = file(params.genes_bed)
@@ -58,23 +54,6 @@ workflow PROCESS_GWAS_RESULTS_WF {
         .join(ANNOTATE_FILTERED.out.annotated_ch, by: 0)
         .join(clump_results_ch, by: 0, remainder: true)
 
-    //==== GENERATE HTML REPORTS ====
-    /*
-    html_reports_ch = Channel.empty()
-    if (params.make_report) {
-        REPORT (
-            merged_results_and_annotated_filtered,
-            VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-            gwas_report_template,
-            VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-            covariates_file_validated_log,
-            regenie_step1_parsed_logs,
-            regenie_step2_parsed_logs
-        )
-        html_reports_ch = REPORT.out
-    }
-    */
-
     emit:
     processed_results = merged_results_and_annotated_filtered
     //html_reports = html_reports_ch
@@ -83,7 +62,6 @@ workflow PROCESS_GWAS_RESULTS_WF {
 workflow PROCESS_RAREVAR_RESULTS_WF {
     take:
     regenie_step2_by_phenotype
-    regenie_step2_parsed_logs
     
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
@@ -104,25 +82,6 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
         .join(FILTER_RESULTS.out.results_filtered, by: 0)
        //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
 
-    //==== GENERATE HTML REPORTS ====
-    //TODO: completes rarevar_report_template so we can test this
-    /*
-    html_reports_ch = Channel.empty()
-    if (params.make_report) {
-        REPORT (
-            merged_results_and_annotated_filtered,
-            VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-            rarevar_report_template,
-            VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-            covariates_file_validated_log.collect(),
-            regenie_step1_parsed_logs_ch.collect(),
-            regenie_step2_parsed_logs.collect()
-        )
-        html_reports_ch = REPORT.out
-    }
-    */
-
     emit:
     processed_results = merged_results_and_annotated_filtered
-    html_reports = html_reports_ch
 }
