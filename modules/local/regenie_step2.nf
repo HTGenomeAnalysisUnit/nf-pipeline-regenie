@@ -70,7 +70,7 @@ process REGENIE_STEP2_RAREVARS {
   }
 
   label "step2_bychunk" //FIXME Need to use a params to select based on running by chunk or whole dataset
-  tag "${filename}_${chrom}_${chunk}"
+  tag "${filename}_${chrom}_${gene}"
 
   input:
 	  path(step1_out)
@@ -82,14 +82,14 @@ process REGENIE_STEP2_RAREVARS {
     path rarevars_mask_file
 
   output:
-    tuple val(filename), val(chrom), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
-    path "${filename}_${chunk}.log", emit: regenie_step2_out_log
+    tuple val(filename), val(chrom), val(gene), path("*regenie.gz"), emit: regenie_step2_out
+    path "${filename}_${gene}.log", emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_rarevar_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
-    def fileprefix = bed_bgen_pgen.simpleName
-    def extension = params.genotypes_rarevar_format == 'bgen' ? 'bgen' : ''
-    def split_genes = chunk == 'SINGLE_CHUNK' ? '' : "--extract-sets $gene"
+    def format = params.genotypes_rarevar_format == 'vcf' ? 'pgen' : "${params.genotypes_rarevar_format}"
+    def fileprefix = bed_bgen_pgen.baseName
+    def extension = params.genotypes_rarevar_format == 'bgen' ? '.bgen' : ''
+    def split_genes = gene == 'SINGLE_CHUNK' ? '' : "--extract-sets $gene"
     def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
     def bgen_sample = params.genotypes_rarevar_format == 'bgen' ? "--sample $fam_sample_psam" : ''
     def build_mask = params.regenie_build_mask ? "--build-mask ${params.regenie_build_mask}" : ''
@@ -102,7 +102,7 @@ process REGENIE_STEP2_RAREVARS {
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
     def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
-    def vc_tests = params.rarevars_vc_test ? "--vc-tests ${params.rarevars_vc_test}" : ''
+    def vc_tests = params.rarevars_vc_test ? "--vc-tests ${params.rarevars_vc_test.toLowerCase()}" : ''
     def vc_maxAAF = params.rarevars_vc_maxAAF ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
@@ -110,7 +110,7 @@ process REGENIE_STEP2_RAREVARS {
   """
   regenie \
     --step 2 \
-    --${format} ${fileprefix}.${extension} \
+    --${format} ${fileprefix}${extension} \
     --anno-file $rarevars_anno_file \
     --set-list $rarevars_set_list \
     --mask-def $rarevars_mask_file \
@@ -137,7 +137,7 @@ process REGENIE_STEP2_RAREVARS {
     $maxCatLevels \
     $build_mask \
     $write_mask_snplist \
-    --out ${filename}_${chrom}_${gene}
+    --out ${filename}_${chrom}_${gene.simpleName}
   """
 }
 

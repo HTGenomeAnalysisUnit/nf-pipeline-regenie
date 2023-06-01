@@ -243,5 +243,5 @@ datatable(step2_log)
 ---
 
 <small>
-This report has been created with **[nf-fast-regenie `r params$version`](https://github.com/genepi/nf-gwas)**, a nextflow pipeline developed by [Edoardo Giacopuzzi](mailto:edoardo.giacopuzzi@fht.org) at the Human Technopole Foundation, Milan, Italy. 
+This report has been created with **[nf-fast-regenie `r params$version`](https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie)**, a nextflow pipeline developed by [Edoardo Giacopuzzi](mailto:edoardo.giacopuzzi@fht.org) at the Human Technopole Foundation, Milan, Italy. 
 </small>

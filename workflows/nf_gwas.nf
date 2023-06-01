@@ -147,7 +147,8 @@ include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scrip
 include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
 include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
 include { REGENIE_STEP1_WF            } from '../subworkflow/regenie_step1' addParams(outdir: "$outdir", chromosomes: chromosomes)
-include { REPORT                      } from '../modules/local/report'  addParams(outdir: "$outdir")
+include { REPORT_GWAS                 } from '../modules/local/report'  addParams(outdir: "$outdir")
+include { REPORT_RAREVAR              } from '../modules/local/report'  addParams(outdir: "$outdir")
 
 
 //if (params.run_gwas) {
@@ -261,7 +262,7 @@ or contact: edoardo.giacopuzzi@fht.org
     //==== GENERATE HTML REPORTS ====
     if (params.make_report) {
       gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
-      REPORT (
+      REPORT_GWAS (
           PROCESS_GWAS_RESULTS_WF.out.processed_results,
           VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
           gwas_report_template,
@@ -275,7 +276,6 @@ or contact: edoardo.giacopuzzi@fht.org
   
   //==== STEP2 AND REPORTS - RARE VARIANTS ====
   if (params.genotypes_rarevar) {
-    println "Entering rare vars"
     //Prpare data for step 2
     PREPARE_RAREVARIANT_DATA()
     
@@ -300,19 +300,16 @@ or contact: edoardo.giacopuzzi@fht.org
     PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_RAREVAR_WF.out.regenie_results)
 
     //==== GENERATE HTML REPORTS ====
-    //TODO: completes rarevar_report_template so we can test this
-    /*
-    html_reports_ch = Channel.empty()
     if (params.make_report) {
-      //rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.Rmd",checkIfExists: true)
+      rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.Rmd",checkIfExists: true)
       REPORT (
-          merged_results_and_annotated_filtered,
-          VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-          rarevar_report_template,
-          VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-          covariates_file_validated_log.collect(),
-          regenie_step1_parsed_logs_ch.collect(),
-          regenie_step2_parsed_logs.collect()
+        PROCESS_RAREVAR_RESULTS_WF.out.processed_results,
+        VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
+        rarevar_report_template,
+        VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
+        covariates_file_validated_log,
+        REGENIE_STEP1_WF.out.regenie_step1_parsed_logs.collect(),
+        REGENIE_STEP2_GWAS_WF.out.regenie_log.first()
       )
       html_reports_ch = REPORT.out
     }
