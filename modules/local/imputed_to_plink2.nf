@@ -12,11 +12,13 @@ process CONVERT_TO_PGEN {
     path("${vcf_file.baseName}.pvar"), emit: variants_pvar
 
 script:
+def dosage_certainty = params.import_dosage_certainty ? "--import-dosage-certainty ${params.import_dosage_certainty}" : ''
 """
 plink2 \
-  --vcf $vcf_file dosage=DS \
+  --vcf $vcf_file dosage=${params.dosage_from} \
   --make-pgen \
   --double-id \
+  ${dosage_certainty} \
   --out ${vcf_file.baseName} \
   --threads ${task.cpus} \
   --memory ${task.memory.toMega()}

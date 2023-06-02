@@ -3,7 +3,7 @@ process REGENIE_STEP2_GWAS {
     publishDir "${params.outdir}", mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_bychunk" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  label "step2_gwas" //FIXME Need to use a params to select based on running by chunk or whole dataset
   tag "${filename}_${chrom}_${chunk}"
 
   input:
@@ -69,7 +69,7 @@ process REGENIE_STEP2_RAREVARS {
     publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_bychunk" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset
   tag "${filename}_${chrom}_${gene}"
 
   input:
@@ -137,30 +137,7 @@ process REGENIE_STEP2_RAREVARS {
     $maxCatLevels \
     $build_mask \
     $write_mask_snplist \
-    --out ${filename}_${chrom}_${gene.simpleName}
+    --out ${filename}_${chrom}_${task.index}
   """
 }
 
-
-/*
-- read from bed / bim / fam, bgen or VCF
-- additional inputs: mask file, annotation file, set list file, 
-- optional inputs: external aaf file, 
-- separate minMAC for rare
-- options: --aaf-bins, --vs-test, --vc-maxAAF
-- optional output mask snp list: --write-mask-snplist
-
-- split by chr based on file glob pattern
-- split by gene --> with a single file --extract-setlist to extract a specific gene in the set list file
-                --> with multiple files by chr we must join by chr first
-- use 2 separate input dataset for common step2 and rare step2
-- split present workflow into sub-workflows 
-        --> processing of pheno and covars remain the same
-        --> a common step1 sub-workflow 
-        --> common vars step2 sub-wf 
-        --> rare vars step2 sub-wf
-
-- eventually collect results by chr, or by gene 
-- prepare rare vars report 
-
-*/
