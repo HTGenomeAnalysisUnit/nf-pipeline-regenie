@@ -70,7 +70,7 @@ process REGENIE_STEP2_RAREVARS {
   }
 
   label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset
-  tag "${filename}_${chrom}_${gene}"
+  tag "${filename}_chr${chrom}_chunk${task.index}"
 
   input:
 	  path(step1_out)
@@ -82,8 +82,8 @@ process REGENIE_STEP2_RAREVARS {
     path rarevars_mask_file
 
   output:
-    tuple val(filename), val(chrom), val(gene), path("*regenie.gz"), emit: regenie_step2_out
-    path "${filename}_${gene}.log", emit: regenie_step2_out_log
+    tuple val(filename), val(chrom), val(task.index), path("*regenie.gz"), emit: regenie_step2_out
+    path "${filename}_${chrom}_${task.index}.log", emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_rarevar_format == 'vcf' ? 'pgen' : "${params.genotypes_rarevar_format}"

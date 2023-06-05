@@ -26,6 +26,7 @@ workflow CLUMP_RESULTS {
             } 
             chromosomes_ch = Channel.of(params.chromosomes)
             ld_panel_part1_ch = chromosomes_ch.combine(bed_files_ch.single_file)
+                .map { tuple(it[0],it[1],it[2],it[3]) }
             ld_panel_ch = ld_panel_part1_ch.mix(bed_files_ch.split_by_chr)
         } else {
             def pattern = "${params.ld_panel.replace('{CHROM}', '(.+)').replace('/', '\\/')}"
@@ -33,8 +34,10 @@ workflow CLUMP_RESULTS {
                 .map { tuple((("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bed',''), it[1], it[2], it[3]) }
         }
         
-        CHECK_CHANNEL_SIZE(ld_panel_ch.count(), params.chromosomes.size(), "LD panel files")
-        clump_input_ch = results.combine(ld_panel_ch)
+        ld_panel_filtered_ch = ld_panel_ch.filter { it[0] in params.chromosomes }
+
+        CHECK_CHANNEL_SIZE(ld_panel_filtered_ch.count(), params.chromosomes.size(), "LD panel files")
+        clump_input_ch = results.combine(ld_panel_filtered_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
         merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple()
         MERGE_CLUMP_RESULTS(merge_input_ch)

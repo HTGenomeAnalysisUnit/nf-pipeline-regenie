@@ -16,10 +16,10 @@ if (params.genes_ranges) {
 }
 
 //Inclusion statements
-include { FILTER_RESULTS    } from '../modules/local/filter_results'
-include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}/results", annotation_interval_kb: params.annotation_interval_kb)
+include { FILTER_RESULTS    } from '../modules/local/filter_results'   addParams(outdir: "${params.outdir}/tophits", publish: params.publish_filtered)
+include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}/tophits", annotation_interval_kb: params.annotation_interval_kb)
 if (params.clumping) {
-  include { CLUMP_RESULTS } from './clump_results' addParams(outdir: "${params.outdir}/results", logdir: "${params.outdir}/log", chromosomes: params.chromosomes)
+  include { CLUMP_RESULTS } from './clump_results' addParams(outdir: "${params.outdir}/toploci", logdir: "${params.logdir}/clumping", chromosomes: params.chromosomes)
 }
 
 workflow PROCESS_GWAS_RESULTS_WF {

@@ -267,9 +267,9 @@ As a result of this process, if you use only a subset of samples present in the 
 
 ### Clumping
 
-When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumpling will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
+When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumping will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
 
-**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data, otherwise SNPs that are not found will be dropped from clumping report.
+**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the input  dataset for GWAS analysis, otherwise SNPs that are not found will be dropped from clumping report.
 
 ## Monitor execution on Nextflow tower
 

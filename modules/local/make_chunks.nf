@@ -50,7 +50,7 @@ process MAKE_GENES_CHUNKS {
     do 
         if [ -f \$c.genes ]
         then
-            split -l ${params.step2_rarevar_chunk_size} -d 1.genes ${filename}.rarevar-chunks.chr\${c}.
+            split -l ${params.step2_rarevar_chunk_size} -d \${c}.genes ${filename}.rarevar-chunks.chr\${c}.
         fi
     done
     """

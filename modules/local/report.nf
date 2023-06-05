@@ -1,8 +1,7 @@
 process REPORT_GWAS {
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/reports", mode: 'copy', pattern: '*.html'
 
-  label 'required_memory_report'
+  label 'html_report'
 
   input:
     tuple val(phenotype), path(regenie_merged), path(annotated_tophits), path(annotated_toploci)
@@ -48,11 +47,10 @@ process REPORT_GWAS {
 }
 
 process REPORT_RAREVAR {
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/reports", mode: 'copy', pattern: '*.html'
   publishDir "${params.outdir}/results", mode: 'copy', pattern: '*.gz'
 
-  label 'required_memory_report'
+  label 'html_report'
 
   input:
     tuple val(phenotype), path(regenie_merged), path(annotated_tophits)

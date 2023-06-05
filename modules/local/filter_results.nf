@@ -1,5 +1,9 @@
 process FILTER_RESULTS {
   tag "${phenotype}"
+  
+  if (params.publish) {
+    publishDir "${params.outdir}", mode: 'copy'
+  }
 
   input:
     tuple val(phenotype), path(regenie_result_gz)
