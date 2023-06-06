@@ -125,7 +125,7 @@ bonferroni_threshold_high = -log10(0.05 / length(dt_clean$pvalue))
 #This is the min global LOG10P for which FDR <= 0.05
 fdr_sorted_df <- dt_clean[order(dt_clean$LOG10P_FDR_alltests, decreasing = T),]
 test_fdr_value <- which(fdr_sorted_df$LOG10P_FDR_alltests >= -log10(0.05))
-if (lenght(test_fdr_value) == 0) {
+if (length(test_fdr_value) == 0) {
   fdr_global_threshold <- NULL 
 } else {
   fdr_idx <- max(test_fdr_value)

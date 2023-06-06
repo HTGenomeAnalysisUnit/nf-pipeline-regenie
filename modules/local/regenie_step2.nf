@@ -66,7 +66,7 @@ process REGENIE_STEP2_GWAS {
 
 process REGENIE_STEP2_RAREVARS {
   if (params.save_step2_logs) {
-    publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.log'
+    publishDir "${params.outdir}", mode: 'copy', pattern: '*.log'
   }
 
   label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset

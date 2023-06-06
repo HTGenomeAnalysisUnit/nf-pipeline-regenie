@@ -330,33 +330,32 @@ Now when the pipeline is running you should be able to monitor progress in the [
 
 ## Outputs
 
-By default the pipeline will generate all results in a folder named according to `project` variable. Alternatively you can provide an `outdir` parameter and the output folder will be created as `<outdir>/<project>`. Output files are organized as follows:
+By default the pipeline will generate all results in a folder named according to `project` parameter. When you provide the `outdir` parameter, the output folder will be created as `<outdir>/<project>`. Main structure of the output folder is as follows:
 
 ```bash
-|-- logs
+.
 |-- analysis_config
+|-- logs
+|   |-- clumping
+|   |   `-- <pheno>_clump
+|   |-- step2_gwas_logs
+|   `-- step2_rarevar_logs
 |-- regenie_step1_preds
-|   |-- regenie_step1_out_1.loco.gz
-|   |-- [one per tested phenotype]
-|   `-- regenie_step1_out_pred.list
-|-- results  
-|   |-- QP1.regenie.gz
-|   |-- QP1.regenie.gz.tbi
-|   |-- [one pair per test phenotype] 
-|   |-- tophits
-|   `-- toploci [only when clumping is active]
+|-- reports
+|-- results
+|   |-- gwas
+|   |   |-- tophits
+|   |   `-- toploci
+|   `-- rarevar
+|       `-- tophits
 |-- step2_chunks
-|   `-- chunks.txt
-|-- test-gwas-split.QP1.regenie.html
-|-- [one html report per tested phenotype]
 `-- validated_input
-    |-- covars.validated.txt
-    `-- phenos.validated.txt
 ```
 
-- main results from association are in `results`, with top associated SNPs annotated for gene(s) overlap and nearby gene(s) located in the `tophits` sub-folder
+- main results from GWAS and rare variants tests are in `results`. For GWAS, top associated SNPs annotated for gene(s) overlap and nearby gene(s) are saved in the `tophits` sub-folder, and top loci after clumping are saved in `toploci` sub folder. For rare variants, top associated genes are saved in `tophits` sub folder.
 - step 1 predictions in `regenie_step1_preds` can be reused for further analyses on the same dataset as long as the input bgen, phenotype file and covars file are exactly the same and phenotypes and covars list are provided in the same order.
 - logs from all operations are saved in `logs` for debugging. Note that more than a thousand log file may be generated when the input dataset is large.
+- HTML reports for GWAS and rare variants are saved in `reports` folder
 - when you are running in multi models mode, one folder will be created for each run_id under the `master_outdir` folder.
 
 ## Re-use Step 1 predictions

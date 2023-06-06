@@ -48,7 +48,7 @@ process REPORT_GWAS {
 
 process REPORT_RAREVAR {
   publishDir "${params.outdir}/reports", mode: 'copy', pattern: '*.html'
-  publishDir "${params.outdir}/results", mode: 'copy', pattern: '*.gz'
+  publishDir "${params.outdir}/results/rarevar", mode: 'copy', pattern: '*.gz'
 
   label 'html_report'
 
