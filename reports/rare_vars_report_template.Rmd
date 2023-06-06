@@ -146,7 +146,7 @@ The first plot represents results using LOG10P values.
 - the dashed red line represents the highest (more stringent) Bonferroni threshold when correcting for each group of test separately (namely each combination of test * mask). Genes above this line are annotated.
 - the blue dashed line represent the p value for which the global FDR (FDR computed across all results) is <= 0.05. This line is missing when there are no results with FDR <= 0.05.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=300}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=150}
 dt_top_per_gene <- dt_clean %>%
   group_by(GENE) %>% slice_max(pvalue, n=1)
 
@@ -188,7 +188,7 @@ p2
 
 The second plot represents results using `r sig_value_column` values. Here, the solid line represented the configured top hits threshold (`r params$tophits_min_value`) and genes above this line are annotated.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=300}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=150}
 dt_top_per_gene <- dt_clean %>%
   group_by(GENE) %>% slice_max(eval(as.symbol(sig_value_column)), n=1)
 df_plot <- dt_top_per_gene
@@ -249,7 +249,7 @@ The following section contains detailed results with manhattan plots and QQ plot
 
 Results for standard burden test are showed separately for each mask and AF bin.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7, dpi=300}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
 df <- dt_clean[!grepl('-', dt_clean$TEST),]
 thr_df <- bonferroni_threshold_df[!grepl('-', bonferroni_threshold_df$TEST),]
 fast_manhattan(
@@ -299,7 +299,7 @@ ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasi
 
 Results for other gene tests (SKAT, ACAT, ...) are showed separately for test and mask.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=300}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8}
 afbin <- unique(dt_clean %>% filter(TEST != "ADD") %>% pull(AFBIN))
 df <- dt_clean[grepl('-', dt_clean$TEST),]
 ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ TEST, scales="free") + labs(title="QQ plot for other gene tests", subtitle="TEST x MASK",x="-log10(expected P)", y="-log10(observed P)")
