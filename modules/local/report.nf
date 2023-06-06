@@ -83,10 +83,9 @@ process REPORT_RAREVAR {
       covariate_log='${covariate_log}',
       regenie_step1_log='${step1_log}',
       regenie_step2_log='${step2_log}',
-      plot_ylimit=${params.plot_ylimit},
       manhattan_annotation_enabled = $annotation_as_string,
       tophits_min_value = ${params.rarevar_tophits_min_value},
-      significance_stat_test = ${params.rarevar_stat_test}
+      significance_stat_test = '${params.rarevar_stat_test}'
     ),
     intermediates_dir='\$PWD',
     knit_root_dir='\$PWD',

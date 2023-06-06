@@ -1,9 +1,9 @@
-include { REGENIE_LOG_PARSER_STEP2 as GWAS_LOG_PARSER_STEP2     } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.outdir}/logs")
-include { REGENIE_LOG_PARSER_STEP2 as RAREVAR_LOG_PARSER_STEP2  } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.outdir}/logs")
-include { CONCAT_STEP2_RESULTS as CONCAT_GWAS_RESULTS           } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}/results", rarevar_results: false)
-include { CONCAT_STEP2_RESULTS as CONCAT_RAREVAR_RESULTS        } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}/results", rarevar_results: true)
-include { REGENIE_STEP2_GWAS                                    } from '../modules/local/regenie_step2'             addParams(outdir: "${params.outdir}/logs/step2_gwas_logs", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
-include { REGENIE_STEP2_RAREVARS                                } from '../modules/local/regenie_step2'             addParams(outdir: "${params.outdir}/logs/step2_rarevar_logs", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
+include { REGENIE_LOG_PARSER_STEP2 as GWAS_LOG_PARSER_STEP2     } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.logdir}")
+include { REGENIE_LOG_PARSER_STEP2 as RAREVAR_LOG_PARSER_STEP2  } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.logdir}")
+include { CONCAT_STEP2_RESULTS as CONCAT_GWAS_RESULTS           } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}", rarevar_results: false)
+include { CONCAT_STEP2_RESULTS as CONCAT_RAREVAR_RESULTS        } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}", rarevar_results: true)
+include { REGENIE_STEP2_GWAS                                    } from '../modules/local/regenie_step2'             addParams(outdir: "${params.logdir}/step2_gwas_logs", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
+include { REGENIE_STEP2_RAREVARS                                } from '../modules/local/regenie_step2'             addParams(outdir: "${params.logdir}/step2_rarevar_logs", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
 
 workflow REGENIE_STEP2_WF {
     take:

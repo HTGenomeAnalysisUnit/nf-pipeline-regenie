@@ -13,11 +13,12 @@ process CONVERT_TO_PGEN {
 
 script:
 def dosage_certainty = params.import_dosage_certainty ? "--import-dosage-certainty ${params.import_dosage_certainty}" : ''
+def sample_id_opt = params.vcf_fixed_fid ? "--const-fid ${params.vcf_fixed_fid}" : '--double-id'
 """
 plink2 \
   --vcf $vcf_file dosage=${params.dosage_from} \
   --make-pgen \
-  --double-id \
+  ${sample_id_opt} \
   ${dosage_certainty} \
   --out ${vcf_file.baseName} \
   --threads ${task.cpus} \

@@ -104,10 +104,16 @@ The input dataset can be provided as a single file or split by chromosome includ
 
 The input VCF will be converted to `pgen` format using plink2 and `--double-id` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
 
-- `gwas_read_dosage_from` / `rarevar_read_dosage_from`: these params set from which field to read GT probabilities when converting VCF for the GWAS and rare variants input datasets, respectively. Accepted options are `'DS'` (default) which usually works for VCF from imputation or `'GP'` to use with VCF from sequencing.
-- `import_dosage_certainty`: when `read_dosage_from = 'GP'` this parameter controls the minimum probability accepted to set a genotype. Default is `0.8`.
+- `gwas_read_dosage_from` / `rarevar_read_dosage_from`: these params set from which field to read GT probabilities when converting VCF for the GWAS and rare variants input datasets, respectively. Accepted options are `'HDS'` (default) which usually works for VCF from Minimac4 imputation, `'DS'` for Minimac3 dosages or `'GP'` for genotype probabilities (to use with VCF from sequencing). Default is `'HDS'`.
+- `import_dosage_certainty`: when `read_dosage_from = 'GP'` this parameter controls the minimum probability accepted to set a genotype. You can set to null to remove this filter. Default is `0.7`.
+- `vcf_fixed_fid`: when `null` the conversion is performed using `--double-id` option, so that sample IDs in the VCF are used also for FID. If you set a string (like `'0'`) than the FID column in the VCF is fixe and set to this value for all samples. Default is `null`.
 
 The converted dataset is saved to output folder when `save_pgen = true` (default).
+
+**NB.** There are some aspects to keep in mind about the conversion from VCF to pgen format (see [plink2 docs](https://www.cog-genomics.org/plink/2.0/input#vcf) for more details):
+- PGEN can store genotype dosage, but not genotype probabilities, thus probabilities are collapsed to dosages during conversio, which is usually fine for most analysis.
+- When using `DS` or `HDS` during import, the dosage are read directly from the VCF.
+- When using `GP`, the genotype probabilites are converted to dosages according to the `import_dosage_certainty` parameter. The default value of `0.7` means that a genotype dosage are set only if the probability of the most likely genotype is >= 0.7, otherwise teh whole genotype is set to missing.
 
 #### bgen format
 

@@ -1,6 +1,6 @@
 process ANNOTATE_FILTERED {
 
-  publishDir "${params.outdir}/tophits", mode: 'copy'
+  publishDir "${params.outdir}", mode: 'copy'
 
   input:
     tuple val(phenotype), path(regenie_merged)
