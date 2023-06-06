@@ -10,6 +10,42 @@ Setting `genotypes_imputed` input trigger the GWAS analsysi, while `genotypes_ra
 
 Two running modes are available: **single project mode** and **multi models mode**.
 
+## Table of contents
+
+- [nf-pipeline-regenie](#nf-pipeline-regenie)
+  - [Table of contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+  - [Prepare config files](#prepare-config-files)
+    - [Main parameters to adjust](#main-parameters-to-adjust)
+  - [Understand input files for genetic data](#understand-input-files-for-genetic-data)
+    - [Full genotype data (from imputation or sequencing) - MANDATORY](#full-genotype-data-from-imputation-or-sequencing---mandatory)
+      - [vcf format](#vcf-format)
+      - [bgen format](#bgen-format)
+      - [pgen format](#pgen-format)
+      - [bed format](#bed-format)
+      - [Input dataset split by chromosome](#input-dataset-split-by-chromosome)
+    - [QCed genotyped SNPs - MANDATORY](#qced-genotyped-snps---mandatory)
+    - [Variant annotation files - MANDATORY for RARE VARIANT ANALYSIS](#variant-annotation-files---mandatory-for-rare-variant-analysis)
+    - [LD panel - OPTIONAL (recommended for very large datasets)](#ld-panel---optional-recommended-for-very-large-datasets)
+  - [Run in single project mode](#run-in-single-project-mode)
+    - [Inputs for single project mode](#inputs-for-single-project-mode)
+  - [Run in multi models mode](#run-in-multi-models-mode)
+    - [Inputs for multi models mode](#inputs-for-multi-models-mode)
+    - [Multi models execution monitoring](#multi-models-execution-monitoring)
+    - [Resume execution for a failed task](#resume-execution-for-a-failed-task)
+    - [Note on unexpected exit from multi models execution](#note-on-unexpected-exit-from-multi-models-execution)
+  - [Important notes - Please read this](#important-notes---please-read-this)
+    - [Phenotypes](#phenotypes)
+    - [MAC filtering](#mac-filtering)
+    - [Clumping](#clumping)
+  - [Monitor execution on Nextflow tower](#monitor-execution-on-nextflow-tower)
+  - [Outputs](#outputs)
+  - [Re-use Step 1 predictions](#re-use-step-1-predictions)
+  - [Full parameters explanation](#full-parameters-explanation)
+  - [License](#license)
+  - [Contact](#contact)
+
+
 ## Quick Start
 
 1. Create a folder for your project (e.g. `yourproject`) and clone the latest pipeline version into the project folder using
