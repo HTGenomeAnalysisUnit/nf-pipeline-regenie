@@ -16,7 +16,7 @@ process ANNOTATE_FILTERED {
   """
   #!/bin/bash
   set -e
-  mkdir work
+  mkdir -p work
   #save original header
   zcat ${regenie_merged} | head -1 > header.txt
   #sort and transform to bed file

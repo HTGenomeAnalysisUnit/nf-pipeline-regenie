@@ -12,7 +12,7 @@ process CONCAT_STEP2_RESULTS {
     def n_head_lines = params.rarevar_results ? 2 : 1
     suffix = params.rarevar_results ? "rarevars" : "gwas"
     """
-    mkdir tmp_sort
+    mkdir -p tmp_sort
 
     for f in *${pheno}.regenie.gz;
     do
