@@ -4,7 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 LABEL author="Edoardo Giacopuzzi"
 LABEL contact="edoardo.giacopuzzi@fht.org"
 LABEL image_version="0.4"
-LABEL regenie_version="3.2.5"
+LABEL regenie_version="3.2.7"
 LABEL bgenix_version="1.1.7"
 LABEL R_version="4.1.0"
 
@@ -89,11 +89,12 @@ RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
 
 # Install regenie
 WORKDIR /opt
+ENV REGENIE_VERSION = "3.2.7"
 RUN mkdir regenie && cd regenie && \
-    wget https://github.com/rgcgithub/regenie/releases/download/v3.2.5/regenie_v3.2.5.gz_x86_64_Linux.zip && \
-    unzip -q regenie_v3.*.gz_x86_64_Linux.zip && \
-    rm regenie_v3.*.gz_x86_64_Linux.zip && \
-    mv regenie_v3.*.gz_x86_64_Linux regenie && \
+    wget https://github.com/rgcgithub/regenie/releases/download/v${REGENIE_VERSION}/regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
+    unzip -q regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
+    rm regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
+    mv regenie_v${REGENIE_VERSION}.gz_x86_64_Linux regenie && \
     chmod +x regenie
 ENV PATH="/opt/regenie/:${PATH}"
 
