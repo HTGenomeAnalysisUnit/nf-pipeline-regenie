@@ -75,7 +75,7 @@ You can eventually chose a specific version of the pipeline using the `--branch`
    #SBATCH --mem 4G
    #SBATCH --time 15-00:00:00
 
-   module load nextflow/22.10.6 singularity/3.6.3
+   module load nextflow/22.10.6 singularity/3.8.5
 
    ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx4G" 

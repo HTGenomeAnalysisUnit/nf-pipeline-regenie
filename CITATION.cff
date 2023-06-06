@@ -4,5 +4,5 @@ authors:
 - family-names: "Giacopuzzi"
   given-names: "Edoardo"
 title: "nf-pipeline-regenie - Perform regenie GWAS at high speed."
-version: 0.2
+version: 1.7
 url: "https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie"
