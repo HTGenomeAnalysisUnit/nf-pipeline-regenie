@@ -60,9 +60,11 @@ You can eventually chose a specific version of the pipeline using the `--branch`
 
 2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
-3. Prepare the [config files](#prepare-config-files) for your project.
+If you want to use our pre-processed UKBB data, we have a copy of them on scracth for optimized performance. The files are available at `/scratch/edoardo.giacopuzzi/UKBB`.
 
-4. Invoke the pipeline
+1. Prepare the [config files](#prepare-config-files) for your project.
+
+2. Invoke the pipeline
 
    Ideally, you should prepare a script to submit the pipeline in your project folder using `sbatch`. The following template can be used as example:
 
