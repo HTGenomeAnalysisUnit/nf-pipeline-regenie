@@ -113,9 +113,11 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - Set `regenie_gwas_min_mac` and `regenie_rarevar_min_mac` to control the min allowed MAC for variants tested in either GWAS or rare variant analysis. Variants with MAC below this threshold will be excluded from the analysis.
 
-- Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs from GWAS results. These SNPs are also annotated in the manhattan plot.
+- Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs from GWAS results. These SNPs are also annotated in the manhattan plot in the HTML report.
 
-- Set `rarevar_tophits_min_value` to the min value ( -log10(pval) ) for top hit gene based results from rare variants analysis. These genes are also annotated in the manhattan plot.
+- Set `rarevar_min_log10p` to the min value ( -log10(pval) ) for top hit genes from rare variants analysis.           
+
+- Set `rarevar_tophits_min_value` and `rarevar_stat_test` to customise genes annotated in the manhattan plot in HTML report. For `rarevar_stat_test` you can select "pvalue", "FDR_bygroup", "FDR_alltests", "BONF_bygroup", "BONF_alltests". Then genes with ( -log10(stat_test) ) > min_value will be highlighted in the HTML report.
 
 - Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
 
