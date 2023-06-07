@@ -1,5 +1,6 @@
 process CACHE_JBANG_SCRIPTS {
-
+  label 'small_task'
+  
   input:
     path regenie_log_parser_java
     path regenie_filter_java

@@ -1,0 +1,355 @@
+---
+title: "Report: `r params$project`"
+output:
+  rmdformats::robobook:
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+    gallery: false
+    highlight: tango
+params:
+  project: test-gwas
+  date: 2021-08-09
+  version: v0.4
+  regenie_merged: /ssu/gassu/shared/test_new_gwas_pipe/BMI_test_PCs/results/rarevar/p21001_i0.rarevars.regenie.gz
+  regenie_filename: p21001_i0.rarevars.regenie.gz
+  phenotype: p21001_i0
+  covariates: p21022,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10,PC11,PC12,PC13,PC14,PC15,PC16,PC17,PC18,PC19,PC20
+  phenotype_file: /ssu/gassu/shared/test_new_gwas_pipe/regenie_pheno_input_withPCs.tabsep.tsv
+  regenie_step1_log: /ssu/gassu/shared/test_new_gwas_pipe/BMI_test_PCs/logs/BMI_test_PCs.step1.log
+  regenie_step2_log: /ssu/gassu/shared/test_new_gwas_pipe/BMI_test_PCs/logs/BMI_test_PCs.step2.log
+  phenotype_log: /ssu/gassu/shared/test_new_gwas_pipe/BMI_test_PCs/logs/regenie_pheno_input_withPCs.pheno.validated.log
+  covariate_log: /ssu/gassu/shared/test_new_gwas_pipe/BMI_test_PCs/logs/regenie_pheno_input_withPCs.cov.validated.log
+  manhattan_annotation_enabled: TRUE
+  tophits_min_value: 1.3
+  significance_stat_test: "BONF_bygroup"
+---
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(DT)
+library(data.table)
+library(R.utils)
+library(ggplot2)
+library(skimr)
+library(dplyr)
+library(tidyr)
+library(ggfastman)
+sig_value_column <- switch(params$significance_stat_test,
+                            "pvalue" = "pvalue",
+                            "FDR_bygroup" = "LOG10P_FDR_bygroup",
+                            "FDR_alltests" = "LOG10P_FDR_alltests",
+                            "BONF_bygroup" = "LOG10P_BONF_bygroup",
+                            "BONF_alltests" = "LOG10P_BONF_alltests",
+                            "pvalue")
+```
+
+## Project Summary
+
+| Parameter     | Value                                      |
+| ------------- |--------------------------------------------|
+| Project       | `r params$project`                         |
+| Pipeline Version       | `r params$version`                |
+| Date       | `r params$date`                         |
+| Phenotype File      | `r params$phenotype_file`            |
+| Phenotype       | `r params$phenotype`                     |
+| Covariates       | `r params$covariates`                     |
+| Regenie Output      | `r params$regenie_filename`             |
+
+## Phenotype Statistics
+
+### Overview
+
+```{r, echo=FALSE}
+phenotypeTable <- read.table(params$phenotype_file, header=TRUE, sep="\t", dec = ".")
+dt <- as.data.frame(skim(phenotypeTable) %>%
+  dplyr::filter(skim_variable == params$phenotype))
+dt <- as.data.frame(as.matrix(dt), stringsAsFactors = F)
+datatable(dt)
+```
+
+### Phenotype distribution
+
+```{r, echo=FALSE, warning=FALSE}
+if (length(unique(na.omit(phenotypeTable[[params$phenotype]]))) == 2) {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_bar(color="black", fill="white",bins=30) + theme_bw()
+} else {
+  ggplot(phenotypeTable, aes_string(x=params$phenotype)) +
+    geom_histogram(color="black", fill="white",bins=30) + theme_bw()
+}
+```
+
+## Manhattan plot
+
+Following plots summarise results across all tests and AF bins by plotting only the most significant result for each gene. Note that in case of ties all results with the same pvalue are plotted. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dt <- fread(params$regenie_merged)
+dt <- dt %>% 
+  mutate(
+    LOG10P_BONF_alltests = -log10(p.adjust(10^(-LOG10P), method = "bonferroni")),
+    LOG10P_FDR_alltests = -log10(p.adjust(10^(-LOG10P), method = "fdr"))
+  )
+dt <- as.data.table(
+  dt %>% group_by(ALLELE1, TEST) %>%
+  mutate(
+    LOG10P_BONF_bygroup = -log10(p.adjust(10^(-LOG10P), method = "bonferroni")),
+    LOG10P_FDR_bygroup = -log10(p.adjust(10^(-LOG10P), method = "fdr"))
+  )
+)
+prefix <- gsub(".+/|\\.gz","", params$regenie_merged)
+fwrite(dt[order(dt$CHROM, dt$GENPOS),],file = paste0(prefix, ".correctedP"), 
+       sep="\t", row.names = F, quote = F, na = "NA")
+
+setnames(dt, c("CHROM", "GENPOS", "LOG10P"), c("chr","pos","pvalue"))
+
+dt_clean <- dt %>% 
+  mutate(
+    tmp_col=gsub("([^.]+)\\.(.+)","\\1@\\2", dt$ALLELE1) 
+  ) %>% 
+  separate(tmp_col,c("MASK","AFBIN"),sep = '@',extra = "merge", remove = FALSE) %>%
+  select(-tmp_col)
+  
+dt_clean$GENE <- mapply(function(x,y)gsub(paste0('.',x),"",y),dt_clean$ALLELE1,dt_clean$ID) 
+dt_clean$rsid <- dt_clean$GENE
+
+bonferroni_threshold_df = dt %>% group_by(ALLELE1, TEST) %>% 
+  summarise(bonferroni_thr = -log10(0.05 / length(pvalue))) %>%
+  mutate(
+    ID=gsub("([^.]+)\\.(.+)","\\1@\\2", ALLELE1) 
+  ) %>% 
+  separate(ID,c("MASK","AFBIN"),sep = '@',extra = "merge")
+
+#This is the max possible bonferroni threshold across single tests and masks
+bonferroni_threshold_low = max(bonferroni_threshold_df %>% pull(bonferroni_thr))
+
+#This is the global bonferroni treshold across all tests
+bonferroni_threshold_high = -log10(0.05 / length(dt_clean$pvalue))
+
+#This is the min global LOG10P for which FDR <= 0.05
+fdr_sorted_df <- dt_clean[order(dt_clean$LOG10P_FDR_alltests, decreasing = T),]
+test_fdr_value <- which(fdr_sorted_df$LOG10P_FDR_alltests >= -log10(0.05))
+if (length(test_fdr_value) == 0) {
+  fdr_global_threshold <- NULL 
+} else {
+  fdr_idx <- max(test_fdr_value)
+  fdr_global_threshold <- fdr_sorted_df$pvalue[fdr_idx]
+}
+
+```
+
+### Manhattan LOG10P
+
+The first plot represents results using LOG10P values.
+
+- the solid red line represents the Bonferroni threshold when correcting across all results
+- the dashed red line represents the highest (more stringent) Bonferroni threshold when correcting for each group of test separately (namely each combination of test * mask). Genes above this line are annotated.
+- the blue dashed line represent the p value for which the global FDR (FDR computed across all results) is <= 0.05. This line is missing when there are no results with FDR <= 0.05.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=150}
+dt_top_per_gene <- dt_clean %>%
+  group_by(GENE) %>% slice_max(pvalue, n=1)
+
+p1 <- fast_manhattan(
+  dt_top_per_gene,log10p = F,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2,
+  highlight = dt_top_per_gene[dt_top_per_gene$pvalue > bonferroni_threshold_low,]$GENE,
+    
+) +
+  geom_hline(yintercept = fdr_global_threshold, linetype ="longdash", color ="blue") +
+  
+  geom_hline(yintercept = bonferroni_threshold_low, linetype ="longdash", color ="firebrick") +
+  geom_hline(yintercept = bonferroni_threshold_high, linetype ="solid", color ="firebrick") +
+  labs(title="Manhattan plot - best gene result based on LOG10P") +
+  theme_bw() +
+  theme(
+      legend.position="none",
+      panel.border = element_blank(),
+      axis.text = element_text(size = 12,
+                               color = "black"),
+      axis.title = element_text(size = 14),
+      axis.ticks = element_line(color = "black")
+      )
+
+if(!params$manhattan_annotation_enabled) {
+  p2 <- p1
+} else {
+  p2 <- p1 + 
+    ggrepel::geom_text_repel(
+      data = . %>% filter(pvalue >= bonferroni_threshold_low) %>%
+        group_by(GENE) %>% slice(1),
+      aes(label=GENE), color =1)
+}
+p2
+```
+
+### Manhattan - `r sig_value_column`
+
+The second plot represents results using `r sig_value_column` values. Here, the solid line represented the configured top hits threshold (`r params$tophits_min_value`) and genes above this line are annotated.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, dpi=150}
+dt_top_per_gene <- dt_clean %>%
+  group_by(GENE) %>% slice_max(eval(as.symbol(sig_value_column)), n=1)
+df_plot <- dt_top_per_gene
+df_plot$pvalue <- df_plot[[sig_value_column]]
+p1 <- fast_manhattan(
+  df_plot,log10p = F,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2,
+  highlight = df_plot[df_plot$pvalue > params$tophits_min_value,]$GENE,
+    
+) +
+  geom_hline(yintercept = params$tophits_min_value, linetype ="longdash", color ="firebrick") +
+  labs(title=paste0("Manhattan plot - best gene result based on ", sig_value_column),
+       y=paste0("-log10(",params$significance_stat_test,")")) +
+  theme_bw() +
+  theme(
+      legend.position="none",
+      panel.border = element_blank(),
+      axis.text = element_text(size = 12,
+                               color = "black"),
+      axis.title = element_text(size = 14),
+      axis.ticks = element_line(color = "black")
+      )
+
+if(!params$manhattan_annotation_enabled) {
+  p2 <- p1
+} else {
+  p2 <- p1 + 
+    ggrepel::geom_text_repel(
+      data = . %>% filter(pvalue >= params$tophits_min_value) %>%
+        group_by(GENE) %>% slice(1),
+      aes(label=GENE), color =1)
+}
+p2
+```
+
+## Top hits
+
+The table reports for each gene the test with the lowest value for `r sig_value_column` and only those with value >= `r params$tophits_min_value`
+
+```{r, echo=FALSE, warning=FALSE}
+datatable(dt_top_per_gene %>% filter(pvalue >= params$tophits_min_value) %>%
+            select(chr,pos,GENE,MASK,AFBIN,N,TEST,BETA,SE,CHISQ,pvalue) %>%
+            rename("CHROM"="chr","GENPOS"="pos","LOG10P"="pvalue"),
+          extensions = 'FixedHeader',
+          options=list(scrollX=T, scrollY=500, fixedHeader = TRUE))
+```
+
+## Detailed results per model
+
+The following section contains detailed results with manhattan plots and QQ plots for each test, mask and AF bin. In these plots the dashed line represents the bonferroni threshold for the specific test (namely combination of test * mask)
+
+### Manhattan plot
+<details>
+  <summary>Click <strong>here</strong> to expand detailed Manhattan plot results</summary>
+
+#### Standard burden test
+
+Results for standard burden test are showed separately for each mask and AF bin.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7}
+df <- dt_clean[!grepl('-', dt_clean$TEST),]
+thr_df <- bonferroni_threshold_df[!grepl('-', bonferroni_threshold_df$TEST),]
+fast_manhattan(
+  df,log10p = F,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2
+) +
+  facet_grid(MASK ~ AFBIN) +
+  geom_hline(data=thr_df, aes(yintercept = bonferroni_thr), linetype ="longdash", color ="firebrick") +
+  theme_bw()
+
+```
+
+#### Other gene tests
+
+Results are showed separately for each mask and test.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=10}
+df <- dt_clean[grepl('-', dt_clean$TEST),]
+thr_df <- bonferroni_threshold_df[grepl('-', bonferroni_threshold_df$TEST),]
+fast_manhattan(
+  df,log10p = F,
+  build='hg19', speed = "f", 
+  color1 = "grey", color2 = "orange", pointsize = 2
+) +
+  facet_grid(MASK ~ TEST) +
+  geom_hline(data=thr_df, aes(yintercept = bonferroni_thr), linetype ="longdash", color ="firebrick") +
+  theme_bw()
+
+```
+</details>
+
+### QQ plot
+<details>
+  <summary>Click <strong>here</strong> to expand detailed QQ plot results</summary>
+
+#### Standard burden test
+
+Results for standard burden test are showed separately for each mask and AF bin.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8}
+df <- dt_clean[!grepl('-', dt_clean$TEST),]
+ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ AFBIN, scales="free") + labs(title="QQ plot for ADD burden test", subtitle="AF BIN x MASK", x="-log10(expected P)", y="-log10(observed P)")
+```
+
+#### Other gene tests
+
+Results for other gene tests (SKAT, ACAT, ...) are showed separately for test and mask.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8}
+afbin <- unique(dt_clean %>% filter(TEST != "ADD") %>% pull(AFBIN))
+df <- dt_clean[grepl('-', dt_clean$TEST),]
+ggplot(df,aes(x=-log10(1:length(pvalue)/length(pvalue)), y=sort(pvalue, decreasing=T))) + geom_point(size=0.5) + geom_abline(slope=1, intercept=0, color="red") + theme_bw() + facet_grid(MASK ~ TEST, scales="free") + labs(title="QQ plot for other gene tests", subtitle="TEST x MASK",x="-log10(expected P)", y="-log10(observed P)")
+```
+
+</details>
+
+## Validation and Logs
+
+### Phenotype File Validation
+
+```{r, echo=FALSE}
+phenotype_log <- read.table(params$phenotype_log,
+                      sep ="\t", header = TRUE, dec =".")
+datatable(phenotype_log)
+```
+
+### Covariate File Validation
+
+```{r, echo=FALSE, results='asis'}
+if(file.exists(params$covariate_log)) {
+step1_log <- read.table(params$covariate_log,sep ="\t", header = TRUE, dec =".")
+datatable(step1_log)
+} else {
+    cat("*No covariates available.*")
+}
+```
+
+### Regenie Step 1 Log
+
+```{r, echo=FALSE, results='asis'}
+if(file.exists(params$regenie_step1_log)) {
+step1_log <- read.table(params$regenie_step1_log,sep ="\t", header = TRUE, dec =".")
+datatable(step1_log)
+} else {
+    cat("*Regenie step 1 skipped.*")
+}
+```
+
+### Regenie Step 2 Log
+
+```{r, echo=FALSE}
+step2_log <- read.table(params$regenie_step2_log,
+                      sep ="\t", header = TRUE, dec =".")
+datatable(step2_log)
+```
+
+
+---
+
+<small>
+This report has been created with **[nf-fast-regenie `r params$version`](https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie)**, a nextflow pipeline developed by [Edoardo Giacopuzzi](mailto:edoardo.giacopuzzi@fht.org) at the Human Technopole Foundation, Milan, Italy. 
+</small>

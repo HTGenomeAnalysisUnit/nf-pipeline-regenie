@@ -103,9 +103,9 @@ process RUNL1 {
   label 'step1_runl1'
   stageInMode 'copy'
   
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
+  publishDir "${params.logdir}", mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out_*'
+    publishDir "${params.outdir}", mode: 'copy', pattern: 'regenie_step1_out_*'
   }
 
   input:
@@ -150,16 +150,16 @@ process RUNL1 {
     --keep-l0 --gz --verbose \
     --out regenie_step1_out
 
-    sed -i 's|\$PWD/||g' regenie_step1_out_pred.list
+    sed -i "s|\$PWD/||g" regenie_step1_out_pred.list
   """
 }
 
 process REGENIE_STEP1 {
   label 'step1_single'
 
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
+  publishDir "${params.outdir}", mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir "${params.outdir}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out*.{gz,list}'
+    publishDir "${params.outdir}", mode: 'copy', pattern: 'regenie_step1_out*.{gz,list}'
   }
 
   input:

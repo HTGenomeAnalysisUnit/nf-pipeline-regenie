@@ -65,7 +65,7 @@ process PLINK_CLUMPING {
 }
 
 process MERGE_CLUMP_RESULTS {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/toploci", mode: 'copy'
     label 'merge_clump'
     tag "${phenotype}"
 

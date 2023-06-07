@@ -1,6 +1,6 @@
 process PRUNE_GENOTYPED {
 
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*.pruned.log'
+  publishDir "${params.logdir}", mode: 'copy', pattern: '*.pruned.log'
   label 'process_plink2'
 
   input:

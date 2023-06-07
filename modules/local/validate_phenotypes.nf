@@ -1,5 +1,6 @@
 process VALIDATE_PHENOTYPES {
-
+  label 'small_task'
+  
   publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*log'
   publishDir "${params.outdir}/validated_input/", mode: 'copy', pattern: '*validated.txt'
 

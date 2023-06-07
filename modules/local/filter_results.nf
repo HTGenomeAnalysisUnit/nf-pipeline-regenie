@@ -1,6 +1,9 @@
 process FILTER_RESULTS {
-
   tag "${phenotype}"
+  
+  if (params.publish) {
+    publishDir "${params.outdir}", mode: 'copy'
+  }
 
   input:
     tuple val(phenotype), path(regenie_result_gz)
@@ -9,10 +12,12 @@ process FILTER_RESULTS {
     tuple val(phenotype), path("${regenie_result_gz.baseName}.filtered.gz"), emit: results_filtered
     //tuple val(phenotype), path("${regenie_chromosomes}"), emit: results
 
-  """
-  zcat $regenie_result_gz | awk 'NR == 1 {print ;}; NR > 1 && \$13 >= ${params.annotation_min_log10p}' > ${regenie_result_gz.baseName}.filtered
-  #todo: CSVWriter for gzip
-  gzip ${regenie_result_gz.baseName}.filtered
-  """
-
+  shell:
+  n_head_lines = params.rarevar_results ? 2 : 1 
+  grep_rarevar = params.rarevar_results ? 'tail -n+2 | ' : ''
+  '''
+  colnum=$(zcat !{regenie_result_gz} | !{grep_rarevar} head -1 | tr "\\t" "\\n" | cat -n | grep "LOG10P" | cut -f1 | sed -e 's/ //g')
+  zcat !{regenie_result_gz} | awk -v colnum="$colnum" 'NR <= !{n_head_lines} {print ;}; NR > !{n_head_lines} && $colnum >= !{params.annotation_min_log10p}' > !{regenie_result_gz.baseName}.filtered
+  gzip !{regenie_result_gz.baseName}.filtered
+  '''
 }

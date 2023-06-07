@@ -1,6 +1,7 @@
 process REGENIE_LOG_PARSER_STEP1 {
-
-  publishDir "${params.outdir}/logs", mode: 'copy'
+  label 'small_task'
+  
+  publishDir "${params.logdir}", mode: 'copy'
 
   input:
     path regenie_step1_log

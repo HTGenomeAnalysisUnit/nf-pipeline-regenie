@@ -1,12 +1,50 @@
 # nf-pipeline-regenie
 
-A nextflow pipeline to perform genome-wide association studies (GWAS) using [regenie](https://github.com/rgcgithub/regenie) at high speed.
+A nextflow pipeline to perform genome-wide association studies (GWAS) and rare variant association analysis using [regenie](https://github.com/rgcgithub/regenie) at high speed.
 
 Original concept based on this amazing [github repository](https://github.com/genepi/nf-gwas) from Institute of Genetic Epidemiology, Innsbruck maintained by Sebastian Schönherr and Lukas Forer.
 
-The pipeline is optimized for massive scaling and can analyze 10 quantitative phenotype on 500k individuals and 40M SNPs in ~4.5h.
+The pipeline is optimized for massive scaling and can analyze multiple quantitative phenotype on 500k individuals and 40M SNPs in ~2h.
+
+Setting `genotypes_imputed` input trigger the GWAS analsysi, while `genotypes_rarevar` trigger the rare variant analysis using burden test and the set of test configured `rarevars_vc_test`. Possible tests include: skat, skato, acato, acatv, skato-acat.
 
 Two running modes are available: **single project mode** and **multi models mode**.
+
+## Table of contents
+
+- [nf-pipeline-regenie](#nf-pipeline-regenie)
+  - [Table of contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+  - [Prepare config files](#prepare-config-files)
+    - [Main parameters to adjust](#main-parameters-to-adjust)
+  - [Understand input files for genetic data](#understand-input-files-for-genetic-data)
+    - [Full genotype data (from imputation or sequencing) - MANDATORY](#full-genotype-data-from-imputation-or-sequencing---mandatory)
+      - [vcf format](#vcf-format)
+      - [bgen format](#bgen-format)
+      - [pgen format](#pgen-format)
+      - [bed format](#bed-format)
+      - [Input dataset split by chromosome](#input-dataset-split-by-chromosome)
+    - [QCed genotyped SNPs - MANDATORY](#qced-genotyped-snps---mandatory)
+    - [Variant annotation files - MANDATORY for RARE VARIANT ANALYSIS](#variant-annotation-files---mandatory-for-rare-variant-analysis)
+    - [LD panel - OPTIONAL (recommended for very large datasets)](#ld-panel---optional-recommended-for-very-large-datasets)
+  - [Run in single project mode](#run-in-single-project-mode)
+    - [Inputs for single project mode](#inputs-for-single-project-mode)
+  - [Run in multi models mode](#run-in-multi-models-mode)
+    - [Inputs for multi models mode](#inputs-for-multi-models-mode)
+    - [Multi models execution monitoring](#multi-models-execution-monitoring)
+    - [Resume execution for a failed task](#resume-execution-for-a-failed-task)
+    - [Note on unexpected exit from multi models execution](#note-on-unexpected-exit-from-multi-models-execution)
+  - [Important notes - Please read this](#important-notes---please-read-this)
+    - [Phenotypes](#phenotypes)
+    - [MAC filtering](#mac-filtering)
+    - [Clumping](#clumping)
+  - [Monitor execution on Nextflow tower](#monitor-execution-on-nextflow-tower)
+  - [Outputs](#outputs)
+  - [Re-use Step 1 predictions](#re-use-step-1-predictions)
+  - [Full parameters explanation](#full-parameters-explanation)
+  - [License](#license)
+  - [Contact](#contact)
+
 
 ## Quick Start
 
@@ -18,7 +56,7 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
-`git clone --depth 1 --branch v1.6.1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.7 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
@@ -37,7 +75,7 @@ You can eventually chose a specific version of the pipeline using the `--branch`
    #SBATCH --mem 4G
    #SBATCH --time 15-00:00:00
 
-   module load nextflow/21.10.6 singularity/3.6.3
+   module load nextflow/22.10.6 singularity/3.8.5
 
    ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx4G" 
@@ -65,65 +103,121 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - If you provide a project id (`project`) that will be used in reports and a folder will be created with the same name to store all results.
 
-- Set `step2_chunk_size` according to the size of your dataset. A value of 100000 usually works fine, but you can decrease this down to 25000 for very large datasets to speed up the process if you have large number of cpus available. Note that the pipeline will submit *N_SNPs/chunk_size* jobs in batches of 500 jobs.
+- Set `chromosomes` to represent the list of chromosome to be included in the analysis
+
+- Set `genotypes_build` to the build of your genotype data, either hg19 or hg38.
+
+- Set `step2_gwas_chunk_size` and `step2_rarevar_chunk_size` according to the size of your dataset. These control how the dataset is split for step2 analysis. Teh default values usually work fine, but you can increase/decrease them if you have very large or small datasets. Keep in mind that a small chunk size may result in a very large amount of parallel jobs. By default the pipeline job submission rate is limited to 250 concurrent jobs. The total number of jobs will be *N_SNPs/gwas_chunk_size* for GWAS and *N_genes/rare_chunk_size* for rare variant analysis.
 
 - Set `regenie_test` to 'additive', 'dominant' or 'recessive' according to the genetic model you want to test.
 
-- Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs. These SNPs are also annotated in the manhattan plot
+- Set `regenie_gwas_min_mac` and `regenie_rarevar_min_mac` to control the min allowed MAC for variants tested in either GWAS or rare variant analysis. Variants with MAC below this threshold will be excluded from the analysis.
+
+- Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs from GWAS results. These SNPs are also annotated in the manhattan plot.
+
+- Set `rarevar_tophits_min_value` to the min value ( -log10(pval) ) for top hit gene based results from rare variants analysis. These genes are also annotated in the manhattan plot.
 
 - Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
 
 - If you are analyzing many phenotypes, it may be useful to set `make_report` to false. Generating the HTML graphical report can add a considerable amount of time for large datasets with many millions SNPs thus slowing down the overall execution.
 
+- If you have categorical covariates, the maximum number of allowed categories is set to 10 bu default. You can adjsut this using the `maxCatLevels` parameter.
+
 ## Understand input files for genetic data
 
-**NB.** All chromosome names must be numeric (1..22, X=23) without 'chr' prefix.
+### Full genotype data (from imputation or sequencing) - MANDATORY
 
-### Full genotype data (from imputation) - MANDATORY
+Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on input data so ensure it is clean.
 
-1. A bgen file of your full genotype data (`genotypes_imputed`). Regenie step2 will run faster on bgen v1.2 with 8 bits encoding. You can convert existing data using plink2 with `--export bgen-1.2 'bits=8'` option. No QC is performed on this file so ensure it is clean.
-2. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). A `bgen` module is available on our HPC to index your file if needed. You can use something like `bgenix -g my_data.bgen -index`
-3. A SNP list for your full genotype data. This is a tab-separated file without header containing 2 columns: chr, pos for all SNPs in your data. When `imputed_snplist = true`, given an inpute dataset named `my_dataset.bgen` the expected name of the snplist is `my_dataset.snplist`. You can generate a snplits it from bgi index using
+Input dataset for GWAS analysis is defined by `genotypes_imputed` and `genotypes_imputed_format` parameters, while input dataset for rare variants analysis is defined by `genotypes_rarevar` and `genotypes_rarevar_format`. The format parameter accepts 4 possible formats: vcf, bgen, pgen and bed.
+
+The input dataset can be provided as a single file or split by chromosome including a `{CHROM}` tag in the input filename (see below).
+
+Note that the pipeline will do highly parallelized access to the input dataset. Thus, especially if you are using a single file as input and when step 2 chunk size is small, it is reccomended to use a high performance filesystem optimized for parallel access.
+
+#### vcf format
+
+- input format: `'vcf'`
+- input dataset: `'path/to/my_data.vcf.gz'`
+
+The input VCF will be converted to `pgen` format using plink2 and `--double-id` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
+
+- `gwas_read_dosage_from` / `rarevar_read_dosage_from`: these params set from which field to read GT probabilities when converting VCF for the GWAS and rare variants input datasets, respectively. Accepted options are `'HDS'` (default) which usually works for VCF from Minimac4 imputation, `'DS'` for Minimac3 dosages or `'GP'` for genotype probabilities (to use with VCF from sequencing). Default is `'HDS'`.
+- `import_dosage_certainty`: when `read_dosage_from = 'GP'` this parameter controls the minimum probability accepted to set a genotype. You can set to null to remove this filter. Default is `0.7`.
+- `vcf_fixed_fid`: when `null` the conversion is performed using `--double-id` option, so that sample IDs in the VCF are used also for FID. If you set a string (like `'0'`) than the FID column in the VCF is fixe and set to this value for all samples. Default is `null`.
+
+The converted dataset is saved to output folder when `save_pgen = true` (default).
+
+**NB.** There are some aspects to keep in mind about the conversion from VCF to pgen format (see [plink2 docs](https://www.cog-genomics.org/plink/2.0/input#vcf) for more details):
+- PGEN can store genotype dosage, but not genotype probabilities, thus probabilities are collapsed to dosages during conversio, which is usually fine for most analysis.
+- When using `DS` or `HDS` during import, the dosage are read directly from the VCF.
+- When using `GP`, the genotype probabilites are converted to dosages according to the `import_dosage_certainty` parameter. The default value of `0.7` means that a genotype dosage are set only if the probability of the most likely genotype is >= 0.7, otherwise teh whole genotype is set to missing.
+
+#### bgen format
+
+- input format: `'bgen'`
+- input dataset: `'path/to/my_data.bgen'`
+
+Some additional files are expected when using bgen format:
+
+1. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). You can use something like `bgenix -g my_data.bgen -index`. 
+2. A sample file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.sample`. This is standard sample file defined for the bgen format which contains sample level information. 
+3. A SNP list for your dataset. This is a tab-separated file without header containing 6 columns: chr, id, cm, pos, ref, alt for all SNPs in your data, with chromosome in column 1 and position in column 4. Given a dataset named `my_dataset.bgen` the expected name of the snplist is `my_dataset.snplist`. You can generate a snplits from bgi index using
 
    ```bash
-   bgenix -g input.bgen -list \
-   | tail -n+3 | cut -f3,4 | sed '$d' > ${prefix}.snplist
+   bgenix -g my_dataset.begn -list | tail -n+3 \
+   | awk '{OFS="\t"}; {print $3, $2, 0, $4, $6, $7}' | sed '\$d' > my_dataset.snplist
    ```
 
-**IMPORTANT FOR BGEN INPUT:** When using BGEN input, make sure that the sample ID in the BGEN can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. You can provide a `.sample` file to have better control on the sample IDs.
+**NB:** When using BGEN input, make sure that the sample ID in the BGEN or sample file can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. Using a `.sample` file can help to have better control on the sample IDs. 
 
-Given the input file `my_dataset.bgen` if a file named `my_dataset.sample` is present, this will be used automatically by the pipeline. Otherwise, the user can provide an alternative sample file using the parameter `regenie_sample_file`.
+If any of these files is missing, the pipeline will generate them automatically and save them in the output folder by default. This behaviour can be controlled by `save_bgen_index`, `save_bgen_sample`, `save_snplist` parameters. Keep in mind that these steps can add a significant amount of time to the overall execution, so it is suggested to prepare these files in advance.
 
-#### Use a single bgen / VCF as input
+#### pgen format
 
-- if the input is bgen (`genotypes_imputed_format = 'bgen`), given the input file `input.bgen`, the pipeline will automatically search for `input.bgen.bgi` index and `input.sample` file. The first is automatically generated when missing, the second is ignored when missing.
-- if the input is VCF (`genotypes_imputed_format = 'vcf`), the pipeline will automatically convert to bgen and generate all the needed files.
+- input format: `'pgen'`
+- input dataset: `'path/to/my_data'`
 
-When using a single input file, step2 can eventually be parallelized by chunk (`step2_split = 'chunk'`) or by chromosome (`step2_split = 'chr'`), or the whole file can be analyzed in a single run (`step2_split = 'no_split'`).
+For pgen input, you have to specify only the basename of the dataset. Given a input dataset named `my_dataset`, the pipeline will look for the following files: `my_data.pgen`, `my_data.pvar`, `my_data.psam`.
 
-When `step2_split = 'chunk'` the pipeline will check for `input.snplist` file if `imputed_snplist = true` or will generate the snplist when `imputed_snplist = false`.  
+#### bed format
 
-Only chromosomes listed by `chromosome` parameters will be used. **NB** ALL chromosomes requested by `chromosome` parameter must be present in the dataset.
-  
-#### Use multiple bgen/vcf
+- input format: `'bed'`
+- input dataset: `'path/to/my_data'`
 
-If you imputed dataset is already splitted for example by single chromosomes and you have multiple bgen or VCF files, you can run association on all files using something like `genotypes_imputed = '/my/path/imputed_genotypes_chr*.bgen'`. **NB** The pipeline can not manage additional split on multiple files thus you have to set `step2_split = 'no_split'`.
+For bed input, you have to specify only the basename of the dataset. Given a input dataset named `my_dataset`, the pipeline will look for the following files: `my_data.bed`, `my_data.bim`, `my_data.fam`.
 
-Each file is processed independently and `.sample`, `.bgi` files are checked for each single input file and managed automatically as explained above for single file input.
+#### Input dataset split by chromosome
 
-If the parameter `regenie_sample_file` is specified then this sample file is used for all bgen files.
+If your input dataset is split by chromosome across multiple files, you can use the `{CHROM}` tag in your input file name. This tag must be placed corresponding to the number of chromosome in the filename. When using this method be careful that the chromosome names captured from the filename correspond to numbers 1-22 for autosomes. 
 
-#### Large datasets
+For example, if you have a dataset split by chromosome in the following way: 
 
-Note that in case of a large dataset, creating BGI index and SNPLIST on the fly can add significant time to the running process. In this case we suggest to prepare a single BGEN file, and the corresponding BGI and SNPLIST files and then use `step2_split = 'chunck'` mode letting the pipeline to parallelize by chunk automatically.
+- `my_dataset_chr1.bgen`
+- `my_dataset_chr2.bgen`
+- `my_dataset_chr3.bgen`
+- ...
+
+You can specify the input dataset as `my_dataset_chr{CHROM}.bgen` and the pipeline will automatically replace `{CHROM}` with the chromosome number.
 
 ### QCed genotyped SNPs - MANDATORY
 
 A {bed,bim,fam} dataset containing independent SNPs used by regenie step 1 (`genotypes_array`). Ideally, this would contain ~500k QCed and pruned SNPs and MUST contain less than 1M SNPs. An additional QC will be automatically performed on this file since step1 requires strict filtering criteria. This need to be specified as prefix, so if you a dataset named `my_dataset.bed/bim/fam` you should specify `my_dataset` as input.
 
+### Variant annotation files - MANDATORY for RARE VARIANT ANALYSIS
+
+When running a rare variant analysis additional variant annotation files are needed and must be provided using the following parameters:
+
+- `rarevar_set_list_file`: set list file as defined in regenie docs. Essentially a tab- or space-separated file with 4 columns: the set/gene name followed, a chromosome, physical position for the set/gene, a comma-separated list of variants included in the set/gene. This file is used to define the variant sets to be tested. The chromosome names must be numbers 1-22 for autosomes.
+
+- `rarevar_anno_file`: variant annotation file for regenie. A tab- or space-separated file with 3 columns: variant name, the set/gene name, a single annotation category (for example missense, LoF, ...). Variants not in this file will be assigned to a default "NULL" category. A maximum of 63 annotation categories (+NULL category) is allowed.
+
+- `rarevar_mask_file`: mask definition file for regenie. A tab- or space-separated file with 2 columns: a mask name followed by a comma-seperated list of categories included in the mask.
+
+
 ### LD panel - OPTIONAL (recommended for very large datasets)
 
-LD panel files (`ld_panel` parameter). If you are analysing a large dataset with more than 50k samples, to speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. This is only processed when `clumping` option is active. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 50k. You can generate LD files from input BGEN using plink2 and the `--keep` option to extract a subset of unrelated samples.
+LD panel files (`ld_panel` parameter). If you are analysing a large dataset with more than 50k samples, to speed up LD computation for clumping we suggest to prepare by chromosome bed/bim/fam files with the same variants present in the full genotype data (input bgen) but only a subset of samples. Then you can specify a pattern to these files like `/ld_panel/chr{CHROM}_ld`. The `{CHROM}` is automatically substituted with number 1-23 when the pipeline is running. This is only processed when `clumping` option is active. If the `ld_panel` parameter is not set and clumping is active the pipeline will use the full genotype data to estimate LD. Note that this will result in very long run time for huge datasets so providing an LD panel is highly reccomended when sample size is above 50k. You can generate LD files using plink2 and the `--keep` option to extract a subset of unrelated samples.
 
 ```bash
 chrom=1 #Chromosome id
@@ -217,9 +311,9 @@ As a result of this process, if you use only a subset of samples present in the 
 
 ### Clumping
 
-When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumpling will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
+When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumping will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
 
-**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the BGEN file of imputed data, otherwise SNPs that are not found will be dropped from clumping report.
+**NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the input  dataset for GWAS analysis, otherwise SNPs that are not found will be dropped from clumping report.
 
 ## Monitor execution on Nextflow tower
 
@@ -238,33 +332,32 @@ Now when the pipeline is running you should be able to monitor progress in the [
 
 ## Outputs
 
-By default the pipeline will generate all results in a folder named according to `project` variable. Alternatively you can provide an `outdir` parameter and the output folder will be created as `<outdir>/<project>`. Output files are organized as follows:
+By default the pipeline will generate all results in a folder named according to `project` parameter. When you provide the `outdir` parameter, the output folder will be created as `<outdir>/<project>`. Main structure of the output folder is as follows:
 
 ```bash
-|-- logs
+.
 |-- analysis_config
+|-- logs
+|   |-- clumping
+|   |   `-- <pheno>_clump
+|   |-- step2_gwas_logs
+|   `-- step2_rarevar_logs
 |-- regenie_step1_preds
-|   |-- regenie_step1_out_1.loco.gz
-|   |-- [one per tested phenotype]
-|   `-- regenie_step1_out_pred.list
-|-- results  
-|   |-- QP1.regenie.gz
-|   |-- QP1.regenie.gz.tbi
-|   |-- [one pair per test phenotype] 
-|   |-- tophits
-|   `-- toploci [only when clumping is active]
+|-- reports
+|-- results
+|   |-- gwas
+|   |   |-- tophits
+|   |   `-- toploci
+|   `-- rarevar
+|       `-- tophits
 |-- step2_chunks
-|   `-- chunks.txt
-|-- test-gwas-split.QP1.regenie.html
-|-- [one html report per tested phenotype]
 `-- validated_input
-    |-- covars.validated.txt
-    `-- phenos.validated.txt
 ```
 
-- main results from association are in `results`, with top associated SNPs annotated for gene(s) overlap and nearby gene(s) located in the `tophits` sub-folder
+- main results from GWAS and rare variants tests are in `results`. For GWAS, top associated SNPs annotated for gene(s) overlap and nearby gene(s) are saved in the `tophits` sub-folder, and top loci after clumping are saved in `toploci` sub folder. For rare variants, top associated genes are saved in `tophits` sub folder.
 - step 1 predictions in `regenie_step1_preds` can be reused for further analyses on the same dataset as long as the input bgen, phenotype file and covars file are exactly the same and phenotypes and covars list are provided in the same order.
 - logs from all operations are saved in `logs` for debugging. Note that more than a thousand log file may be generated when the input dataset is large.
+- HTML reports for GWAS and rare variants are saved in `reports` folder
 - when you are running in multi models mode, one folder will be created for each run_id under the `master_outdir` folder.
 
 ## Re-use Step 1 predictions
