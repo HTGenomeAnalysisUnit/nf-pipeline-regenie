@@ -133,6 +133,8 @@ Input dataset for GWAS analysis is defined by `genotypes_imputed` and `genotypes
 
 The input dataset can be provided as a single file or split by chromosome including a `{CHROM}` tag in the input filename (see below).
 
+Note that the pipeline will do highly parallelized access to the input dataset. Thus, especially if you are using a single file as input and when step 2 chunk size is small, it is reccomended to use a high performance filesystem optimized for parallel access.
+
 #### vcf format
 
 - input format: `'vcf'`

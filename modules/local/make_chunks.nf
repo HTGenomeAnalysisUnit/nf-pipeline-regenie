@@ -1,5 +1,5 @@
 process MAKE_VARIANTS_CHUNKS {
-    label 'split_data'
+    label 'small_task'
     
     if (params.publish) {
         publishDir "${params.outdir}", mode: 'copy', pattern: "*.GWAS-chunks.txt"
@@ -29,7 +29,7 @@ process MAKE_VARIANTS_CHUNKS {
 }
 
 process MAKE_GENES_CHUNKS {
-    label 'split_data'
+    label 'small_task'
     
     if (params.publish) {
         publishDir "${params.outdir}", mode: 'copy', pattern: "*.rarevar-chunks.chr*"

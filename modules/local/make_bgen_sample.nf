@@ -1,5 +1,5 @@
 process MAKE_BGEN_SAMPLE {
-  label 'process_bgenix'
+  label 'small_task'
   if (params.publish) {
     publishDir "${params.outdir}", mode: 'copy', pattern: '*.bgi'
   }

@@ -89,7 +89,7 @@ RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
 
 # Install regenie
 WORKDIR /opt
-ENV REGENIE_VERSION = "3.2.7"
+ENV REGENIE_VERSION "3.2.7"
 RUN mkdir regenie && cd regenie && \
     wget https://github.com/rgcgithub/regenie/releases/download/v${REGENIE_VERSION}/regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
     unzip -q regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \

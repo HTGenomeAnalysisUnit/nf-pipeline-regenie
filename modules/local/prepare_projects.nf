@@ -1,5 +1,5 @@
 process PREPARE_PROJECTS {
-  label 'prepare_project'
+  label 'small_task'
   publishDir "${params.outdir}", mode: 'copy', pattern: 'master_table.tsv'
 
   input:

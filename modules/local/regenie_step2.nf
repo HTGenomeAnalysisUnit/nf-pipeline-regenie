@@ -18,7 +18,7 @@ process REGENIE_STEP2_GWAS {
 
   script:
     def format = params.genotypes_imputed_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
-    def fileprefix = bed_bgen_pgen.simpleName
+    def fileprefix = bed_bgen_pgen.baseName
     def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen' : ''
     def split_region = chunk == 'SINGLE_CHUNK' ? '' : "--range $chunk"
     def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
