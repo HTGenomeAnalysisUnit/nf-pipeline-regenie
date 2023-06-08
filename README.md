@@ -75,18 +75,18 @@ If you want to use our pre-processed UKBB data, we have a copy of them on scract
    #SBATCH --partition cpuq
    #SBATCH --cpus-per-task 1
    #SBATCH --mem 4G
-   #SBATCH --time 15-00:00:00
+   #SBATCH --time 1-00:00:00
 
-   module load nextflow/22.10.6 singularity/3.8.5
+   module load nextflow/22.10.1 singularity/3.8.5
 
    ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx4G" 
    nextflow run nf-pipeline-regenie \
-      -profile slurm -c your_project.conf
+      -profile ht_cluster -c your_project.conf
 
    ###  For multiple models using a model table  ###
    nextflow run nf-pipeline-regenie \
-      -profile slurm -c shared_parameters.conf \
+      -profile ht_cluster -c shared_parameters.conf \
       --with_master \
       --shared_config_file shared_parameters.conf \
       --models_table models.tsv \

@@ -43,7 +43,7 @@ for row in read_tsv(input_file):
     run_template = update_conf(run_template, 'project', row['run_group'])
     run_template = update_conf(run_template, 'covariates_filename', row['cov_file'])
     run_template = update_conf(run_template, 'phenotypes_filename', row['pheno_file'])
-    run_template = update_conf(run_template, 'regenie_test', row['genetic_model'])
+    run_template = update_conf(run_template, 'regenie_gwas_test', row['genetic_model'])
     
     run_template = update_conf(run_template, 'covariates_cat_columns', row['cat_var'])
     if row['cat_var'] != 'NA':
