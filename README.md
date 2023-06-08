@@ -56,7 +56,7 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
-`git clone --depth 1 --branch v1.7 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.7.1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
