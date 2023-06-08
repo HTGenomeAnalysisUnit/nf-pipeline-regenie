@@ -35,7 +35,7 @@ workflow PREPARE_GENETIC_DATA {
             genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         default:
-            println "Unknown input format: ${params.input_format}"
+            log.error "Unknown input format: ${params.input_format}"
             exit 1
         } 
     
@@ -59,7 +59,7 @@ workflow PREPARE_GENETIC_DATA {
                 .map { tuple(it[0], it[1], it[2], it[3], "ONE_FILE") }
             break
         default:
-            println "Unknown input format: ${params.input_format}"
+            log.error "Unknown input format: ${params.input_format}"
             exit 1
         }
         //Check we have a single input file
@@ -101,12 +101,15 @@ workflow PREPARE_GENETIC_DATA {
                     found: it[3].exists()
                     missing: true
                 }
-            .set { check_sample_ch }   
+            .set { check_sample_ch }
+
+            MAKE_BGEN_SAMPLE(check_sample_ch.missing.map { tuple(it[0], it[1], it[2], it[4]) } )
+            
+            genotypes_bgen_and_sample = check_sample_ch.found
+                .mix(MAKE_BGEN_SAMPLE.out)
         }
 
-        MAKE_BGEN_SAMPLE(check_sample_ch.missing.map { tuple(it[0], it[1], it[2], it[4]) } )
-        genotypes_plink2_ch = check_sample_ch.found
-            .mix(MAKE_BGEN_SAMPLE.out)
+        genotypes_plink2_ch = genotypes_bgen_and_sample
     }
 
     emit:

@@ -8,7 +8,7 @@ process CHECK_MAX_CHANNEL_SIZE {
 
     exec:
     if (channel_size > max_size) {
-        println "ERROR: Channel size for $channel_name is $channel_size, but maximum allowed is $max_size"
+        log.error "ERROR: Channel size for $channel_name is $channel_size, but maximum allowed is $max_size"
         exit 1
     }
 }
@@ -23,7 +23,7 @@ process CHECK_CHANNEL_SIZE {
 
     exec:
     if (channel_size != expected_size) {
-        println "ERROR: Channel size for $channel_name is $channel_size, but $expected_size was expected"
+        log.error "ERROR: Channel size for $channel_name is $channel_size, but $expected_size was expected"
         exit 1
     }
 }
