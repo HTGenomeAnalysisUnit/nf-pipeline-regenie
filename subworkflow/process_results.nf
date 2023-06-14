@@ -3,16 +3,16 @@ if (params.genes_bed) {
   genes_bed_hg19 = file(params.genes_bed)
   genes_bed_hg38 = file(params.genes_bed)
 } else {
-  genes_bed_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.sorted.bed", checkIfExists: true)
-  genes_bed_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.sorted.bed", checkIfExists: true)
+  genes_bed_hg19 = file("$projectDir/genes/genes.GRCh37.1-23.${params.genes_group}.bed", checkIfExists: true)
+  genes_bed_hg38 = file("$projectDir/genes/genes.GRCh38.1-23.${params.genes_group}.bed", checkIfExists: true)
 }
 
 if (params.genes_ranges) {
   genes_ranges_hg19 = file(params.genes_ranges)
   genes_ranges_hg38 = file(params.genes_ranges)
 } else {
-  genes_ranges_hg19 = file("$projectDir/genes/glist-hg19", checkIfExists: true)
-  genes_ranges_hg38 = file("$projectDir/genes/glist-hg38", checkIfExists: true)
+  genes_ranges_hg19 = file("$projectDir/genes/glist-hg19-${params.genes_group}", checkIfExists: true)
+  genes_ranges_hg38 = file("$projectDir/genes/glist-hg38-${params.genes_group}", checkIfExists: true)
 }
 
 //Inclusion statements
