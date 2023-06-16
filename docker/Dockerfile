@@ -68,6 +68,9 @@ RUN R -e "install.packages(c('BiocManager', 'groundhog'), repos = c(CRAN = 'http
 COPY install_R_pkgs.R .
 RUN Rscript install_R_pkgs.R
 
+# Install python packages
+RUN pip install pandas
+
 # Install miniconda and create a python2 environment
 WORKDIR /opt
 ENV CONDA_DIR /opt/conda

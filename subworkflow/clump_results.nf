@@ -26,7 +26,7 @@ workflow CLUMP_RESULTS {
             }
             .set { bed_files_fork_ch }
 
-            chromosomes_ch = Channel.of(params.chromosomes)
+            chromosomes_ch = Channel.fromList(params.chromosomes)
             ld_panel_part1_ch = chromosomes_ch.combine(bed_files_fork_ch.single_file)
                 .map { tuple(it[0],it[1],it[2],it[3]) }
             ld_panel_ch = ld_panel_part1_ch.mix(bed_files_fork_ch.split_by_chr)
