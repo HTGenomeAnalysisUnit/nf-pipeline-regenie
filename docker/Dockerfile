@@ -21,6 +21,7 @@ RUN apt-get update && \
     build-essential \
     automake \
     python3 \
+    python3-pip \
     zlib1g-dev \
     libgomp1 \
     procps \
@@ -41,36 +42,6 @@ RUN apt-get update && \
 && apt-get -y clean all \
 && rm -rf /var/cache 
 
-# Prepare R environment
-WORKDIR "/opt"
-ENV R_LIBS /opt/R/libs
-ENV R_LIBS_USER /opt/R/user_libs
-ENV BIOC_VERSION 3.14
-
-RUN mkdir -p /home/ruser/R/libs \
-    && mkdir -p /home/ruser/R/user_libs \
-    && mkdir -p /root/R_groundhog \
-    && mkdir -p /opt/R/user_libs
-
-# Install R from source
-RUN wget https://cloud.r-project.org/src/base/R-4/R-4.1.0.tar.gz \
-    && tar -zxvf R-4.1.0.tar.gz \
-    && rm R-4.1.0.tar.gz \
-    && cd R-4.1.0 \
-    && ./configure --enable-R-shlib \
-    && make \
-    && make install \
-    && cd .. \
-    && rm -rf R-4.1.0
-
-# Install R packages
-RUN R -e "install.packages(c('BiocManager', 'groundhog'), repos = c(CRAN = 'https://cloud.r-project.org'))"
-COPY install_R_pkgs.R .
-RUN Rscript install_R_pkgs.R
-
-# Install python packages
-RUN pip install pandas
-
 # Install miniconda and create a python2 environment
 WORKDIR /opt
 ENV CONDA_DIR /opt/conda
@@ -78,6 +49,9 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     /bin/bash ~/miniconda.sh -b -p /opt/conda
 ENV PATH=$CONDA_DIR/bin:$PATH
 RUN conda create -n python2 "python<3" 
+
+# Install pacakges in the root env
+RUN conda install -n root pandas
 
 WORKDIR /opt
 RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
@@ -155,3 +129,28 @@ RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
     ./waf install && \
     cd .. && \
     rm -rf bgen.tgz
+
+# Prepare R environment
+WORKDIR "/opt"
+ENV R_LIBS /opt/R/libs
+ENV R_LIBS_USER /opt/R/user_libs
+ENV BIOC_VERSION 3.14
+
+RUN mkdir -p /home/ruser/R/libs \
+    && mkdir -p /home/ruser/R/user_libs \
+    && mkdir -p /root/R_groundhog \
+    && mkdir -p /opt/R/user_libs
+
+# Install R from source
+RUN wget https://cloud.r-project.org/src/base/R-4/R-4.1.0.tar.gz \
+    && tar -zxvf R-4.1.0.tar.gz \
+    && rm R-4.1.0.tar.gz \
+    && cd R-4.1.0 \
+    && ./configure --enable-R-shlib \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -rf R-4.1.0
+
+# Install R packages
+RUN R -e "install.packages(c('data.table', 'optparse'), repos = c(CRAN = 'https://cloud.r-project.org'))"

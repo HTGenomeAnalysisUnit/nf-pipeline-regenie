@@ -166,7 +166,7 @@ include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/re
 workflow NF_GWAS {   
 
   //==== SET WORKFLOW runName ====
-  workflow.runName = "[${workflow.runName} - REGENIE] - ${params.project}"
+  workflow.runName = "${workflow.runName}-${params.project}"
 
   //==== INITIAL LOGGING OF PARAMETERS ====
   log_params = [ 
