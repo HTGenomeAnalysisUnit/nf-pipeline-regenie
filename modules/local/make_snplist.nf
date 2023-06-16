@@ -15,6 +15,6 @@ process MAKE_SNPLIST {
 
     script:
     """
-    bgenix -g $bgen_file -list | tail -n+3 | awk '{OFS="\t"}; {print \$3, \$2, 0, \$4, \$6, \$7}' | sed '\$d' > ${filename}.snplist
+    bgenix -g $bed_bgen_pgen -list | tail -n+3 | awk '{OFS="\t"}; {print \$3, \$2, 0, \$4, \$6, \$7}' | sed '\$d' > ${filename}.snplist
     """
 }

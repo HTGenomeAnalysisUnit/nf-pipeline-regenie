@@ -171,7 +171,7 @@ Some additional files are expected when using bgen format:
 
    ```bash
    bgenix -g my_dataset.begn -list | tail -n+3 \
-   | awk '{OFS="\t"}; {print $3, $2, 0, $4, $6, $7}' | sed '\$d' > my_dataset.snplist
+   | awk '{OFS="\t"}; {print $3, $2, 0, $4, $6, $7}' | sed '$d' > my_dataset.snplist
    ```
 
 **NB:** When using BGEN input, make sure that the sample ID in the BGEN or sample file can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. Using a `.sample` file can help to have better control on the sample IDs. 
