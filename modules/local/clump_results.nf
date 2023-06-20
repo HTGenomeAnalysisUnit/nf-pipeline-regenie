@@ -38,7 +38,7 @@ process PLINK_CLUMPING {
         path "${output_prefix}.log", emit: logs
 
     script:
-    def bfile_prefix = bed.simpleName
+    def bfile_prefix = bed.baseName
     def genes_ranges = params.genotypes_build == 'hg19' ? "hg19_genes" : "hg38_genes"
     def target_chrom = chrom != 'NO_SPLIT' ? "--chr ${chrom}" : ''
     output_prefix = chrom != 'NO_SPLIT' ? "${chrom}" : "${bfile_prefix}"
