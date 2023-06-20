@@ -10,8 +10,10 @@ try:
 	df = pd.read_csv(filename, sep='\t', header=None)
 
 	# Drop columns 20, 21, 22 and group by column 3 (variant)	
-	df = df.drop(columns=[20, 21, 22])
-	df[23] = df.groupby(3)[23].transform(lambda x: ','.join(x))
+	last_column = df.columns[-1]
+	cols_to_drop = list(range(last_column-3, last_column))
+	df = df.drop(columns=cols_to_drop)
+	df[last_column] = df.groupby(3)[last_column].transform(lambda x: ','.join(x))
 
 	# Convert back to DataFrame and drop duplicates
 	result = df.drop_duplicates()
