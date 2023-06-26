@@ -57,7 +57,7 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
-`git clone --depth 1 --branch v1.7.1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.7.3 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
 
 2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
@@ -83,11 +83,11 @@ If you want to use our pre-processed UKBB data, we have a copy of them on scract
    ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx4G" 
    nextflow run nf-pipeline-regenie \
-      -profile ht_cluster -c your_project.conf
+      -profile singularity,ht_cluster -c your_project.conf
 
    ###  For multiple models using a model table  ###
    nextflow run nf-pipeline-regenie \
-      -profile ht_cluster -c shared_parameters.conf \
+      -profile singularity,ht_cluster -c shared_parameters.conf \
       --with_master \
       --shared_config_file shared_parameters.conf \
       --models_table models.tsv \
@@ -101,7 +101,8 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - To run a single project, copy the template file `templates/single_project.conf` and adapt the parameters according to your input files and preferences.
 - To run multiple models, copy the template file `templates/shared_parameters.conf` and adapt the parameters according to your input files and preferences.
-
+- To create a profile for your HPC cluster, copy the template file `templates/profile_template.config` and adapt the parameters according to your HPC cluster configuration. Then use the profile name in the pipeline command line with `-profile <profile_name>`.
+  
 ### Main parameters to adjust
 
 - If you provide a project id (`project`) that will be used in reports and a folder will be created with the same name to store all results.
