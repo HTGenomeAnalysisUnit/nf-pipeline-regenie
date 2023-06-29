@@ -4,7 +4,7 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 
 Original concept based on this amazing [github repository](https://github.com/genepi/nf-gwas) from Institute of Genetic Epidemiology, Innsbruck maintained by Sebastian Schönherr and Lukas Forer.
 
-The pipeline is optimized for massive scaling and can analyze multiple quantitative phenotype on 500k individuals and 40M SNPs in ~2h.
+The pipeline is optimized for massive scaling. In our tests it can analyze 100 quantitative phenotypes on teh full UKBB dataset (about 500k individuals) and 40M SNPs in ~4h under normal HPC load considering a limit of 250 concurrent tasks. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks.
 
 Setting `genotypes_imputed` input trigger the GWAS analsysi, while `genotypes_rarevar` trigger the rare variant analysis using burden test and the set of test configured `rarevars_vc_test`. Possible tests include: skat, skato, acato, acatv, skato-acat.
 
@@ -49,25 +49,15 @@ Two running modes are available: **single project mode** and **multi models mode
 
 ## Quick Start
 
-1. Create a folder for your project (e.g. `yourproject`) and clone the latest pipeline version into the project folder using
-
-`git clone --depth 1 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
-
-This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
-
-You can eventually chose a specific version of the pipeline using the `--branch` option
-
-`git clone --depth 1 --branch v1.7.3 https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie.git`
+1. Create a folder for your project (e.g. `yourproject`) 
 
 2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
 
-If you want to use our pre-processed UKBB data, we have a copy of them on scracth for optimized performance. The files are available at `/scratch/edoardo.giacopuzzi/UKBB`.
+3. Prepare the [config files](#prepare-config-files) for your project in your project folder.
 
-1. Prepare the [config files](#prepare-config-files) for your project.
+4. Invoke the pipeline
 
-2. Invoke the pipeline
-
-   Ideally, you should prepare a script to submit the pipeline in your project folder using `sbatch`. The following template can be used as example:
+   Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler:
 
    ```bash
    #!/bin/bash
@@ -82,11 +72,11 @@ If you want to use our pre-processed UKBB data, we have a copy of them on scract
 
    ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx4G" 
-   nextflow run nf-pipeline-regenie \
+   nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
       -profile singularity,ht_cluster -c your_project.conf
 
    ###  For multiple models using a model table  ###
-   nextflow run nf-pipeline-regenie \
+   nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
       -profile singularity,ht_cluster -c shared_parameters.conf \
       --with_master \
       --shared_config_file shared_parameters.conf \
@@ -95,13 +85,24 @@ If you want to use our pre-processed UKBB data, we have a copy of them on scract
       --master_outdir outputs
    ```
 
+
+Optionally, you can clone the latest pipeline version into the project folder using
+
+`git clone --depth 1 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
+
+This will create a new folder called `nf-pipeline-regenie` in the current folder containing all the pipeline files.
+
+You can eventually chose a specific version of the pipeline using the `--branch` option
+
+`git clone --depth 1 --branch v1.7.4 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
+
 ## Prepare config files
 
 To run the pipeline, you need to prepare a config file. The following config file can be used as example:
 
 - To run a single project, copy the template file `templates/single_project.conf` and adapt the parameters according to your input files and preferences.
 - To run multiple models, copy the template file `templates/shared_parameters.conf` and adapt the parameters according to your input files and preferences.
-- To create a profile for your HPC cluster, copy the template file `templates/profile_template.config` and adapt the parameters according to your HPC cluster configuration. Then use the profile name in the pipeline command line with `-profile <profile_name>`.
+- To create a profile for your HPC cluster, copy the template file `templates/profile_template.config` and adapt the parameters according to your HPC cluster configuration. Then use the profile in the pipeline execution by providing the new config file and the profile name, something like `-c myprofile.config -profile <profile_name>`.
   
 ### Main parameters to adjust
 
