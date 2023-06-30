@@ -85,7 +85,6 @@ Two running modes are available: **single project mode** and **multi models mode
       --master_outdir outputs
    ```
 
-
 Optionally, you can clone the latest pipeline version into the project folder using
 
 `git clone --depth 1 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
@@ -252,7 +251,9 @@ In this mode you run a single GWAS model on the provided genetic data given a ta
 
 ## Run in multi models mode
 
-In this mode you can specifify a general trait table and a model table that describes the models you want to test (pheno ~ covars). Given a missingness threshold, the pipeline will automatically generate a list of of inputs and run the corresponding GWAS analyses.
+In this mode you can specifify a general trait table and a model table that describes the models you want to test (pheno ~ covars) and the type of phenotype (quantitative or binary). Given a missingness threshold, the pipeline will automatically group together data to generate a list of uniform analyses (named analysis chunk) and then run the corresponding workflows automatically. 
+
+When using the multi-models mode, be sure to allocate enough time to the master job to be able to complete all the analysis chunks.
 
 ### Inputs for multi models mode
 
@@ -275,7 +276,7 @@ M4      QP4 ~ 1  quant   additive   NA
 
 ### Multi models execution monitoring
 
-If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named `run-<chunk_id>-gwas`.
+If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named according to the `<chunk_id>`.
 
 In the master output folder you will also see:
 
@@ -295,7 +296,7 @@ After fixing the error, you can resume execution of a specific task following th
 ### Note on unexpected exit from multi models execution
 
 At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.
-In this case, please verify if you have any running jobs using `squeue -u $USER` and terminate any job with name containing `nf-SETUP_MULTIPLE_RUNS_SUBMIT_GWAS_RUN` or `nf-NF_GWAS_REGENIE`.
+In this case, please verify if you have any running jobs using your scheduler ( for example `squeue -u $USER` ) and terminate any residual job spawned by the master pipeline.
 
 Normally, if one of the single run submission terminates with error, the master pipeline will go on and a warning is reported. This ensure the whole pipeline can gracefully terminate and all sub-jobs are properly cleaned up. You can see from the warning message which run has failed an eventually re-run this analysis as single GWAS.
 
@@ -389,7 +390,7 @@ You can load level 1 preds from this folder in subsequent analyses by setting `r
 
 ## Full parameters explanation
 
-See the [project wiki](https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie/-/wikis/home) for detailed explanation of all configuration parameters
+See the project wiki for detailed explanation of all configuration parameters
 
 ## License
 
