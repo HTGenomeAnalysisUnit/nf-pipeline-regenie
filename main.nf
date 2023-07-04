@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    genepi/nf-gwas
+    nf-pipeline-regenie
 ========================================================================================
-    GitLab : https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie
+    GitHub : https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie
     Author : Edoardo Giacopuzzi
-    Based on github : https://github.com/genepi/nf-gwas
+    Original concept GitHub : https://github.com/genepi/nf-gwas
     ---------------------------
 */
 
