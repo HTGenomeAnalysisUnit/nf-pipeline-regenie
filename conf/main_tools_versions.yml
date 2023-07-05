@@ -1,4 +1,4 @@
-regenie: v3.2.5
+regenie: v3.2.7
 plink: 20220402 
 plink2: 20220814
 htslib: v1.16
@@ -23,10 +23,10 @@ R_packages:
       - dplyr
       - remotes
   github:
-    pksgs:
+    pkgs:
       - exaexa/scattermore@v0.8
       - roman-tremmel/ggfastman@v.1.2
-  bioconductore:
+  bioconductor:
     version: 3.14
     pkgs:
       - biovizBase

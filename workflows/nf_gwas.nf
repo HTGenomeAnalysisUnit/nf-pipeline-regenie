@@ -1,30 +1,5 @@
-//Check general required parameters
-requiredParams = [
-  'project', 'genotypes_array', 'genotypes_build',
-  'phenotypes_filename', 'phenotypes_columns', 'phenotypes_binary_trait',
-  'chromosomes',
-  'prune_enabled',
-  'prune_maf',
-  'prune_window_kbsize',
-  'prune_step_size',
-  'prune_r2_threshold',
-  'qc_maf',
-  'qc_mac',
-  'qc_geno',
-  'qc_hwe',
-  'qc_mind',
-  'regenie_bsize_step1',
-  'step1_n_chunks',
-  'regenie_bsize_step2',
-  'annotation_min_log10p',
-  'annotation_interval_kb'
-]
-
-for (param in requiredParams) {
-    if (params[param] == null || params[param] == '') {
-      exit 1, "Parameter ${param} is required."
-    }
-}
+//Set project_id
+project_id = params.project
 
 //Check required parameters for GWAS analysis
 if (params.genotypes_imputed) {
@@ -37,20 +12,23 @@ if (params.genotypes_imputed) {
 
   for (param in requiredParams) {
       if (params[param] == null || params[param] == '') {
-        exit 1, "Parameter ${param} is required when running GWAS analysis."
+        log.error "Parameter ${param} is required when running GWAS analysis."
+        exit 1
       }
   }
 
   //Check specified regenie test is allowed
   def allowed_tests = ['additive', 'dominant', 'recessive']
   if (!(params.regenie_test in allowed_tests)){
-    exit 1, "Test ${params.regenie_test} not supported. Allowed tests are $allowed_tests."
+    log.error "Test ${params.regenie_test} not supported. Allowed tests are $allowed_tests."
+    exit 1
   }
 
   //Check imputed file format is allwed
   def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
   if (!(params.genotypes_imputed_format in allowed_input_formats)){
-    exit 1, "File format ${params.genotypes_imputed_format} not supported. Allowed formats are $allowed_input_formats."
+    log.error "File format ${params.genotypes_imputed_format} not supported. Allowed formats are $allowed_input_formats."
+    exit 1
   }
 }
 
@@ -69,61 +47,35 @@ if (params.genotypes_rarevar) {
 
   for (param in requiredParams) {
       if (params[param] == null || params[param] == '') {
-        exit 1, "Parameter ${param} is required when running rare variant analysis."
+        log.error "Parameter ${param} is required when running rare variant analysis."
+        exit 1
       }
   }
 
   //Check imputed file format is allwed
   def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
   if (!(params.genotypes_rarevar_format in allowed_input_formats)){
-    exit 1, "File format ${params.genotypes_rarevar_format} not supported. Allowed formats are $allowed_input_formats."
+    log.error "File format ${params.genotypes_rarevar_format} not supported. Allowed formats are $allowed_input_formats."
+    exit 1
   }
 }
 
 if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {
-  exit 1, "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
+  log.error "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
+  exit 1
 }
 
 //Set output and logs directories
 if(params.outdir == null) {
-  outdir = "${params.project}"
+  outdir = './'
 } else {
-  outdir = "${params.outdir}/${params.project}"
+  outdir = "${params.outdir}"
 }
 
 if (params.master_log_dir != null) {
   master_log_dir = "${params.master_log_dir}"
 } else {
   master_log_dir = "${outdir}"
-}
-
-project_id = params.project
-phenotypes_array = params.phenotypes_columns.trim().split(',')
-
-covariates_array= []
-if(!params.covariates_columns.isEmpty()){
-  covariates_array = params.covariates_columns.trim().split(',')
-}
-
-//Check accessory scripts
-regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
-regenie_filter_java = file("$projectDir/bin/RegenieFilter.java", checkIfExists: true)
-regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
-
-//Phenotypes
-phenotypes_file = file(params.phenotypes_filename, checkIfExists: true)
-phenotypes = Channel.from(phenotypes_array)
-
-//Covariates
-if (params.covariates_filename == 'NO_COV_FILE') {
-  covar_tmp_file = file("${workflow.workDir}/NO_COV_FILE")
-  covar_tmp_file.append('')
-  covariates_file = file("$covar_tmp_file")
-} else {
-  covariates_file = file(params.covariates_filename)
-}
-if (params.covariates_filename != 'NO_COV_FILE' && !covariates_file.exists()){
-  exit 1, "Covariate file ${params.covariates_filename} not found."
 }
 
 //Make chromosomes list
@@ -139,13 +91,8 @@ params.chromosomes.split(',').each { element ->
 }
 chromosomes = chromosomes*.toString()
 
-//Set input channel for step 1
-Channel.fromFilePairs("${params.genotypes_array}.{bim,bed,fam}", size: 3).set {genotyped_plink_ch}
-
 //Include modules
-include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
-include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes' addParams(outdir: "$outdir")
-include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates' addParams(outdir: "$outdir")
+include { OPENING_LOG                 } from '../modules/local/opening_log' addParams(outdir: "$outdir")
 include { REGENIE_STEP1_WF            } from '../subworkflow/regenie_step1' addParams(outdir: "$outdir", chromosomes: chromosomes)
 include { REPORT_GWAS                 } from '../modules/local/report'  addParams(outdir: "$outdir")
 include { REPORT_RAREVAR              } from '../modules/local/report'  addParams(outdir: "$outdir")
@@ -164,76 +111,30 @@ include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/re
 
 //==== WORKFLOW ====
 workflow NF_GWAS {   
+  take:
+  project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
+  input_validation_logs //[project_id, pheno_validation_log, covar_validation_log]
 
+  main:
   //==== SET WORKFLOW runName ====
-  workflow.runName = "${workflow.runName}-${params.project}"
+  workflow.runName = "${workflow.runName}-${project_data[0]}"
 
-  //==== INITIAL LOGGING OF PARAMETERS ====
-  log_params = [ 
-  'genotypes_array',
-  'genotypes_imputed', 'genotypes_imputed_format',
-  'genotypes_rarevar', 'genotypes_rarevar_format',
-  'genotypes_build',
-  'phenotypes_filename','phenotypes_columns','phenotypes_binary_trait',
-  'covariates_filename','covariates_columns',
-  'chromosomes',
-  'regenie_test','annotation_min_log10p',
-  'save_step1_predictions'
-  ]
-  log_params_string = []
-  for (p in log_params) {
-      log_params_string.add("$p : " + params[p])
-  }
+  //==== OPENING LOG ====
+  OPENING_LOG(project_data)
 
-log.info"""\
-==========================================================
-  REGENIE GWAS - PROJECT ${params.project} - NF PIPELINE    
-==========================================================
-PROJECT ID      : ${params.project}
-OUTDIR          : ${outdir}
-
-${log_params_string.join('\n')}
-==========================================================
-Please report issues to:
-https://gitlab.fht.org/genome-analysis-unit/nf-pipeline-regenie
-or contact: edoardo.giacopuzzi@fht.org
-"""
-
-  //==== VALIDATE COVARS AND PHENO TABLES ====
-  CACHE_JBANG_SCRIPTS (
-      regenie_log_parser_java,
-      regenie_filter_java,
-      regenie_validate_input_java
-  )
-
-  VALIDATE_PHENOTYPES (
-      phenotypes_file,
-      CACHE_JBANG_SCRIPTS.out.regenie_validate_input_jar
-  )
-
-  if(covariates_file.exists() && covariates_file.name != 'NO_COV_FILE') {
-      VALIDATE_COVARIATS (
-        covariates_file,
-        CACHE_JBANG_SCRIPTS.out.regenie_validate_input_jar
-      )
-
-      covariates_file_validated = VALIDATE_COVARIATS.out.covariates_file_validated
-      covariates_file_validated_log = VALIDATE_COVARIATS.out.covariates_file_validated_log
-
-  } else {
-
-    // set covariates_file to default value
-    covariates_file_validated = covariates_file
-    covariates_file_validated_log = Channel.fromPath("NO_COV_LOG")
-  }
-
+  //TODO: Combine genotyped_plink_ch with project data and perform step 1 by project
+  //TODO: results of step 1 are mapped into project_data
   //==== STEP 1 ====
+  //Set input channel for step 1
+  genotyped_files = Channel.fromFilePairs("${params.genotypes_array}.{bed,bim,fam}", size: 3, flat: true)
+    .combine(project_data.map { it[0] } )
+    .set {genotyped_plink_ch}
+
   REGENIE_STEP1_WF (
     genotyped_plink_ch,
-    VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-    covariates_file_validated,
-    CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
+    project_data
   )
+  
 
   //==== STEP2 AND REPORTS - GWAS ====
   if (params.genotypes_imputed) {
@@ -247,6 +148,7 @@ or contact: edoardo.giacopuzzi@fht.org
         .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
     }
 
+    //TODO: Combine gwas_data_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
     REGENIE_STEP2_GWAS_WF(
       gwas_data_input_ch,
@@ -286,7 +188,8 @@ or contact: edoardo.giacopuzzi@fht.org
       rare_variants_input_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
         .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
     }
-    
+
+    //TODO: Combine rare_variants_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
     REGENIE_STEP2_RAREVAR_WF(
       rare_variants_input_ch,
