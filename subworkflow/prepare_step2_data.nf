@@ -113,5 +113,5 @@ workflow PREPARE_GENETIC_DATA {
     }
 
     emit:
-        processed_genotypes = genotypes_plink2_ch
+        processed_genotypes = genotypes_plink2_ch //[file_prefix, file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom)]
 }

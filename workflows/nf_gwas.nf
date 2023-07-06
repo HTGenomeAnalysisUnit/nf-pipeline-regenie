@@ -100,14 +100,14 @@ include { REPORT_RAREVAR              } from '../modules/local/report'  addParam
 //gwas sub wf and modules
 include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file, chromosomes: chromosomes, dosage_from: params.gwas_read_dosage_from)
 include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(outdir: "$outdir/results/gwas", logdir: "$outdir/logs", chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false, publish_filtered: false, annotation_min_log10p: params.annotation_min_log10p)
-include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir/results/gwas", logdir: "$outdir/logs", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
+include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(outdir: "$outdir", logdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false, publish_filtered: false, annotation_min_log10p: params.annotation_min_log10p)
+include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", logdir: "$outdir", chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 
 //rare variant sub wf and modules
 include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(outdir: "$outdir", genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file, chromosomes: chromosomes, dosage_from: params.rarevar_read_dosage_from)
 include { SPLIT_RAREVARIANT_DATA_WF        } from '../subworkflow/split_data' addParams(outdir: "$outdir", chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(outdir: "$outdir/results/rarevar", logdir: "$outdir/logs", chromosomes: chromosomes, rarevar_results: true, publish_filtered: true, annotation_min_log10p: params.rarevar_min_log10p)
-include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir/results/rarevar", logdir: "$outdir/logs", chromosomes: chromosomes, run_gwas: false, run_rarevar: true)
+include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(outdir: "$outdir", logdir: "$outdir", chromosomes: chromosomes, rarevar_results: true, publish_filtered: true, annotation_min_log10p: params.rarevar_min_log10p)
+include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(outdir: "$outdir", logdir: "$outdir", chromosomes: chromosomes, run_gwas: false, run_rarevar: true)
 
 //==== WORKFLOW ====
 workflow NF_GWAS {   
@@ -122,8 +122,6 @@ workflow NF_GWAS {
   //==== OPENING LOG ====
   OPENING_LOG(project_data)
 
-  //TODO: Combine genotyped_plink_ch with project data and perform step 1 by project
-  //TODO: results of step 1 are mapped into project_data
   //==== STEP 1 ====
   //Set input channel for step 1
   genotyped_files = Channel.fromFilePairs("${params.genotypes_array}.{bed,bim,fam}", size: 3, flat: true)
@@ -142,21 +140,20 @@ workflow NF_GWAS {
     PREPARE_GWAS_DATA()
     if (params.step2_gwas_split) {
       SPLIT_GWAS_DATA_WF(PREPARE_GWAS_DATA.out.processed_genotypes)
-      gwas_data_input_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
+      processed_gwas_data_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
     } else {
-      gwas_data_input_ch = PREPARE_GWAS_DATA.out.processed_genotypes
+      processed_gwas_data_ch = PREPARE_GWAS_DATA.out.processed_genotypes
         .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
     }
 
     //TODO: Combine gwas_data_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
-    REGENIE_STEP2_GWAS_WF(
-      gwas_data_input_ch,
-      REGENIE_STEP1_WF.out.regenie_step1_out,
-      VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-      covariates_file_validated,
-      CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
-    )
+
+    gwas_data_input_ch = project_data
+      .join(REGENIE_STEP1_WF.out.regenie_step1_out)
+      .combine(processed_gwas_data_ch)
+
+    REGENIE_STEP2_GWAS_WF( gwas_data_input_ch )
 
     //Process results - filtering and annotation
     PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_GWAS_WF.out.regenie_results, PREPARE_GWAS_DATA.out.processed_genotypes)
@@ -183,21 +180,19 @@ workflow NF_GWAS {
     
     if (params.step2_rarevar_split) {
       SPLIT_RAREVARIANT_DATA_WF(PREPARE_RAREVARIANT_DATA.out.processed_genotypes)
-      rare_variants_input_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
+      processed_rarevar_data_ch = SPLIT_RAREVARIANT_DATA_WF.out.processed_genotypes
     } else {
-      rare_variants_input_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
+      processed_rarevar_data_ch = PREPARE_RAREVARIANT_DATA.out.processed_genotypes
         .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
     }
 
+    rarevar_data_input_ch = project_data
+      .join(REGENIE_STEP1_WF.out.regenie_step1_out)
+      .combine(processed_rarevar_data_ch)
+
     //TODO: Combine rare_variants_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
-    REGENIE_STEP2_RAREVAR_WF(
-      rare_variants_input_ch,
-      REGENIE_STEP1_WF.out.regenie_step1_out,
-      VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-      covariates_file_validated,
-      CACHE_JBANG_SCRIPTS.out.regenie_log_parser_jar
-    )
+    REGENIE_STEP2_RAREVAR_WF( rarevar_data_input_ch )
 
     //Process results - filtering
     PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_RAREVAR_WF.out.regenie_results)

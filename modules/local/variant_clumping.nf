@@ -24,17 +24,17 @@ process CONVERT_TO_BED {
 }
 
 process PLINK_CLUMPING {
-    publishDir "${params.logdir}/${phenotype}_clump", mode: 'copy', pattern: '*.log'
+    publishDir "${params.logdir}/${project_id}/logs/${phenotype}_clump", mode: 'copy', pattern: '*.log'
     label 'plink_clump'
-    tag "${phenotype}_${chrom}"
+    tag "${project_id}_${phenotype}_${chrom}"
 
     input:
-        tuple val(phenotype), file(pheno_results_gz), val(chrom), file(bed), file(bim), file(fam)
+        tuple val(project_id), val(phenotype), file(pheno_results_gz), val(chrom), file(bed), file(bim), file(fam)
         path genes_hg19, stageAs: 'hg19_genes'
         path genes_hg38, stageAs: 'hg38_genes'
 
     output:
-        tuple val(phenotype), path("${output_prefix}.clumped"), path("${output_prefix}.clumped.ranges"), emit: chrom_clump_results
+        tuple val(project_id), val(phenotype), path("${output_prefix}.clumped"), path("${output_prefix}.clumped.ranges"), emit: chrom_clump_results
         path "${output_prefix}.log", emit: logs
 
     script:
@@ -65,15 +65,15 @@ process PLINK_CLUMPING {
 }
 
 process MERGE_CLUMP_RESULTS {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/${project_id}/results/gwas/toploci", mode: 'copy'
     label 'merge_clump'
-    tag "${phenotype}"
+    tag "${project_id}_${phenotype}"
 
     input:
-        tuple val(phenotype), file(chromosome_clump), file(chromosome_ranges)
+        tuple val(project_id), val(phenotype), file(chromosome_clump), file(chromosome_ranges)
 
     output:
-        path "${phenotype}.toploci.tsv", emit: toploci
+        tuple val(project_id), path "${phenotype}.toploci.tsv", emit: toploci
         tuple val(phenotype), path("${phenotype}.toploci.annot.tsv"), emit: annotloci
 
     script:

@@ -1,5 +1,6 @@
 regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
 
+include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { QC_FILTER_GENOTYPED                  } from '../modules/local/qc_filter_genotyped'        addParams(logdir: "${params.outdir}")
 include { PRUNE_GENOTYPED                      } from '../modules/local/prune_genotyped'            addParams(logdir: "${params.outdir}")
 include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1'              addParams(outdir: "${params.outdir}", logdir: "${params.outdir}", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
@@ -66,6 +67,6 @@ workflow REGENIE_STEP1_WF {
     }
 
     emit:
-        regenie_step1_out = regenie_step1_out_ch
-        regenie_step1_parsed_logs = regenie_step1_parsed_logs_ch
+        regenie_step1_out = regenie_step1_out_ch //[val(project_id), path("regenie_step1_out_*")]
+        regenie_step1_parsed_logs = regenie_step1_parsed_logs_ch //[val(project_id), path(step1_log_file)]
 }

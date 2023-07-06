@@ -105,7 +105,7 @@ process RUNL1 {
 
   output:
     tuple val(project_id), path("regenie_step1_out_*"), emit: regenie_step1_out
-    path "regenie_step1_out.log", emit: regenie_step1_out_log
+    tuple val(project_id), path("regenie_step1_out.log"), emit: regenie_step1_out_log
 
   script:
   master_prefix = master_file.simpleName()
