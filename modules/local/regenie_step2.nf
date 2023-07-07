@@ -1,6 +1,6 @@
 process REGENIE_STEP2_GWAS {
   if (params.save_step2_logs) {
-    publishDir "${params.outdir}/${project_id}/logs/step2_gwas_logs", mode: 'copy', pattern: '*.log'
+    publishDir {"${params.outdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
   }
 
   label "step2_gwas" //FIXME Need to use a params to select based on running by chunk or whole dataset
@@ -22,7 +22,7 @@ process REGENIE_STEP2_GWAS {
     def test = pheno_meta.model != 'additive' ? "--test ${pheno_meta.model}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
-    def binaryTrait =  pheno_meta.binary ? "--bt $firth " : ""
+    def binaryTrait =  pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
     def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
@@ -63,7 +63,7 @@ process REGENIE_STEP2_GWAS {
 
 process REGENIE_STEP2_RAREVARS {
   if (params.save_step2_logs) {
-    publishDir "${params.outdir}/${project_id}/logs/step2_rarevar_logs", mode: 'copy', pattern: '*.log'
+    publishDir {"${params.outdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
   }
 
   label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset
@@ -86,7 +86,7 @@ process REGENIE_STEP2_RAREVARS {
     def build_mask = params.regenie_build_mask ? "--build-mask ${params.regenie_build_mask}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
-    def binaryTrait =  pheno_meta.binary ? "--bt $firth " : ""
+    def binaryTrait = pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
     def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''

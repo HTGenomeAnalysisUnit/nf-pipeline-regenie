@@ -40,9 +40,9 @@ for (param in requiredParams) {
 
 //Set output and logs directories
 if(params.outdir == null) {
-  outdir = './'
+  outdir = "${params.project}"
 } else {
-  outdir = "${params.outdir}"
+  outdir = "${params.outdir}/${params.project}"
 }
 
 if (params.master_log_dir == null) {
@@ -55,21 +55,24 @@ include { PREPARE_PROJECT } from './workflows/prepare_project'  addParams(outdir
 include { NF_GWAS         } from './workflows/nf_gwas'          addParams(outdir: outdir, logdir: master_log_dir)
 
 workflow {
-    //==== INITIAL LOGGING OF PARAMETERS ====
-    log_params = [ 
-    'genotypes_array',
-    'genotypes_imputed', 'genotypes_imputed_format',
-    'genotypes_rarevar', 'genotypes_rarevar_format',
-    'genotypes_build',
-    'chromosomes',
-    'annotation_min_log10p',
-    'save_step1_predictions'
-    ]
-    
-    global_parameters = []
-    for (p in log_params) {
-      global_parameters.add("$p : " + params[p])
-    }
+  //==== SET WORKFLOW runName ====
+  workflow.runName = "${workflow.runName}-${params.project}"
+
+  //==== INITIAL LOGGING OF PARAMETERS ====
+  log_params = [ 
+  'genotypes_array',
+  'genotypes_imputed', 'genotypes_imputed_format',
+  'genotypes_rarevar', 'genotypes_rarevar_format',
+  'genotypes_build',
+  'chromosomes',
+  'annotation_min_log10p',
+  'save_step1_predictions'
+  ]
+  
+  global_parameters = []
+  for (p in log_params) {
+    global_parameters.add("$p : " + params[p])
+  }
 
 log.info"""\
 ==========================================================
@@ -82,11 +85,12 @@ Please report issues to:
 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie
 or contact: edoardo.giacopuzzi@fht.org
 """
-    //==== PREPARE PROJECT INPUTS ====
-    PREPARE_PROJECT()
 
-    //==== RUN NF-GWAS ====
-    // project_data = [project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
-    //NF_GWAS(PREAPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
+  //==== PREPARE PROJECT INPUTS ====
+  PREPARE_PROJECT()
+
+  //==== RUN NF-GWAS ====
+  // project_data = [project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
+  NF_GWAS(PREPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
     
 }

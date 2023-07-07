@@ -32,7 +32,7 @@ workflow PREPARE_PROJECT {
                 file(row[0][1]),
                 [
                     cols: row[0][2],
-                    binary: {row[0][3] == 'True' ? true : false},
+                    binary: "${row[0][3] == 'True' ? true : false}",
                     model: row[0][4]
                 ]
             )} 
@@ -53,13 +53,15 @@ workflow PREPARE_PROJECT {
     } else {
         
         //==== READ INPUTS FROM PARAMS ====
+        pheno_is_binary = params.phenotypes_binary_trait ? 'true' : 'false'
+        pheno_is_binary = params.phenotypes_binary_trait == 'false' ? 'false' : pheno_is_binary
         //Phenotypes
         phenotype_data = Channel.of([
                 params.project,
                 file(params.phenotypes_filename, checkIfExists: true),
                 [ 
                     cols: params.phenotypes_columns, 
-                    binary: params.phenotypes_binary_trait,
+                    binary: pheno_is_binary,
                     model: params.regenie_gwas_test
                 ]
             ])
@@ -118,9 +120,6 @@ workflow PREPARE_PROJECT {
     
     input_validation_logs = VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log
         .join(validated_covars_logs)
-
-    project_data.view()
-    input_validation_logs.view()
 
     emit:
     project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]

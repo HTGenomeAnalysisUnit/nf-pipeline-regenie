@@ -103,18 +103,15 @@ workflow NF_GWAS {
   input_validation_logs //[project_id, pheno_validation_log, covar_validation_log]
 
   main:
-  //==== SET WORKFLOW runName ====
-  workflow.runName = "${workflow.runName}-${project_data[0]}"
-
   //==== OPENING LOG ====
-  OPENING_LOG(project_data)
+  //OPENING_LOG(project_data)
 
   //==== STEP 1 ====
   //Set input channel for step 1
   genotyped_files = Channel.fromFilePairs("${params.genotypes_array}.{bed,bim,fam}", size: 3, flat: true)
-    .combine(project_data.map { it[0] } )
-    .set {genotyped_plink_ch}
-
+    .map{ tuple(it[1], it[2], it[3])}
+  genotyped_plink_ch = project_data.map { it[0] }.combine(genotyped_files)
+  
   REGENIE_STEP1_WF (
     genotyped_plink_ch,
     project_data
@@ -202,7 +199,7 @@ workflow NF_GWAS {
 
 workflow.onComplete {
   //==== SAVE CONFIGURATION ====
-  pipeline_log_dir = file("$outdir/analysis_config")
+  pipeline_log_dir = file("${params.outdir}/analysis_config")
   pipeline_log_dir.mkdirs()
   
   def msg="""\
@@ -237,30 +234,30 @@ workflow.onComplete {
   versions_yml.copyTo("${pipeline_log_dir}/main_tools_versions.yml")
 
   //if (params.master_log_dir != null) {
-    master_log = file("${master_log_dir}/job_execution_summary.log")
-    def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
-    master_log.append(master_log_msg)
+    // master_log = file("${master_log_dir}/job_execution_summary.log")
+    // def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
+    // master_log.append(master_log_msg)
   //}
 
   //CLOSE MESSAGE
   println "Results location: ${ params.outdir }"
 }
 
-workflow.onError {
-  if (params.master_log_dir != null) {
-    error_log = file("${master_log_dir}/${project_id}_error.log")
-    def error_log_msg="""\
-    ### ERROR MESSAGE ###
-    ${workflow.errorMessage}
+// workflow.onError {
+//   if (params.master_log_dir != null) {
+//     error_log = file("${master_log_dir}/${project_id}_error.log")
+//     def error_log_msg="""\
+//     ### ERROR MESSAGE ###
+//     ${workflow.errorMessage}
 
-    ### ERROR REPORT ###
-    ${workflow.errorReport}
-    """
-    .stripIndent()
-    error_log.append(error_log_msg)
+//     ### ERROR REPORT ###
+//     ${workflow.errorReport}
+//     """
+//     .stripIndent()
+//     error_log.append(error_log_msg)
 
-    master_log = file("${master_log_dir}/job_execution_summary.log")
-    def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
-    master_log.append(master_log_msg)
-  }
-}
+//     master_log = file("${master_log_dir}/job_execution_summary.log")
+//     def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
+//     master_log.append(master_log_msg)
+//   }
+// }

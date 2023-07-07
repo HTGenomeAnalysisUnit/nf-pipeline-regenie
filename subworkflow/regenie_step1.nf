@@ -17,7 +17,7 @@ workflow REGENIE_STEP1_WF {
     //==== PREPARE GENOTYPE DATA FOR STEP1 ====
     qc_input_ch = genotyped_plink_ch
         .join(project_data.map { tuple(it[0], it[1]) })
-    
+        
     QC_FILTER_GENOTYPED ( qc_input_ch )
 
     if(params.prune_enabled) {

@@ -10,6 +10,7 @@ workflow REGENIE_STEP1_SPLIT {
 
     l1_input_ch = RUNL0.out.groupTuple(size: params.step1_n_chunks)
       .join(SPLITL0.out)
+
     RUNL1(l1_input_ch)
 
   emit:
@@ -22,7 +23,7 @@ process SPLITL0 {
     tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(file_bim), path(file_bed), path(file_fam)
 
   output:
-    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path("regenie_step1.master"), path("regenie_step1*.snplist"), val(genotyped_plink_filename), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path("regenie_step1.master"), path("regenie_step1*.snplist"), path(file_bim), path(file_bed), path(file_fam)
 
   script:
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
@@ -53,7 +54,7 @@ process RUNL0 {
   label 'step1_runl0'
   
   input:
-    tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), val(genotyped_plink_filename), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
     
   output:
     tuple val(project_id), path("${master_prefix}_job${job_n}_l0_*")
@@ -67,7 +68,7 @@ process RUNL0 {
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
-  def binary = pheno_meta.binary == true ? '--bt' : ''
+  def binary = pheno_meta.binary == 'true' ? '--bt' : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -95,20 +96,20 @@ process RUNL1 {
   label 'step1_runl1'
   stageInMode 'copy'
   
-  publishDir "${params.logdir}/${project_id}/logs", mode: 'copy', pattern: 'regenie_step1_out.log'
+  publishDir {"${params.logdir}/${project_id}/logs"}, mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir "${params.outdir}/${project_id}/regenie_step1_preds", mode: 'copy', pattern: 'regenie_step1_out_*'
+    publishDir {"${params.outdir}/${project_id}/regenie_step1_preds"}, mode: 'copy', pattern: 'regenie_step1_out_*'
   }
 
   input:
-    tuple val(project_id), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), val(genotyped_plink_filename), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
 
   output:
     tuple val(project_id), path("regenie_step1_out_*"), emit: regenie_step1_out
     tuple val(project_id), path("regenie_step1_out.log"), emit: regenie_step1_out_log
 
   script:
-  master_prefix = master_file.simpleName()
+  master_prefix = master_file.simpleName
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
   def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
@@ -116,15 +117,15 @@ process RUNL1 {
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
-  def binary = pheno_meta.binary == true ? '--bt' : ''
+  def binary = pheno_meta.binary == 'true' ? '--bt' : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
     --step 1 \
-    --bed ${genotyped_plink_filename} \
+    --bed ${file_bed.baseName} \
     --phenoFile ${phenotypes_file} \
-    --phenoColList  ${params.phenotypes_columns} \
+    --phenoColList ${pheno_meta.cols} \
     $covariants \
     $cat_covariates \
     $deleteMissings \
