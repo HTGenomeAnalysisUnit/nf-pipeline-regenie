@@ -38,8 +38,21 @@ for (param in requiredParams) {
     }
 }
 
-include { PREPARE_PROJECT } from './workflows/prepare_project'
-include { NF_GWAS } from './workflows/nf_gwas'
+//Set output and logs directories
+if(params.outdir == null) {
+  outdir = './'
+} else {
+  outdir = "${params.outdir}"
+}
+
+if (params.master_log_dir == null) {
+  master_log_dir = './'
+} else {
+  master_log_dir = "${params.master_log_dir}"
+}
+
+include { PREPARE_PROJECT } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
+include { NF_GWAS         } from './workflows/nf_gwas'          addParams(outdir: outdir, logdir: master_log_dir)
 
 workflow {
     //==== INITIAL LOGGING OF PARAMETERS ====
@@ -73,6 +86,6 @@ or contact: edoardo.giacopuzzi@fht.org
 
     //==== RUN NF-GWAS ====
     // project_data = [project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
-    NF_GWAS(PREAPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
+    //NF_GWAS(PREAPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
     
 }

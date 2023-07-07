@@ -33,41 +33,43 @@ def find_not_overlap(lst1, lst2):
     lst3 = [value for value in lst1 if value not in lst2]
     return lst3
 
-with open(config_file) as f:
-    conf_template = f.read()
+# with open(config_file) as f:
+#     conf_template = f.read()
 
-for row in read_tsv(input_file):
-    run_config_file = open(f"{row['run_group']}/gwas.conf", "w")
-    run_template = conf_template
-    run_template = update_conf(run_template, 'outdir', base_dir)
-    run_template = update_conf(run_template, 'project', row['run_group'])
-    run_template = update_conf(run_template, 'covariates_filename', row['cov_file'])
-    run_template = update_conf(run_template, 'phenotypes_filename', row['pheno_file'])
-    run_template = update_conf(run_template, 'regenie_gwas_test', row['genetic_model'])
-    
-    run_template = update_conf(run_template, 'covariates_cat_columns', row['cat_var'])
-    if row['cat_var'] != 'NA':
-        cat_covars = row['cat_var'].split(",")
-    else:
-        cat_covars = []
+#subfolder with tables has the same name as run_group
+#then in this folder we have chunk_<i>.cov chunk_<i>.pheno
+#Read master table and output a new table with columns reflecting the data channel we need
 
-    run_template = update_conf(run_template, 'phenotypes_binary_trait', row['trait_type'] == "log")
-    
-    if row['cov_file'] == "NO_COV_FILE":
-        run_template = update_conf(run_template, 'covariates_columns', 'NO_COV_FILE')    
-    else:
-        with open(row['cov_file']) as f:
+with open("analysis.conf", "w") as outf:
+    outf.write('\t'.join(['project_id','pheno_file','pheno_cols','pheno_binary','pheno_model','cov_file','cov_cols','cov_cat_cols']) + '\n')
+    for row in read_tsv(input_file):
+        run_template = update_conf(run_template, 'covariates_cat_columns', row['cat_var'])
+        if row['cat_var'] != 'NA':
+            cat_covars = row['cat_var'].split(",")
+        else:
+            cat_covars = []
+
+        if row['cov_file'] == "NO_COV_FILE":
+            run_template = update_conf(run_template, 'covariates_columns', 'NO_COV_FILE')    
+        else:
+            with open(row['cov_file']) as f:
+                first_line = tokenize(f.readline())
+                covars = first_line[2:]
+                covars = find_not_overlap(covars, cat_covars)
+                covars = ",".join(covars)
+                run_template = update_conf(run_template, 'covariates_columns', covars)
+
+        with open(row['pheno_file']) as f:
             first_line = tokenize(f.readline())
-            covars = first_line[2:]
-            covars = find_not_overlap(covars, cat_covars)
-            covars = ",".join(covars)
-            run_template = update_conf(run_template, 'covariates_columns', covars)
-
-    with open(row['pheno_file']) as f:
-        first_line = tokenize(f.readline())
-        phenos = ",".join(first_line[2:])
-        run_template = update_conf(run_template, 'phenotypes_columns', phenos)
-
-    run_config_file.write(run_template + "\n")
-    run_config_file.write(f"manifest.name = 'run-{row['run_group']}-gwas'\n")
-    run_config_file.close()
+            phenos = ",".join(first_line[2:])
+            run_template = update_conf(run_template, 'phenotypes_columns', phenos)
+                
+        outf.write('\t'.join([
+            row['run_group'],
+            os.path.abspath(row['pheno_file']),
+            phenos,
+            row['trait_type'] == "log",
+            row['genetic_model'],
+            os.path.abspath(row['cov_file']),
+            covars,
+            row['cat_var']]) + '\n')
