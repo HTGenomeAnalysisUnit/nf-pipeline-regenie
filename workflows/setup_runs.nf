@@ -21,9 +21,6 @@ if (params.master_log_dir == null) {
 }
 master_log_dir.mkdirs()
 
-for (p in ["genotypes_imputed", "imputed_snplist"]) {
-    file(params[p], checkIfExists: true)
-}
 for (x in ["fam", "bim", "bed"]) {
     file("${params.genotypes_array}.${x}", checkIfExists: true)
 }
