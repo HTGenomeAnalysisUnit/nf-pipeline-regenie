@@ -4,8 +4,8 @@ import sys
 import os
 
 input_file = sys.argv[1] # master table from phenotyper script
-config_file = sys.argv[2] # template of config file
-base_dir = sys.argv[3] # full path to output folder. One sub-folder per run will be created here
+#config_file = sys.argv[2] # template of config file
+#base_dir = sys.argv[3] # full path to output folder. One sub-folder per run will be created here
 
 def read_tsv(tsv_file):
     """
@@ -43,32 +43,28 @@ def find_not_overlap(lst1, lst2):
 with open("analysis.conf", "w") as outf:
     outf.write('\t'.join(['project_id','pheno_file','pheno_cols','pheno_binary','pheno_model','cov_file','cov_cols','cov_cat_cols']) + '\n')
     for row in read_tsv(input_file):
-        run_template = update_conf(run_template, 'covariates_cat_columns', row['cat_var'])
         if row['cat_var'] != 'NA':
             cat_covars = row['cat_var'].split(",")
         else:
             cat_covars = []
 
-        if row['cov_file'] == "NO_COV_FILE":
-            run_template = update_conf(run_template, 'covariates_columns', 'NO_COV_FILE')    
-        else:
+        covars = ''
+        if row['cov_file'] != "NO_COV_FILE":
             with open(row['cov_file']) as f:
                 first_line = tokenize(f.readline())
                 covars = first_line[2:]
                 covars = find_not_overlap(covars, cat_covars)
                 covars = ",".join(covars)
-                run_template = update_conf(run_template, 'covariates_columns', covars)
 
         with open(row['pheno_file']) as f:
             first_line = tokenize(f.readline())
             phenos = ",".join(first_line[2:])
-            run_template = update_conf(run_template, 'phenotypes_columns', phenos)
                 
         outf.write('\t'.join([
             row['run_group'],
             os.path.abspath(row['pheno_file']),
             phenos,
-            row['trait_type'] == "log",
+            str(row['trait_type'] == "log"),
             row['genetic_model'],
             os.path.abspath(row['cov_file']),
             covars,

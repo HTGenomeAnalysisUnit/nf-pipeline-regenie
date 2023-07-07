@@ -1,11 +1,10 @@
 //Check accessory scripts
 regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
 
-include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
-include { VALIDATE_PHENOTYPES         } from '../modules/local/validate_phenotypes'
-include { VALIDATE_COVARIATS          } from '../modules/local/validate_covariates'
-include { SETUP_MULTIPLE_RUNS         } from '../modules/local/setup_multiple_runs'
-include { PREPARE_PROJECT_CONFIG  } from '../modules/local/prepare_projects_config'
+include { CACHE_JBANG_SCRIPTS       } from '../modules/local/cache_jbang_scripts'
+include { VALIDATE_PHENOTYPES       } from '../modules/local/validate_phenotypes'
+include { VALIDATE_COVARIATS        } from '../modules/local/validate_covariates'
+include { SETUP_MULTIPLE_RUNS       } from '../modules/local/setup_multiple_runs'
 
 workflow PREPARE_PROJECT {
     main:
@@ -17,7 +16,7 @@ workflow PREPARE_PROJECT {
         //conf_template = file("$projectDir/templates/run_parameters.conf", checkIfExists: true)
         //shared_config_file = file(params.shared_config_file, checkIfExists: true)
         models_table = file(params.models_table, checkIfExists: true)
-        traits_table = file(params.phenotype_filename, checkIfExists: true)
+        traits_table = file(params.phenotypes_filename, checkIfExists: true)
         fam_file = file("${params.genotypes_array}.fam", checkIfExists: true)
         
         models_table.copyTo("${params.outdir}/models.tsv")
@@ -26,42 +25,44 @@ workflow PREPARE_PROJECT {
         SETUP_MULTIPLE_RUNS(pheno_chunker_r, prepare_projects_py, traits_table, models_table, fam_file) 
         
         phenotype_data = SETUP_MULTIPLE_RUNS.out.analysis_config
-            .map{ it.splitCsv(sep: '\t', header: true)
-                .map{ row -> tuple(
-                    row.project_id,
-                    file(row.pheno_file),
-                    [
-                        cols: row.pheno_cols,
-                        binary: ${row.pheno_binary == 'True' ? true : false}
-                        model: row.pheno_model
-                    ]
-                )} 
-            }
+            .map{ it.splitCsv(sep: '\t', skip: 1) }
+            .toList().transpose()
+            .map{ row -> tuple(
+                row[0][0],
+                file(row[0][1]),
+                [
+                    cols: row[0][2],
+                    binary: {row[0][3] == 'True' ? true : false},
+                    model: row[0][4]
+                ]
+            )} 
+
 
         covariate_data = SETUP_MULTIPLE_RUNS.out.analysis_config
-            .map{ it.splitCsv(sep: '\t', header: true)
-                .map{ row -> tuple(
-                    row.project_id,
-                    file(row.cov_file),
-                    [
-                        cols: row.col_cols,
-                        cat_cols: row.cov_cat_cols
-                    ]
-                )} 
-            }
+            .map{ it.splitCsv(sep: '\t', skip: 1) }
+            .toList().transpose()
+            .map{ row -> tuple(
+                row[0][0],
+                file(row[0][5]),
+                [
+                    cols: row[0][6],
+                    cat_cols: row[0][7]
+                ]
+            )} 
+
     } else {
         
         //==== READ INPUTS FROM PARAMS ====
         //Phenotypes
-        phenotype_data = [
-                params.project
+        phenotype_data = Channel.of([
+                params.project,
                 file(params.phenotypes_filename, checkIfExists: true),
                 [ 
                     cols: params.phenotypes_columns, 
-                    binary: params.phenotypes_binary_trait
+                    binary: params.phenotypes_binary_trait,
                     model: params.regenie_gwas_test
                 ]
-            ]
+            ])
 
         //Covariates
         if (params.covariates_filename == 'NO_COV_FILE') {
@@ -71,19 +72,16 @@ workflow PREPARE_PROJECT {
         } else {
             covariates_file = file(params.covariates_filename, checkIfExists: true)
         }
-        covariate_data = [
-            params.project
+        covariate_data = Channel.of([
+            params.project,
             covariates_file,
             [ 
                 cols: params.covariates_columns, 
                 cat_cols: params.covariates_cat_columns
             ]
-        ]
+        ])
 
     }
-
-    phenotype_data.view()
-    covariate_data.view()
 
     //==== PREPARE SCRIPTS ====
     CACHE_JBANG_SCRIPTS (

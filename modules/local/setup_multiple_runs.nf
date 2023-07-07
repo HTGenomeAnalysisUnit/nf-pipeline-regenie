@@ -25,8 +25,6 @@ process SETUP_MULTIPLE_RUNS {
     $missing_tolerance
 
   python $prepare_projects_py \
-    master_table.tsv \
-    $template_config \
-    ${params.outdir}
+    master_table.tsv
   """
 }

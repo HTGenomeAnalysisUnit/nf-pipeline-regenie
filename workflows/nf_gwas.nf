@@ -243,7 +243,7 @@ workflow.onComplete {
   //}
 
   //CLOSE MESSAGE
-  println "Results location: ${ outdir }"
+  println "Results location: ${ params.outdir }"
 }
 
 workflow.onError {

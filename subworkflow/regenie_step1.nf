@@ -12,17 +12,13 @@ workflow REGENIE_STEP1_WF {
         project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
   
     main:
-    CACHE_JBANG_SCRIPTS (
-        regenie_log_parser_java
-    )
+    CACHE_JBANG_SCRIPTS ( regenie_log_parser_java )
 
     //==== PREPARE GENOTYPE DATA FOR STEP1 ====
-    qc_input_ch = genotyped_plink_ch.
+    qc_input_ch = genotyped_plink_ch
         .join(project_data.map { tuple(it[0], it[1]) })
     
-    QC_FILTER_GENOTYPED (
-        qc_input_ch
-    )
+    QC_FILTER_GENOTYPED ( qc_input_ch )
 
     if(params.prune_enabled) {
         PRUNE_GENOTYPED (

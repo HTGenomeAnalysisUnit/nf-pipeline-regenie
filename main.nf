@@ -65,9 +65,10 @@ workflow {
     'annotation_min_log10p',
     'save_step1_predictions'
     ]
-    log_params_string = []
+    
+    global_parameters = []
     for (p in log_params) {
-    log_params_string.add("$p : " + params[p])
+      global_parameters.add("$p : " + params[p])
     }
 
 log.info"""\
