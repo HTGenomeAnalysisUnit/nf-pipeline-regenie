@@ -1,7 +1,6 @@
-include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_PGEN", publish: params.save_pgen, dosage_from: params.dosage_from)
+include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_pgen", publish: params.save_pgen, dosage_from: params.dosage_from)
 include { MAKE_BGEN_INDEX   } from '../modules/local/make_bgen_index'   addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_index)
 include { MAKE_BGEN_SAMPLE  } from '../modules/local/make_bgen_sample'  addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_sample)
-include { MAKE_SNPLIST      } from '../modules/local/make_snplist'      addParams(outdir: "${params.outdir}/snplist", publish: params.save_snplist)
 include { CHECK_MAX_CHANNEL_SIZE } from '../modules/local/check_channel_size'
 
 workflow PREPARE_GENETIC_DATA {

@@ -1,5 +1,5 @@
 process CONCAT_STEP2_RESULTS {
-    publishDir "${params.outdir}/${project_id}/results", mode: 'copy'
+    publishDir "${params.outdir}/${project_id}/results/gwas", mode: 'copy'
     
     input:
         tuple val(project_id), val(pheno), file(regenie_gz)

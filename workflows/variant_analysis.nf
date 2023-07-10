@@ -1,10 +1,9 @@
-//Set project_id
-project_id = params.project
+//Set variables
+def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
 
 //Check required parameters for GWAS analysis
 if (params.genotypes_imputed) {
   requiredParams = [
-    'regenie_gwas_test',
     'regenie_min_imputation_score',
     'regenie_gwas_min_mac',
     'regenie_min_imputation_score'
@@ -17,15 +16,7 @@ if (params.genotypes_imputed) {
       }
   }
 
-  //Check specified regenie test is allowed
-  def allowed_tests = ['additive', 'dominant', 'recessive']
-  if (!(params.regenie_test in allowed_tests)){
-    log.error "Test ${params.regenie_test} not supported. Allowed tests are $allowed_tests."
-    exit 1
-  }
-
   //Check imputed file format is allwed
-  def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
   if (!(params.genotypes_imputed_format in allowed_input_formats)){
     log.error "File format ${params.genotypes_imputed_format} not supported. Allowed formats are $allowed_input_formats."
     exit 1
@@ -53,16 +44,10 @@ if (params.genotypes_rarevar) {
   }
 
   //Check imputed file format is allwed
-  def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
   if (!(params.genotypes_rarevar_format in allowed_input_formats)){
     log.error "File format ${params.genotypes_rarevar_format} not supported. Allowed formats are $allowed_input_formats."
     exit 1
   }
-}
-
-if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {
-  log.error "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
-  exit 1
 }
 
 //Make chromosomes list
@@ -97,7 +82,7 @@ include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_resul
 include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(chromosomes: chromosomes, run_gwas: false, run_rarevar: true)
 
 //==== WORKFLOW ====
-workflow NF_GWAS {   
+workflow RUN_VARIANT_ANALYSIS {   
   take:
   project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
   input_validation_logs //[project_id, pheno_validation_log, covar_validation_log]

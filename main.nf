@@ -38,21 +38,26 @@ for (param in requiredParams) {
     }
 }
 
+if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {
+  log.error "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
+  exit 1
+}
+
 //Set output and logs directories
 if(params.outdir == null) {
-  outdir = "${params.project}"
+  outdir = "outputs"
 } else {
-  outdir = "${params.outdir}/${params.project}"
+  outdir = "${params.outdir}"
 }
 
 if (params.master_log_dir == null) {
-  master_log_dir = './'
+  master_log_dir = "${outdir}"
 } else {
   master_log_dir = "${params.master_log_dir}"
 }
 
-include { PREPARE_PROJECT } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
-include { NF_GWAS         } from './workflows/nf_gwas'          addParams(outdir: outdir, logdir: master_log_dir)
+include { PREPARE_PROJECT       } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
+include { RUN_VARIANT_ANALYSIS  } from './workflows/variant_analysis'          addParams(outdir: outdir, logdir: master_log_dir)
 
 workflow {
   //==== SET WORKFLOW runName ====
@@ -91,6 +96,6 @@ or contact: edoardo.giacopuzzi@fht.org
 
   //==== RUN NF-GWAS ====
   // project_data = [project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
-  NF_GWAS(PREPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
+  RUN_VARIANT_ANALYSIS(PREPARE_PROJECT.out.project_data, PREPARE_PROJECT.out.input_validation_logs)
     
 }

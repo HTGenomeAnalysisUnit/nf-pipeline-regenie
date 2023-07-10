@@ -1,8 +1,8 @@
 process VALIDATE_PHENOTYPES {
   label 'small_task'
   
-  publishDir "${params.outdir}/logs", mode: 'copy', pattern: '*log'
-  publishDir "${params.outdir}/validated_input/", mode: 'copy', pattern: '*validated.txt'
+  publishDir {"${params.outdir}/${project_id}/logs"}, mode: 'copy', pattern: '*log'
+  publishDir {"${params.outdir}/${project_id}/validated_input"}, mode: 'copy', pattern: '*validated.txt'
 
   input:
     tuple val(project_id), file(phenotypes_file), val(pheno_meta)

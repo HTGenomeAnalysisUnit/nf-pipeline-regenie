@@ -9,7 +9,7 @@ include { SETUP_MULTIPLE_RUNS       } from '../modules/local/setup_multiple_runs
 workflow PREPARE_PROJECT {
     main:
     if (params.models_table) {
-        log.info "Using multi-model mode with models table ${params.models_table}"
+        log.info "==> INIT RUN: Using multi-model mode with models table ${params.models_table}"
 
         pheno_chunker_r = file("$projectDir/bin/pheno_chunker.R", checkIfExists: true)
         prepare_projects_py = file("$projectDir/bin/prepare_projects.py", checkIfExists: true)
@@ -51,17 +51,16 @@ workflow PREPARE_PROJECT {
             )} 
 
     } else {
-        
+        log.info "==> INIT RUN: Using single run execution"
+
         //==== READ INPUTS FROM PARAMS ====
-        pheno_is_binary = params.phenotypes_binary_trait ? 'true' : 'false'
-        pheno_is_binary = params.phenotypes_binary_trait == 'false' ? 'false' : pheno_is_binary
         //Phenotypes
         phenotype_data = Channel.of([
                 params.project,
                 file(params.phenotypes_filename, checkIfExists: true),
                 [ 
                     cols: params.phenotypes_columns, 
-                    binary: pheno_is_binary,
+                    binary: "${params.phenotypes_binary_trait}",
                     model: params.regenie_gwas_test
                 ]
             ])
@@ -120,6 +119,8 @@ workflow PREPARE_PROJECT {
     
     input_validation_logs = VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log
         .join(validated_covars_logs)
+
+    CHECK_PROJECT(project_data.size(), project_data)
 
     emit:
     project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
