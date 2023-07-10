@@ -1,19 +1,14 @@
 process REPORT_GWAS {
-  publishDir "${params.outdir}/reports", mode: 'copy', pattern: '*.html'
+  publishDir {"${params.outdir}/${project_id}/reports/gwas"}, mode: 'copy', pattern: '*.html'
 
   label 'html_report'
 
   input:
-    tuple val(phenotype), path(regenie_merged), path(annotated_tophits), path(annotated_toploci)
-    path phenotype_file_validated
+    tuple val(project_id), path(phenotype_file_validated), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)
     path gwas_report_template
-    path phenotype_log
-    path covariate_log
-    path step1_log
-    path step2_log
-
+ 
   output:
-    path "${params.project}.${regenie_merged.baseName}.html"
+    path "${project_id}.${regenie_merged_results.baseName}.html"
 
   script:
       def annotation_as_string = params.manhattan_annotation_enabled.toString().toUpperCase()
@@ -21,11 +16,11 @@ process REPORT_GWAS {
   """
   Rscript -e "require( 'rmarkdown' ); render('${gwas_report_template}',
     params = list(
-      project = '${params.project}',
+      project = '${project_id}',
       date = '${params.project_date}',
       version = '$workflow.manifest.version',
-      regenie_merged='${regenie_merged}',
-      regenie_filename='${regenie_merged.baseName}',
+      regenie_merged='${regenie_merged_results}',
+      regenie_filename='${regenie_merged_results.baseName}',
       phenotype_file='${phenotype_file_validated}',
       phenotype='${phenotype}',
       covariates='${params.covariates_columns}',
@@ -41,29 +36,24 @@ process REPORT_GWAS {
     ),
     intermediates_dir='\$PWD',
     knit_root_dir='\$PWD',
-    output_file='\$PWD/${params.project}.${regenie_merged.baseName}.html'
+    output_file='\$PWD/${project_id}.${regenie_merged_results.baseName}.html'
   )"
   """
 }
 
 process REPORT_RAREVAR {
-  publishDir "${params.outdir}/reports", mode: 'copy', pattern: '*.html'
-  publishDir "${params.outdir}/results/rarevar", mode: 'copy', pattern: '*.gz'
+  publishDir {"${params.outdir}/${project_id}/reports/rarevar"}, mode: 'copy', pattern: '*.html'
+  publishDir {"${params.outdir}/${project_id}/results/rarevar"}, mode: 'copy', pattern: '*.gz'
 
   label 'html_report'
 
   input:
-    tuple val(phenotype), path(regenie_merged), path(annotated_tophits)
-    path phenotype_file_validated
+    tuple val(project_id), path(phenotype_file_validated), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits)
     path gwas_report_template
-    path phenotype_log
-    path covariate_log
-    path step1_log
-    path step2_log
 
   output:
-    path "${params.project}.${regenie_merged.baseName}.html"
-    tuple path("${regenie_merged.baseName}.correctedP.gz"), path("${regenie_merged.baseName}.correctedP.gz.tbi")
+    path "${project_id}.${regenie_merged_results.baseName}.html"
+    tuple path("${regenie_merged_results.baseName}.correctedP.gz"), path("${regenie_merged_results.baseName}.correctedP.gz.tbi")
 
   script:
       def annotation_as_string = params.manhattan_annotation_enabled.toString().toUpperCase()
@@ -71,11 +61,11 @@ process REPORT_RAREVAR {
   """
   Rscript -e "require( 'rmarkdown' ); render('${gwas_report_template}',
     params = list(
-      project = '${params.project}',
+      project = '${project_id}',
       date = '${params.project_date}',
       version = '$workflow.manifest.version',
-      regenie_merged='${regenie_merged}',
-      regenie_filename='${regenie_merged.baseName}',
+      regenie_merged='${regenie_merged_results}',
+      regenie_filename='${regenie_merged_results.baseName}',
       phenotype_file='${phenotype_file_validated}',
       phenotype='${phenotype}',
       covariates='${params.covariates_columns}',
@@ -89,11 +79,11 @@ process REPORT_RAREVAR {
     ),
     intermediates_dir='\$PWD',
     knit_root_dir='\$PWD',
-    output_file='\$PWD/${params.project}.${regenie_merged.baseName}.html'
+    output_file='\$PWD/${project_id}.${regenie_merged_results.baseName}.html'
   )"
 
-  bgzip ${regenie_merged.baseName}.correctedP
-  tabix -f -b 2 -e 2 -s 1 -S 1 ${regenie_merged.baseName}.correctedP.gz
+  bgzip ${regenie_merged_results.baseName}.correctedP
+  tabix -f -b 2 -e 2 -s 1 -S 1 ${regenie_merged_results.baseName}.correctedP.gz
   """
 }
 

@@ -127,16 +127,18 @@ workflow RUN_VARIANT_ANALYSIS {
     PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_GWAS_WF.out.regenie_results, PREPARE_GWAS_DATA.out.processed_genotypes)
 
     //==== GENERATE HTML REPORTS ====
+    report_input_ch = project_data.map{ tuple(it[0], it[1]) }
+      .join(input_validation_logs)
+      .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
+      .join(REGENIE_STEP2_GWAS_WF.out.regenie_log)
+      .join(PROCESS_GWAS_RESULTS_WF.out.processed_results)
+      //[val(project_id), path(phenotype_file), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)]
+    
     if (params.make_report) {
       gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
       REPORT_GWAS (
-          PROCESS_GWAS_RESULTS_WF.out.processed_results,
-          VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-          gwas_report_template,
-          VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-          covariates_file_validated_log,
-          REGENIE_STEP1_WF.out.regenie_step1_parsed_logs.collect(),
-          REGENIE_STEP2_GWAS_WF.out.regenie_log
+          report_input_ch,
+          gwas_report_template
       )
     }
   }

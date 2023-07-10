@@ -53,8 +53,8 @@ workflow PROCESS_GWAS_RESULTS_WF {
         .join(clump_results_ch, by: [0,1], remainder: true)
 
     emit:
+    //[val(project_id), val(phenotype), path(regenie_merged), path(annotated_tophits), path(annotated_toploci)]
     processed_results = merged_results_and_annotated_filtered
-    //html_reports = html_reports_ch
 }
 
 workflow PROCESS_RAREVAR_RESULTS_WF {
@@ -79,5 +79,6 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
        //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
 
     emit:
+    //[val(project_id), val(phenotype), path(regenie_merged), path(annotated_tophits)]
     processed_results = merged_results_and_annotated_filtered
 }

@@ -73,8 +73,8 @@ process MERGE_CLUMP_RESULTS {
         tuple val(project_id), val(phenotype), file(chromosome_clump), file(chromosome_ranges)
 
     output:
-        tuple val(project_id), path("${phenotype}.toploci.tsv"), emit: toploci
-        tuple val(phenotype), path("${phenotype}.toploci.annot.tsv"), emit: annotloci
+        tuple val(project_id), val(phenotype), path("${phenotype}.toploci.tsv"), emit: toploci
+        tuple val(project_id), val(phenotype), path("${phenotype}.toploci.annot.tsv"), emit: annotloci
 
     script:
     """
