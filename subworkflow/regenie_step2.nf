@@ -52,7 +52,7 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file
         RAREVAR_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.first(),
+            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple(size:1), //.first(),
             CACHE_JBANG_SCRIPTS.out.compiled_jar
         )
         //Concatenate results

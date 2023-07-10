@@ -2,6 +2,7 @@
 regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
 
 include { CACHE_JBANG_SCRIPTS       } from '../modules/local/cache_jbang_scripts'
+include { CHECK_PROJECT             } from '../modules/local/check_project'
 include { VALIDATE_PHENOTYPES       } from '../modules/local/validate_phenotypes'
 include { VALIDATE_COVARIATS        } from '../modules/local/validate_covariates'
 include { SETUP_MULTIPLE_RUNS       } from '../modules/local/setup_multiple_runs'
@@ -36,7 +37,6 @@ workflow PREPARE_PROJECT {
                     model: row[0][4]
                 ]
             )} 
-
 
         covariate_data = SETUP_MULTIPLE_RUNS.out.analysis_config
             .map{ it.splitCsv(sep: '\t', skip: 1) }
@@ -120,7 +120,7 @@ workflow PREPARE_PROJECT {
     input_validation_logs = VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log
         .join(validated_covars_logs)
 
-    CHECK_PROJECT(project_data.size(), project_data)
+    CHECK_PROJECT(project_data.count(), project_data)
 
     emit:
     project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]

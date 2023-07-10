@@ -24,7 +24,7 @@ process CONVERT_TO_BED {
 }
 
 process PLINK_CLUMPING {
-    publishDir "${params.logdir}/${project_id}/logs/${phenotype}_clump", mode: 'copy', pattern: '*.log'
+    publishDir {"${params.logdir}/${project_id}/logs/${phenotype}_clump"}, mode: 'copy', pattern: '*.log'
     label 'plink_clump'
     tag "${project_id}_${phenotype}_${chrom}"
 
@@ -65,7 +65,7 @@ process PLINK_CLUMPING {
 }
 
 process MERGE_CLUMP_RESULTS {
-    publishDir "${params.outdir}/${project_id}/results/gwas/toploci", mode: 'copy'
+    publishDir {"${params.outdir}/${project_id}/results/gwas/toploci"}, mode: 'copy'
     label 'merge_clump'
     tag "${project_id}_${phenotype}"
 

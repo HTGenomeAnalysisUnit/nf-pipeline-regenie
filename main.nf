@@ -45,9 +45,9 @@ if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rare
 
 //Set output and logs directories
 if(params.outdir == null) {
-  outdir = "outputs"
+  outdir = "${params.project}"
 } else {
-  outdir = "${params.outdir}"
+  outdir = "${params.outdir}/${params.project}"
 }
 
 if (params.master_log_dir == null) {
@@ -57,7 +57,7 @@ if (params.master_log_dir == null) {
 }
 
 include { PREPARE_PROJECT       } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
-include { RUN_VARIANT_ANALYSIS  } from './workflows/variant_analysis'          addParams(outdir: outdir, logdir: master_log_dir)
+include { RUN_VARIANT_ANALYSIS  } from './workflows/variant_analysis' addParams(outdir: outdir, logdir: master_log_dir)
 
 workflow {
   //==== SET WORKFLOW runName ====

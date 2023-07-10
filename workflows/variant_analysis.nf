@@ -64,7 +64,6 @@ params.chromosomes.split(',').each { element ->
 chromosomes = chromosomes*.toString()
 
 //Include modules
-include { OPENING_LOG                 } from '../modules/local/opening_log'
 include { REGENIE_STEP1_WF            } from '../subworkflow/regenie_step1' addParams(chromosomes: chromosomes)
 include { REPORT_GWAS                 } from '../modules/local/report'
 include { REPORT_RAREVAR              } from '../modules/local/report'
@@ -184,7 +183,7 @@ workflow RUN_VARIANT_ANALYSIS {
 
 workflow.onComplete {
   //==== SAVE CONFIGURATION ====
-  pipeline_log_dir = file("${params.outdir}/analysis_config")
+  pipeline_log_dir = file("${params.logdir}/analysis_config")
   pipeline_log_dir.mkdirs()
   
   def msg="""\
@@ -225,7 +224,11 @@ workflow.onComplete {
   //}
 
   //CLOSE MESSAGE
-  println "Results location: ${ params.outdir }"
+  log.info """
+  ==============================
+  ANALYSIS COMPLETE!
+  Results location: ${ params.outdir }
+  """.stripIndent()
 }
 
 // workflow.onError {
