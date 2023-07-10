@@ -1,6 +1,6 @@
 process REGENIE_STEP2_GWAS {
   if (params.save_step2_logs) {
-    publishDir {"${params.outdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
+    publishDir {"${params.logdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
   }
 
   label "step2_gwas" //FIXME Need to use a params to select based on running by chunk or whole dataset
@@ -63,7 +63,7 @@ process REGENIE_STEP2_GWAS {
 
 process REGENIE_STEP2_RAREVARS {
   if (params.save_step2_logs) {
-    publishDir {"${params.outdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
+    publishDir {"${params.logdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
   }
 
   label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset

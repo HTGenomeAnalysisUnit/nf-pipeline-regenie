@@ -1,12 +1,12 @@
 regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
 
 include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
-include { REGENIE_LOG_PARSER_STEP2 as GWAS_LOG_PARSER_STEP2     } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.logdir}")
-include { REGENIE_LOG_PARSER_STEP2 as RAREVAR_LOG_PARSER_STEP2  } from '../modules/local/regenie_log_parser_step2'  addParams(outdir: "${params.logdir}")
+include { REGENIE_LOG_PARSER_STEP2 as GWAS_LOG_PARSER_STEP2     } from '../modules/local/regenie_log_parser_step2'  addParams(logdir: "${params.logdir}")
+include { REGENIE_LOG_PARSER_STEP2 as RAREVAR_LOG_PARSER_STEP2  } from '../modules/local/regenie_log_parser_step2'  addParams(logdir: "${params.logdir}")
 include { CONCAT_STEP2_RESULTS as CONCAT_GWAS_RESULTS           } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}", rarevar_results: false)
 include { CONCAT_STEP2_RESULTS as CONCAT_RAREVAR_RESULTS        } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}", rarevar_results: true)
-include { REGENIE_STEP2_GWAS                                    } from '../modules/local/regenie_step2'             addParams(outdir: "${params.logdir}", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
-include { REGENIE_STEP2_RAREVARS                                } from '../modules/local/regenie_step2'             addParams(outdir: "${params.logdir}", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
+include { REGENIE_STEP2_GWAS                                    } from '../modules/local/regenie_step2'             addParams(logdir: "${params.logdir}", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
+include { REGENIE_STEP2_RAREVARS                                } from '../modules/local/regenie_step2'             addParams(logdir: "${params.logdir}", save_step2_logs: params.save_step2_logs, regenie_ref_first: params.regenie_ref_first_step2)
 
 workflow REGENIE_STEP2_WF {
     take:
@@ -27,7 +27,7 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file 
         GWAS_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.first(),
+            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }, //.first(),
             CACHE_JBANG_SCRIPTS.out.compiled_jar
         )
 
@@ -52,7 +52,7 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file
         RAREVAR_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple(size:1), //.first(),
+            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }, //.first(),
             CACHE_JBANG_SCRIPTS.out.compiled_jar
         )
         //Concatenate results

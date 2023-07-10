@@ -1,7 +1,7 @@
 process REGENIE_LOG_PARSER_STEP2 {
   label 'small_task'
   
-  publishDir "${params.outdir}/${project_id}/logs", mode: 'copy'
+  publishDir "${params.logdir}/${project_id}/logs", mode: 'copy'
 
   input:
     tuple val(project_id), path(regenie_step2_logs)

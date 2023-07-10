@@ -29,7 +29,7 @@ workflow PREPARE_GENETIC_DATA {
             genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         case "pgen":
-            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{pgen,pvar,psam}", size:3, flat: true)
+            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{pgen,psam,pvar}", size:3, flat: true)
                 .map { tuple(it[0], it[1], it[3], it[2], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.pgen','')) }
             genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
@@ -54,8 +54,8 @@ workflow PREPARE_GENETIC_DATA {
                 .map { tuple(it[0], it[1], it[2], it[3], "ONE_FILE") }
             break
         case "pgen":
-            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}.{pgen,pvar,psam}", checkIfExists: true, size:3, flat: true)
-                .map { tuple(it[0], it[1], it[2], it[3], "ONE_FILE") }
+            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}.{pgen,psam,pvar}", checkIfExists: true, size:3, flat: true)
+                .map { tuple(it[0], it[1], it[3], it[2], "ONE_FILE") }
             break
         default:
             log.error "Unknown input format: ${params.input_format}"
