@@ -13,6 +13,11 @@ workflow PREPARE_GENETIC_DATA {
     if (params.genotypes_data =~ /\{CHROM\}/) {
         def pattern = "${params.genotypes_data.replace('{CHROM}', '(.+)').replace('/', '\\/')}"
         switch(params.input_format) {
+        case "bcf":
+            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
+                .map { tuple(it[0], it[1], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bcf','')) }
+            genotypes_files = input_ch.filter { it[2] in params.chromosomes }
+            break
         case "vcf":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
                 .map { tuple(it[0], it[1], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.vcf.gz','')) }
@@ -41,6 +46,10 @@ workflow PREPARE_GENETIC_DATA {
     } else {
     //==== INPUT DATA IS PROVIDED IN A SINGLE FILE ==== 
         switch(params.input_format) {
+        case "bcf":
+            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
+                .map { tuple(it[0], it[1], "ONE_FILE") }
+            break
         case "vcf":
             genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
                 .map { tuple(it[0], it[1], "ONE_FILE") }
@@ -69,7 +78,7 @@ workflow PREPARE_GENETIC_DATA {
     genotypes_plink2_ch = genotypes_files
 
     //==== CONVERT TO PGEN IF INPUT IS VCF ====
-    if (params.input_format == "vcf") {
+    if (params.input_format in ["vcf","bcf"]) {
         CONVERT_TO_PGEN ( genotypes_files )
         genotypes_plink2_ch = CONVERT_TO_PGEN.out.genotypes_data
     } 

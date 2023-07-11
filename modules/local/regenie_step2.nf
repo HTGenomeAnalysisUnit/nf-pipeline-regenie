@@ -14,7 +14,7 @@ process REGENIE_STEP2_GWAS {
     tuple val(project_id), path("${project_id}_${chrom}_${chunk}.log"), emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_imputed_format == 'vcf' ? 'pgen' : "${params.genotypes_imputed_format}"
+    def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_imputed_format}"
     def fileprefix = bed_bgen_pgen.baseName
     def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen' : ''
     def split_region = chunk == 'SINGLE_CHUNK' ? '' : "--range $chunk"
@@ -77,7 +77,7 @@ process REGENIE_STEP2_RAREVARS {
     tuple val(project_id), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_rarevar_format == 'vcf' ? 'pgen' : "${params.genotypes_rarevar_format}"
+    def format = params.genotypes_rarevar_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_rarevar_format}"
     def fileprefix = bed_bgen_pgen.baseName
     def extension = params.genotypes_rarevar_format == 'bgen' ? '.bgen' : ''
     def split_genes = gene == 'SINGLE_CHUNK' ? '' : "--extract-sets $gene"

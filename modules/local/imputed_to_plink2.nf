@@ -16,7 +16,7 @@ def dosage_certainty = params.import_dosage_certainty ? "--import-dosage-certain
 def sample_id_opt = params.vcf_fixed_fid ? "--const-fid ${params.vcf_fixed_fid}" : '--double-id'
 """
 plink2 \
-  --vcf $vcf_file dosage=${params.dosage_from} \
+  --${params.input_format} $vcf_file dosage=${params.dosage_from} \
   --make-pgen \
   ${sample_id_opt} \
   ${dosage_certainty} \
