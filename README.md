@@ -28,12 +28,10 @@ Two running modes are available: **single project mode** and **multi models mode
     - [Variant annotation files - MANDATORY for RARE VARIANT ANALYSIS](#variant-annotation-files---mandatory-for-rare-variant-analysis)
     - [LD panel - OPTIONAL (recommended for very large datasets)](#ld-panel---optional-recommended-for-very-large-datasets)
   - [Run in single project mode](#run-in-single-project-mode)
-    - [Inputs for single project mode](#inputs-for-single-project-mode)
+    - [Phenotype input for single project mode](#phenotype-input-for-single-project-mode)
   - [Run in multi models mode](#run-in-multi-models-mode)
     - [Inputs for multi models mode](#inputs-for-multi-models-mode)
-    - [Multi models execution monitoring](#multi-models-execution-monitoring)
-    - [Resume execution for a failed task](#resume-execution-for-a-failed-task)
-    - [Note on unexpected exit from multi models execution](#note-on-unexpected-exit-from-multi-models-execution)
+    - [Note on multi models execution](#note-on-multi-models-execution)
   - [Important notes - Please read this](#important-notes---please-read-this)
     - [Phenotypes](#phenotypes)
     - [MAC filtering](#mac-filtering)
@@ -65,24 +63,15 @@ Two running modes are available: **single project mode** and **multi models mode
    #SBATCH --output nf-regenie_master_%A.log
    #SBATCH --partition cpuq
    #SBATCH --cpus-per-task 1
-   #SBATCH --mem 4G
+   #SBATCH --mem 8G
    #SBATCH --time 1-00:00:00
 
    module load nextflow/22.10.1 singularity/3.8.5
 
    ###  For a single project  ###
-   export NXF_OPTS="-Xms1G -Xmx4G" 
+   export NXF_OPTS="-Xms1G -Xmx8G" 
    nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
       -profile singularity,ht_cluster -c your_project.conf
-
-   ###  For multiple models using a model table  ###
-   nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
-      -profile singularity,ht_cluster -c shared_parameters.conf \
-      --with_master \
-      --shared_config_file shared_parameters.conf \
-      --models_table models.tsv \
-      --traits_table full_traits.csv \
-      --master_outdir outputs
    ```
 
 Optionally, you can clone the latest pipeline version into the project folder using
@@ -100,8 +89,7 @@ You can eventually chose a specific version of the pipeline using the `--branch`
 To run the pipeline, you need to prepare a config file. The following config file can be used as example:
 
 - To run a single project, copy the template file `templates/single_project.conf` and adapt the parameters according to your input files and preferences.
-- To run multiple models, copy the template file `templates/shared_parameters.conf` and adapt the parameters according to your input files and preferences.
-- To create a profile for your HPC cluster, copy the template file `templates/profile_template.config` and adapt the parameters according to your HPC cluster configuration. Then use the profile in the pipeline execution by providing the new config file and the profile name, something like `-c myprofile.config -profile <profile_name>`.
+- To create a profile for your HPC cluster, copy the template file `templates/profile_template.config` and adapt the parameters according to your HPC cluster configuration. Then use the profile in the pipeline execution by providing the new config file and the profile name, something like `-c myprofile.config -profile singularity,<profile_name>`.
   
 ### Main parameters to adjust
 
@@ -113,7 +101,7 @@ To run the pipeline, you need to prepare a config file. The following config fil
 
 - Set `step2_gwas_chunk_size` and `step2_rarevar_chunk_size` according to the size of your dataset. These control how the dataset is split for step2 analysis. Teh default values usually work fine, but you can increase/decrease them if you have very large or small datasets. Keep in mind that a small chunk size may result in a very large amount of parallel jobs. By default the pipeline job submission rate is limited to 250 concurrent jobs. The total number of jobs will be *N_SNPs/gwas_chunk_size* for GWAS and *N_genes/rare_chunk_size* for rare variant analysis.
 
-- Set `regenie_test` to 'additive', 'dominant' or 'recessive' according to the genetic model you want to test.
+- Set `regenie_gwas_test` ('additive', 'dominant' or 'recessive') and `rarevars_vc_test` (comma-separate list of rare variants tests) according to the genetic model you want to test.
 
 - Set `regenie_gwas_min_mac` and `regenie_rarevar_min_mac` to control the min allowed MAC for variants tested in either GWAS or rare variant analysis. Variants with MAC below this threshold will be excluded from the analysis.
 
@@ -242,10 +230,10 @@ plink2 \
 
 In this mode you run a single GWAS model on the provided genetic data given a table of phenotypes and a table of covars.
 
-### Inputs for single project mode
+### Phenotype input for single project mode
 
-6. A tab-separated file with header for phenotypes (`phenotypes_filename`) and the list of column names to process (`phenotypes_columns`). Note that quantitative and binary traits can not be mixed. Regenie will impute missing values when present. Set `phenotypes_binary_trait` to true or false according to the type of phenotypes.
-7. A tab-separated file with header for covariates (`covariates_filename`) and the list of column names (`covariates_columns`) to process(can be omitted if no covars). Here it is fine to mix binary and quantitative covars. Binary covars must contain 0/1 values to be treated as binary. Note that **no missing values** are allowed in this table.
+1. A tab-separated file with header for phenotypes (`phenotypes_filename`) and the list of column names to process (`phenotypes_columns`). Note that quantitative and binary traits can not be mixed. During step1, regenie will impute missing values when present. Set `phenotypes_binary_trait` to true or false according to the type of phenotypes.
+2. A tab-separated file with header for covariates (`covariates_filename`) and the list of column names (`covariates_columns`) to process(can be omitted if no covars). Here it is fine to mix binary and quantitative covars. Binary covars must contain 0/1 values to be treated as binary. Note that **no missing values** are allowed in this table.
 
 **NB.** The first two columns of phenotype and covariate files must the named `FID` and `IID` and contain ids matching those present in the genotype files. Only samples found in all tables will be processed.
 
@@ -257,11 +245,10 @@ When using the multi-models mode, be sure to allocate enough time to the master 
 
 ### Inputs for multi models mode
 
-6. A shared config file describing the input datasets and general config parameters (see `templates/shared_parameters.conf` for an example).
-7. A tab-separated file with header (`full_traits.csv` in the example above) and first column named `IID` containing all traits (phenotypes and covariates) that are needed for the analysis.
-8. A tab-separated file with header (`models.tsv` in the example above) and columns: model_id, model, trait_type, genetic_model, cat_var.
+1. A tab-separated file with header (`phenotypes_filename`) containing all traits (phenotypes and covariates) that are needed for the analysis. The file can have a single `IID` column as first column, or `FID` and `IID` as the first 2 columns. When only `IID` is provided, the `FID` will be deduced from the fam file in the `genotypes_array` dataset.
+2. A tab-separated file with header (`models_table`) and columns: model_id, model, trait_type, genetic_model, cat_var.
    - model_id: a unique identifier for the model.
-   - model: model descrition using col names from `full_traits.csv` in the form `phenotype ~ covar1 + covar2 + ...`. Use `phenotype ~ 1` if you don't have any covariate
+   - model: model descrition using col names from the phenotype table in the form `phenotype ~ covar1 + covar2 + ...`. Use `phenotype ~ 1` if you don't have any covariate
    - trait_type: 'log' (for binary phenotype) or 'quant' (for quantitative phenotype).
    - genetic_model: 'additive', 'dominant' or 'recessive'.
    - cat_var: comma-separated list of categorical covariates. Use NA if none is present. Note that a max of 10 levels are accepted for a catagorical covariates
@@ -274,37 +261,19 @@ M3      QP3 ~ Q1+Q2+Q5  quant   additive  NA
 M4      QP4 ~ 1  quant   additive   NA
 ```
 
-### Multi models execution monitoring
+### Note on multi models execution
 
-If you monitor the execution using nextflow, the master job will be named `nf-highspeed-gwas` and the single GWAS jobs will be named according to the `<chunk_id>`.
+In multi-models mode, the pipeline will first analyze values in the input traits table and create multiple projects (named `chunk_<N>`)` based on the defined models and the configured maximum missingness threshold. Essentially, this creates a set of uniform executions where phenotypes are grouped based on the value type (binary or quantitative) and a uniform missingness and then models with the same set of covariates are run together. 
 
-In the master output folder you will also see:
+For a large set of input models, this can generate a large number of processes, thus be sure to adjust the `queueSize` value for your executor profile to a sensitive value.
 
-- `master_config` folder containing logs, info and config about the master job
-- `execution_log` folder. This will contain the exection path and status for each job and eventually error log files.
-  
-### Resume execution for a failed task
-
-When one of the task fails, the pipeline will report a warning, but continue to execute the remaining tasks. When the pipeline is finished, you can inspect `job_execution_summary.log` located in `<output_dir>/execution_log` and check which task have failed and the corresponding running directory. An `_error.log` file will be present in the same directory explainign the error.
-
-After fixing the error, you can resume execution of a specific task following these steps:
-
-1. move into the corresponding running directory and add the `-resume` flag to the command in the `.command.sh` file.
-2. remove the setting folder from the directory (it is named `chunk_XX`)
-3. submit your job again by simply running `sbatch .command.run`.
-
-### Note on unexpected exit from multi models execution
-
-At the moment, if the master pipeline terminates unexpectedly, it is likely that jobs realted to the single model executions will not be cleaned up. This is because the master pipeline is not aware of the jobs related to the single model executions.
-In this case, please verify if you have any running jobs using your scheduler ( for example `squeue -u $USER` ) and terminate any residual job spawned by the master pipeline.
-
-Normally, if one of the single run submission terminates with error, the master pipeline will go on and a warning is reported. This ensure the whole pipeline can gracefully terminate and all sub-jobs are properly cleaned up. You can see from the warning message which run has failed an eventually re-run this analysis as single GWAS.
+In the end, outputs for each configured run are saved in independent subfolders in the main output folder.
 
 ## Important notes - Please read this
 
 ### Phenotypes
 
-- Phenotype file must have header and first 2 columns must be FID, IID
+- Phenotype file must have a header line and first 2 columns must be FID, IID. When using multi-model mode the phenotype file can have a single `IID` column as first column. In this case, the `FID` will be deduced from the fam file in the `genotypes_array` dataset.
 - Samples listed in pheno file that are not in bgen/bed/pgen file are ignored. Genotyped samples that are not in the pheno file are removed from the analysis.
 - With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
 - With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
@@ -319,7 +288,7 @@ As a result of this process, if you use only a subset of samples present in the 
 
 ### Clumping
 
-When clumping is active, the pipeline will save clumped data and clumps with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumping will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
+When clumping is active, the pipeline will save clumped data and resulting loci with genes annotation in the `toploci` folder. Note that if there are multiple identical SNP IDs clumping will fail. To avoid this you can for example modify your SNP ids to include ref/alt alleles as follows: `[SNPID]_[A0]_[A1]`.
 
 **NB.** If you are using LD panel files as described in the [LD panel section](#ld-panel---optional-recommended-for-very-large-datasets), please ensure that SNP ids are concordant between bed/bim/fam files in the LD_panel and the input  dataset for GWAS analysis, otherwise SNPs that are not found will be dropped from clumping report.
 
@@ -327,7 +296,7 @@ When clumping is active, the pipeline will save clumped data and clumps with gen
 
 To easily monitor pipeline execution, we suggest to use Nextflow tower. First, register to the [Nextflow tower](https://cloud.tower.nf/) using your GitHub or Google account. Then, click on your profile (upper right corner) and select `Your tokens`. Then click add token and follow the instructions to create a new token. Make sure to copy the generated token, since you were not able to see it again.
 
-Finally, add the following to `shared_parameters.conf` or `single_project.conf` file:
+Add the following to `single_project.conf` file or create a separate `tower.conf` file and then run the pipeline adding `-c tower.conf`:
 
 ```nextflow
 tower {
