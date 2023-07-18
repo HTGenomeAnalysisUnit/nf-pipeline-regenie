@@ -1,6 +1,7 @@
 //Set variables
 def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
 def allowed_rarevar_stats = ["FDR_bygroup","FDR_alltests","BONF_bygroup","BONF_alltests"]
+quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
 
 //Check required parameters for GWAS analysis
 if (params.genotypes_imputed) {
@@ -94,9 +95,6 @@ workflow RUN_VARIANT_ANALYSIS {
   input_validation_logs //[project_id, pheno_validation_log, covar_validation_log]
 
   main:
-  //==== OPENING LOG ====
-  //OPENING_LOG(project_data)
-
   //==== STEP 1 ====
   //Set input channel for step 1
   genotyped_files = Channel.fromFilePairs("${params.genotypes_array}.{bed,bim,fam}", size: 3, flat: true)
@@ -140,7 +138,6 @@ workflow RUN_VARIANT_ANALYSIS {
     
     if (params.make_report) {
       gwas_report_template = file("$projectDir/reports/gwas_report_template.qmd", checkIfExists: true)
-      quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
       REPORT_GWAS (
           report_input_ch,
           gwas_report_template,
@@ -181,7 +178,6 @@ workflow RUN_VARIANT_ANALYSIS {
 
     if (params.make_report) {
       rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.qmd",checkIfExists: true)
-      quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
       REPORT_RAREVAR (
           report_input_ch,
           rarevar_report_template,

@@ -18,7 +18,7 @@ if (params.genes_ranges) {
 //Inclusion statements
 include { FILTER_RESULTS    } from '../modules/local/filter_results'   addParams(outdir: "${params.outdir}", publish: params.publish_filtered)
 include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}", annotation_interval_kb: params.annotation_interval_kb)
-include { PROCESS_RAREVAR_RESULTS    } from '../modules/local/process_regenie_rarevar' addParams(outdir: "${params.outdir}")
+include { PROCESS_RAREVAR_RESULTS    } from '../modules/local/process_regenie_rarevars' addParams(outdir: "${params.outdir}")
 if (params.clumping) {
   include { CLUMP_RESULTS } from './clump_results' addParams(outdir: "${params.outdir}", logdir: "${params.logdir}", chromosomes: params.chromosomes)
 }

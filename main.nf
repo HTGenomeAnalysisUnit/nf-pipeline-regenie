@@ -11,6 +11,9 @@
 
 nextflow.enable.dsl = 2
 
+//======================================================================
+//====    INITIALIZATION    ====
+
 //Check general required parameters
 requiredParams = [
   'project', 'genotypes_array', 'genotypes_build',
@@ -58,6 +61,10 @@ if (params.master_log_dir == null) {
 
 include { PREPARE_PROJECT       } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
 include { RUN_VARIANT_ANALYSIS  } from './workflows/variant_analysis' addParams(outdir: outdir, logdir: master_log_dir)
+
+
+//======================================================================
+//====    WORKFLOW    ====
 
 workflow {
   //==== SET WORKFLOW runName ====
