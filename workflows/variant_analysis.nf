@@ -1,5 +1,6 @@
 //Set variables
 def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
+def allowed_rarevar_stats = ["FDR_bygroup","FDR_alltests","BONF_bygroup","BONF_alltests"]
 
 //Check required parameters for GWAS analysis
 if (params.genotypes_imputed) {
@@ -43,9 +44,15 @@ if (params.genotypes_rarevar) {
       }
   }
 
-  //Check imputed file format is allwed
+  //Check imputed file format is allowed
   if (!(params.genotypes_rarevar_format in allowed_input_formats)){
     log.error "File format ${params.genotypes_rarevar_format} not supported. Allowed formats are $allowed_input_formats."
+    exit 1
+  }
+
+  //Check rare variant stats for report is allowed
+  if (!(params.rarevar_stat_test in allowed_rarevar_stats)){
+    log.error "Rare variants stat column ${params.rarevar_stat_test} not supported. Allowed formats are $allowed_rarevar_stats."
     exit 1
   }
 }
@@ -101,7 +108,6 @@ workflow RUN_VARIANT_ANALYSIS {
     project_data
   )
   
-
   //==== STEP2 AND REPORTS - GWAS ====
   if (params.genotypes_imputed) {
     //Prepare data for step 2
@@ -114,9 +120,7 @@ workflow RUN_VARIANT_ANALYSIS {
         .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
     }
 
-    //TODO: Combine gwas_data_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
-
     gwas_data_input_ch = project_data
       .join(REGENIE_STEP1_WF.out.regenie_step1_out)
       .combine(processed_gwas_data_ch)
@@ -135,10 +139,12 @@ workflow RUN_VARIANT_ANALYSIS {
       //[val(project_id), path(phenotype_file), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)]
     
     if (params.make_report) {
-      gwas_report_template = file("$projectDir/reports/gwas_report_template.Rmd",checkIfExists: true)
+      gwas_report_template = file("$projectDir/reports/gwas_report_template.qmd", checkIfExists: true)
+      quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
       REPORT_GWAS (
           report_input_ch,
-          gwas_report_template
+          gwas_report_template,
+          quarto_report_css
       )
     }
   }
@@ -160,7 +166,6 @@ workflow RUN_VARIANT_ANALYSIS {
       .join(REGENIE_STEP1_WF.out.regenie_step1_out)
       .combine(processed_rarevar_data_ch)
 
-    //TODO: Combine rare_variants_input_ch with step1 project data. Subsequent steps runs by project data.
     //Run regenie step 2
     REGENIE_STEP2_RAREVAR_WF( rarevar_data_input_ch )
 
@@ -168,16 +173,19 @@ workflow RUN_VARIANT_ANALYSIS {
     PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_RAREVAR_WF.out.regenie_results)
 
     //==== GENERATE HTML REPORTS ====
+    report_input_ch = project_data.map{ tuple(it[0], it[1]) }
+      .join(input_validation_logs)
+      .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
+      .join(REGENIE_STEP2_RAREVAR_WF.out.regenie_log)
+      .join(PROCESS_RAREVAR_RESULTS_WF.out.processed_results)
+
     if (params.make_report) {
-      rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.Rmd",checkIfExists: true)
+      rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.qmd",checkIfExists: true)
+      quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
       REPORT_RAREVAR (
-        PROCESS_RAREVAR_RESULTS_WF.out.processed_results,
-        VALIDATE_PHENOTYPES.out.phenotypes_file_validated,
-        rarevar_report_template,
-        VALIDATE_PHENOTYPES.out.phenotypes_file_validated_log,
-        covariates_file_validated_log,
-        REGENIE_STEP1_WF.out.regenie_step1_parsed_logs.collect(),
-        REGENIE_STEP2_RAREVAR_WF.out.regenie_log
+          report_input_ch,
+          rarevar_report_template,
+          quarto_report_css
       )
     }
   }

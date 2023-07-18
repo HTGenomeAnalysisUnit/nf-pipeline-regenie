@@ -346,11 +346,11 @@ By default the pipeline will generate all results in a folder named according to
 - step 1 predictions in `regenie_step1_preds` can be reused for further analyses on the same dataset as long as the input bgen, phenotype file and covars file are exactly the same and phenotypes and covars list are provided in the same order.
 - logs from all operations are saved in `logs` for debugging. Note that more than a thousand log file may be generated when the input dataset is large.
 - HTML reports for GWAS and rare variants are saved in `reports` folder
-- when you are running in multi models mode, one folder will be created for each run_id under the `master_outdir` folder.
+- when you are running in multi models mode, one folder will be created for each run_id under the main output folder.
 
 ## Re-use Step 1 predictions
 
-If you set `save_step1_predictions` to true, the pipeline will save the step 1 predictions in `regenie_step1_preds` folder. This can be used to re-use the predictions for further analysis.
+If you set `save_step1_predictions` to true, the pipeline will save the step 1 predictions in `regenie_step1_preds` folder. These predictions can be re-used in  further analyses on the same dataset when phenotype(s) and covariates are the same. 
 You can load level 1 preds from this folder in subsequent analyses by setting `regenie_premade_predictions` to a path like `/results/regenie_step1_preds/regenie_step1_out*`.
 
 - A file named regenie_step1_out_pred.list must be present
