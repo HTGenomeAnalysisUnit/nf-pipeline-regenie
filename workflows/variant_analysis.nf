@@ -79,13 +79,13 @@ include { REPORT_RAREVAR              } from '../modules/local/report'
 //gwas sub wf and modules
 include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file, chromosomes: chromosomes, dosage_from: params.gwas_read_dosage_from)
 include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false, publish_filtered: false, annotation_min_log10p: params.annotation_min_log10p)
+include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false, annotation_min_log10p: params.annotation_min_log10p)
 include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 
 //rare variant sub wf and modules
 include { PREPARE_GENETIC_DATA as PREPARE_RAREVARIANT_DATA } from '../subworkflow/prepare_step2_data' addParams(genotypes_data: params.genotypes_rarevar, input_format: params.genotypes_rarevar_format, bgen_sample_file: params.rarevar_sample_file, chromosomes: chromosomes, dosage_from: params.rarevar_read_dosage_from)
 include { SPLIT_RAREVARIANT_DATA_WF        } from '../subworkflow/split_data' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, rarevar_results: true, publish_filtered: true, annotation_min_log10p: params.rarevar_min_log10p)
+include { PROCESS_RAREVAR_RESULTS_WF        } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, rarevar_results: true, annotation_min_log10p: params.rarevar_min_log10p)
 include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/regenie_step2' addParams(chromosomes: chromosomes, run_gwas: false, run_rarevar: true)
 
 //==== WORKFLOW ====

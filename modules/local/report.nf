@@ -15,11 +15,11 @@ process REPORT_GWAS {
   """
   quarto render ${report_template} \
     -P project:'${project_id}' \
-    -P date:'${params.project_date}' \
+    -P date:"${params.project_date}" \
     -P version:'$workflow.manifest.version' \
-    -P regenie_merged:'${regenie_merged_results}' \
+    -P sumstat_file:'${regenie_merged_results}' \
     -P phenotype_file:'${phenotype_file_validated}' \
-    -P phenotype:'${phenotype_file_validated}' \
+    -P phenotype:'${phenotype}' \
     -P covariates:'${params.covariates_columns}' \
     -P regenie_step1_log:'${step1_log}' \
     -P regenie_step2_log:'${step2_log}' \
@@ -27,9 +27,9 @@ process REPORT_GWAS {
     -P covariate_log:'${covariate_log}' \
     -P manhattan_annotation_type:'${params.manhattan_annotations}' \
     -P annotation_min_log10p:'${params.annotation_min_log10p}' \
-    -P annotated_tophits_filename:'${annotated_tophits}z' \
+    -P annotated_tophits_filename:'${annotated_tophits}' \
     -P annotated_toploci_filename:'${annotated_toploci}' \
-    -P max_loci:'${params.top_loci_n_plot}' \
+    -P max_loci:'${params.n_top_loci_plot}' \
     -P regional_plot_window_kb:'${params.regional_plot_window_kb}' \
     -P genome_build:'${params.genotypes_build}' \
     --to html
@@ -57,11 +57,11 @@ process REPORT_RAREVAR {
   """
   quarto render ${report_template} \
     -P project:'${project_id}' \
-    -P date:'${params.project_date}' \
+    -P date:"${params.project_date}" \
     -P version:'$workflow.manifest.version' \
-    -P regenie_merged:'${regenie_merged_results}' \
+    -P sumstat_file:'${regenie_merged_results}' \
     -P phenotype_file:'${phenotype_file_validated}' \
-    -P phenotype:'${phenotype_file_validated}' \
+    -P phenotype:'${phenotype}' \
     -P covariates:'${params.covariates_columns}' \
     -P regenie_step1_log:'${step1_log}' \
     -P regenie_step2_log:'${step2_log}' \

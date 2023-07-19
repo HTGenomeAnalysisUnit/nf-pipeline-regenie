@@ -7,10 +7,10 @@ process REGENIE_STEP2_GWAS {
   tag "${project_id}_${chrom}_${chunk}"
 
   input:
-	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk)
+	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
 
   output:
-    tuple val(project_id), val(chrom), val(chunk), path("*regenie.gz"), emit: regenie_step2_out
+    tuple val(project_id), val(chrom), val(chunk), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
     tuple val(project_id), path("${project_id}_${chrom}_${chunk}.log"), emit: regenie_step2_out_log
 
   script:
@@ -70,10 +70,10 @@ process REGENIE_STEP2_RAREVARS {
   tag "${project_id}_chr${chrom}_chunk${task.index}"
 
   input:
-	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), covar_meta, path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene)
+	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene), val(n_chunks)
 
   output:
-    tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), emit: regenie_step2_out
+    tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
     tuple val(project_id), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:

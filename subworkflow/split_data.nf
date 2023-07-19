@@ -30,10 +30,11 @@ workflow SPLIT_GWAS_DATA_WF {
     //MAKE CHUNKS of N VARIANTS AS SPECIFIED IN PARAMS
     MAKE_VARIANTS_CHUNKS(genotypes_snplist_ch)
     genotypes_by_chunk_ch = MAKE_VARIANTS_CHUNKS.out
-        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[5].readLines().flatten()) }
+        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[5].readLines().flatten(), it[5].readLines().size()) }
         .transpose(by: 5)
 
     emit:
+        //val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(chunk_coords), val(n_chunks)
         processed_genotypes = genotypes_by_chunk_ch
 }
 
@@ -48,8 +49,10 @@ workflow SPLIT_RAREVARIANT_DATA_WF {
     MAKE_GENES_CHUNKS(genotypes_set_list)
 
     genotypes_by_chunk_ch = MAKE_GENES_CHUNKS.out
+        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[5], it[5].size()) }
         .transpose(by: 5)
 
     emit:
+        //val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(chunk_genes), val(n_chunks)
         processed_genotypes = genotypes_by_chunk_ch
 }

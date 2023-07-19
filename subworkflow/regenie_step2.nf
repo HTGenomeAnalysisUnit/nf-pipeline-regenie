@@ -10,7 +10,7 @@ include { REGENIE_STEP2_RAREVARS                                } from '../modul
 
 workflow REGENIE_STEP2_WF {
     take:
-        processed_genotypes_ch //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk)]
+        processed_genotypes_ch //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)]
 
     main:
     //==== INITIALIZATION ====
@@ -33,9 +33,13 @@ workflow REGENIE_STEP2_WF {
 
         //Concatenate results
         concat_gwas_results_ch = REGENIE_STEP2_GWAS.out.regenie_step2_out.transpose()
-            .map{ tuple(it[0], it[3].baseName.replace("${it[0]}_${it[1]}_${it[2]}_",'').replace('.regenie',''), it[3]) }
-            .groupTuple(by: [0,1]).map{ tuple(it[0], it[1], it[2].flatten()) }
-        
+            .map{ tuple(it[0], it[3].baseName.replace("${it[0]}_${it[1]}_${it[2]}_",'').replace('.regenie',''), it[3], it[4]) }
+            .map{ project, pheno, chunk_results, n_chunks -> [groupKey([project,pheno], n_chunks), chunk_results] }
+            .groupTuple()
+            .map{ tuple(it[0][0], it[0][1], it[1]) }
+            //.groupTuple(by: [0,1]).map{ tuple(it[0], it[1], it[2].flatten()) }
+            
+            
         CONCAT_GWAS_RESULTS(concat_gwas_results_ch)
 
         step2_log = GWAS_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs
@@ -57,8 +61,11 @@ workflow REGENIE_STEP2_WF {
         )
         //Concatenate results
         concat_rarevar_results_ch = REGENIE_STEP2_RAREVARS.out.regenie_step2_out.transpose()
-            .map{ tuple(it[0], it[3].baseName.replace("${it[0]}_${it[1]}_${it[2]}_",'').replace('.regenie',''), it[3]) }
-            .groupTuple(by: [0,1]).map{ tuple(it[0], it[1], it[2].flatten()) }
+            .map{ tuple(it[0], it[3].baseName.replace("${it[0]}_${it[1]}_${it[2]}_",'').replace('.regenie',''), it[3], it[4]) }
+            .map{ project, pheno, chunk_results, n_chunks -> [groupKey([project,pheno], n_chunks), chunk_results] }
+            .groupTuple()
+            .map{ tuple(it[0][0], it[0][1], it[1]) }
+            //.groupTuple(by: [0,1]).map{ tuple(it[0], it[1], it[2].flatten()) }
         
         CONCAT_RAREVAR_RESULTS(concat_rarevar_results_ch)
 

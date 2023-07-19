@@ -16,7 +16,8 @@ if (params.genes_ranges) {
 }
 
 //Inclusion statements
-include { FILTER_RESULTS    } from '../modules/local/filter_results'   addParams(outdir: "${params.outdir}", publish: params.publish_filtered)
+include { FILTER_RESULTS as FILTER_GWAS_RESULTS   } from '../modules/local/filter_results'   addParams(outdir: "${params.outdir}", publish: false)
+include { FILTER_RESULTS as FILTER_RAREVAR_RESULTS   } from '../modules/local/filter_results'   addParams(outdir: "${params.outdir}", publish: true)
 include { ANNOTATE_FILTERED } from '../modules/local/annotate_filtered'  addParams(outdir: "${params.outdir}", annotation_interval_kb: params.annotation_interval_kb)
 include { PROCESS_RAREVAR_RESULTS    } from '../modules/local/process_regenie_rarevars' addParams(outdir: "${params.outdir}")
 if (params.clumping) {
@@ -30,10 +31,10 @@ workflow PROCESS_GWAS_RESULTS_WF {
 
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
-    FILTER_RESULTS ( regenie_step2_by_phenotype )
+    FILTER_GWAS_RESULTS ( regenie_step2_by_phenotype )
     
     ANNOTATE_FILTERED (
-        FILTER_RESULTS.out.results_filtered,
+        FILTER_GWAS_RESULTS.out.results_filtered,
         genes_bed_hg19,
         genes_bed_hg38
     )
@@ -64,7 +65,7 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
     
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
-    FILTER_RESULTS ( regenie_step2_by_phenotype )
+    FILTER_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
     PROCESS_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
     /*
     //At the moment we don't provide any additional annotation for gene based results
@@ -76,7 +77,7 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
     */
 
     merged_results_and_annotated_filtered = regenie_step2_by_phenotype
-        .join(FILTER_RESULTS.out.results_filtered, by: [0,1])
+        .join(FILTER_RAREVAR_RESULTS.out.results_filtered, by: [0,1])
        //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
 
     emit:
