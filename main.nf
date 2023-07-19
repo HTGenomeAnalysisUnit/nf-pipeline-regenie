@@ -11,8 +11,11 @@
 
 nextflow.enable.dsl = 2
 
-//======================================================================
-//====    INITIALIZATION    ====
+/*
+======================================================================
+    INITIALIZATION
+======================================================================
+*/
 
 //Check general required parameters
 requiredParams = [
@@ -62,13 +65,15 @@ if (params.master_log_dir == null) {
 include { PREPARE_PROJECT       } from './workflows/prepare_project'  addParams(outdir: outdir, logdir: master_log_dir)
 include { RUN_VARIANT_ANALYSIS  } from './workflows/variant_analysis' addParams(outdir: outdir, logdir: master_log_dir)
 
-
-//======================================================================
-//====    WORKFLOW    ====
+/*
+======================================================================
+    WORKFLOW
+======================================================================
+*/
 
 workflow {
   //==== SET WORKFLOW runName ====
-  workflow.runName = "${workflow.runName}-${params.project}"
+  workflow.runName = "${params.project}-${workflow.runName}"
 
   //==== INITIAL LOGGING OF PARAMETERS ====
   log_params = [ 

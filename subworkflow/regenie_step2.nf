@@ -52,7 +52,7 @@ workflow REGENIE_STEP2_WF {
         rarevars_anno_file = file(params.rarevar_anno_file, checkIfExists: true)
         rarevars_mask_file = file(params.rarevar_mask_file, checkIfExists: true)
 
-        REGENIE_STEP2_RAREVARS ( processed_genotypes_ch )
+        REGENIE_STEP2_RAREVARS ( processed_genotypes_ch, rarevars_set_list, rarevars_anno_file, rarevars_mask_file)
 
         //Parse log file
         RAREVAR_LOG_PARSER_STEP2 (

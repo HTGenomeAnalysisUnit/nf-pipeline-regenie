@@ -71,6 +71,9 @@ process REGENIE_STEP2_RAREVARS {
 
   input:
 	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene), val(n_chunks)
+    path rarevars_set_list
+    path rarevars_anno_file
+    path rarevars_mask_file
 
   output:
     tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out

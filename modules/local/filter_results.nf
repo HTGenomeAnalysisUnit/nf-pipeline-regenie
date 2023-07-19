@@ -1,9 +1,9 @@
 process FILTER_RESULTS {
   tag "${project_id}_${phenotype}"
   
-  //if (params.publish) {
+  if (params.publish) {
     publishDir "${params.outdir}/${project_id}/results/${params.rarevar_results ? 'rarevar' : 'gwas'}/tophits", mode: 'copy'
-  //}
+  }
 
   input:
     tuple val(project_id), val(phenotype), path(regenie_result_gz)
