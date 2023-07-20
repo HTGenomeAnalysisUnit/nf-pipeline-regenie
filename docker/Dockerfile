@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL author="Edoardo Giacopuzzi"
 LABEL contact="edoardo.giacopuzzi@fht.org"
-LABEL image_version="0.4"
+LABEL image_version="0.5"
 LABEL regenie_version="3.2.7"
 LABEL bgenix_version="1.1.7"
 LABEL R_version="4.1.0"
@@ -41,28 +41,6 @@ RUN apt-get update && \
 && apt-get -y autoremove \
 && apt-get -y clean all \
 && rm -rf /var/cache 
-
-# Install miniconda and create a python2 environment
-WORKDIR /opt
-ENV CONDA_DIR /opt/conda
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/conda
-ENV PATH=$CONDA_DIR/bin:$PATH
-RUN conda create -n python2 "python<3" 
-
-# Install pacakges in the root env
-RUN conda install -n root pandas
-
-WORKDIR /opt
-RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
-    unzip qctool.tgz && \
-    rm qctool.tgz && \
-    cd qctool && \
-    conda run -n python2 ./waf configure && \
-    conda run -n python2 ./waf && \
-    mv build/release/apps/qctool_v2.2.0 /usr/bin/qctool && \
-    cd .. && \
-    rm -rf qctool
 
 # Install regenie
 WORKDIR /opt
@@ -111,14 +89,6 @@ RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.30.0/bedtools.s
     && chmod a+x bedtools \
     && ln -s /opt/bedtools /usr/local/bin/bedtools
 
-# Install jbang (not as conda package available)
-WORKDIR "/opt"
-RUN wget https://github.com/jbangdev/jbang/releases/download/v0.91.0/jbang-0.91.0.zip && \
-    unzip -q jbang-*.zip && \
-    mv jbang-0.91.0 jbang  && \
-    rm jbang*.zip
-ENV PATH="/opt/jbang/bin:${PATH}"
-
 # Install bgen tools
 WORKDIR "/opt"
 RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
@@ -154,3 +124,26 @@ RUN wget https://cloud.r-project.org/src/base/R-4/R-4.1.0.tar.gz \
 
 # Install R packages
 RUN R -e "install.packages(c('data.table', 'optparse'), repos = c(CRAN = 'https://cloud.r-project.org'))"
+
+# Install packages in the root env
+RUN pip install -y pandas==1.5.3 statsmodels==0.13.5
+
+# Install miniconda and create a python2 environment
+WORKDIR /opt
+ENV CONDA_DIR /opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda
+ENV PATH=$CONDA_DIR/bin:$PATH
+RUN conda create -n python2 "python<3" 
+
+# Use python2 to install qctool
+WORKDIR /opt
+RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
+    unzip qctool.tgz && \
+    rm qctool.tgz && \
+    cd qctool && \
+    conda run -n python2 ./waf configure && \
+    conda run -n python2 ./waf && \
+    mv build/release/apps/qctool_v2.2.0 /usr/bin/qctool && \
+    cd .. && \
+    rm -rf qctool
