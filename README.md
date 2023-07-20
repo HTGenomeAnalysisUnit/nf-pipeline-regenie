@@ -50,13 +50,13 @@ Two running modes are available: **single project mode** and **multi models mode
 
 1. Create a folder for your project (e.g. `yourproject`) 
 
-2. Prepare the required genetic data for step 2, usually and [imputed dataset](#full-genotype-data-from-imputation---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory). Then see the instruction to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode).
+2. Prepare the required genetic data for step 2, usually an [imputed or sequencing dataset](#full-genotype-data-from-imputation-or-sequencing---mandatory), and step 1, usually a [QCed genotyped dataset](#qced-genotyped-snps---mandatory).
 
-3. Prepare the [config files](#prepare-config-files) for your project in your project folder.
+3. Prepare the [config files](#prepare-config-files) for your project in your project folder, including a config file to define the profile for your computational environment. See the instructions to prepare config files for [single project run](#run-in-single-project-mode) or [multi models run](#run-in-multi-models-mode) using the templates provided in the `templates` folder.
 
 4. Invoke the pipeline
 
-   Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler:
+   Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler. `myprofile` corresponds to a profile you created for your computational environment:
 
    ```bash
    #!/bin/bash
@@ -69,13 +69,12 @@ Two running modes are available: **single project mode** and **multi models mode
 
    module load nextflow/22.10.1 singularity/3.8.5
 
-   ###  For a single project  ###
    export NXF_OPTS="-Xms1G -Xmx8G" 
    nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
-      -profile singularity,ht_cluster -c your_project.conf
+      -profile singularity,myprofile -c your_project.conf
    ```
 
-Optionally, you can clone the latest pipeline version into the project folder using
+Alternatively, you can clone the latest pipeline version using
 
 `git clone --depth 1 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
 
@@ -83,7 +82,7 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
-`git clone --depth 1 --branch v1.7.4 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.8 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
 
 ## Prepare config files
 
@@ -160,13 +159,13 @@ Some additional files are expected when using bgen format:
 3. A SNP list for your dataset. This is a tab-separated file without header containing 6 columns: chr, id, cm, pos, ref, alt for all SNPs in your data, with chromosome in column 1 and position in column 4. Given a dataset named `my_dataset.bgen` the expected name of the snplist is `my_dataset.snplist`. You can generate a snplits from bgi index using
 
    ```bash
-   bgenix -g my_dataset.begn -list | tail -n+3 \
+   bgenix -g my_dataset.bgen -list | tail -n+3 \
    | awk '{OFS="\t"}; {print $3, $2, 0, $4, $6, $7}' | sed '$d' > my_dataset.snplist
    ```
 
 **NB:** When using BGEN input, make sure that the sample ID in the BGEN or sample file can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. Using a `.sample` file can help to have better control on the sample IDs. 
 
-If any of these files is missing, the pipeline will generate them automatically and save them in the output folder by default. This behaviour can be controlled by `save_bgen_index`, `save_bgen_sample`, `save_snplist` parameters. Keep in mind that these steps can add a significant amount of time to the overall execution, so it is suggested to prepare these files in advance.
+If any of these files is missing, the pipeline will generate them automatically and save them in the output folder by default. This behaviour can be controlled by `save_bgen_index`, `save_bgen_sample`, `save_snplist` parameters. Keep in mind that these steps can add a significant amount of time to the overall execution for large datasets, so it is suggested to prepare these files in advance.
 
 #### pgen format
 
