@@ -4,7 +4,7 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 
 Original concept based on this amazing [github repository](https://github.com/genepi/nf-gwas) from Institute of Genetic Epidemiology, Innsbruck maintained by Sebastian Schönherr and Lukas Forer.
 
-The pipeline is optimized for massive scaling. In our tests it can analyze 100 quantitative phenotypes on teh full UKBB dataset (about 500k individuals) and 40M SNPs in ~4h under normal HPC load considering a limit of 250 concurrent tasks. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks.
+The pipeline is optimized for massive scaling, by chunking operations as much as possible. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks (see the [adjust scaling section](#adjust-scaling)).
 
 Setting `genotypes_imputed` input trigger the GWAS analsysi, while `genotypes_rarevar` trigger the rare variant analysis using burden test and the set of test configured `rarevars_vc_test`. Possible tests include: skat, skato, acato, acatv, skato-acat.
 
@@ -40,6 +40,7 @@ Two running modes are available: **single project mode** and **multi models mode
   - [Annotation of tophits](#annotation-of-tophits)
   - [Outputs](#outputs)
   - [Re-use Step 1 predictions](#re-use-step-1-predictions)
+  - [Adjust scaling](#adjust-scaling)
   - [Full parameters explanation](#full-parameters-explanation)
   - [License](#license)
   - [Contact](#contact)
@@ -356,6 +357,19 @@ You can load level 1 preds from this folder in subsequent analyses by setting `r
 - A file named regenie_step1_out_pred.list must be present
 - One file per phenotype is expected named `regenie_step1_out_1.loco.gz` `regenie_step1_out_2.loco.gz`, ...
 - phenotypes and covariates used in the new analyses must be exactly the same used to generate step1 predictions (both files and column designation must match exactly)
+
+## Adjust scaling
+
+The pipeline optimize the run time by splitting heavy task into small chunks. You can control the exact beahviour of this process by adjusting the following parameters:
+
+- `step2_gwas_chunk_size`: this controls the number of variants analyzed in each chunk during regenie step2. Reducing this number increase the number of concurrent chunks and reduce run time when enough resources are available. Default is 1000000.
+- `step2_rarevar_chunk_size`: this controls the number of genes from the input snpset file analyzed in each chunk during regenie step2 for rare variant analysis. Reducing this number increase the number of concurrent chunks and reduce run time when enough resources are available. Default is 200.
+
+You can also control the number of jobs submitted simultaneously by adjusting the `queueSize` parameter in the executor scope when you create your custom profile. If you have a large cluster with many resources available, you can set this toa large value to submit all jobs simultaneously. This will reduce the overall run time when enough resources are available.
+
+To further increase speed, you can eventually adjust the default amount of resources requested for regenie step1 and regenie step2 operations by editing the file `conf/base.config`. The default here are sensible for most cases, but you can increase the amount of memory and CPUs requested for each task to reduce computation time.
+
+In our tests using the default settings one can analyze 100 quantitative phenotypes on the full UKBB dataset (about 500k individuals and 40M SNPs) in ~3h under normal HPC load considering a limit of 200 concurrent tasks. 
 
 ## Full parameters explanation
 
