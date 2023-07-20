@@ -5,13 +5,12 @@ process REGENIE_LOG_PARSER_STEP2 {
 
   input:
     tuple val(project_id), path(regenie_step2_logs)
-    path regenie_log_parser_jar
 
   output:
     tuple val(project_id), path("${project_id}.step2.log"), emit: regenie_step2_parsed_logs
 
   """
-  java -jar ${regenie_log_parser_jar} ${regenie_step2_logs} --output ${project_id}.step2.log
+  RegenieLogParser.py ${regenie_step2_logs} --output ${project_id}.step2.log
   """
 
 }

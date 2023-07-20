@@ -1,6 +1,3 @@
-regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
-
-include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { QC_FILTER_GENOTYPED                  } from '../modules/local/qc_filter_genotyped'        addParams(logdir: "${params.outdir}")
 include { PRUNE_GENOTYPED                      } from '../modules/local/prune_genotyped'            addParams(logdir: "${params.outdir}")
 include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1'              addParams(outdir: "${params.outdir}", logdir: "${params.outdir}", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
@@ -12,8 +9,6 @@ workflow REGENIE_STEP1_WF {
         project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
   
     main:
-    CACHE_JBANG_SCRIPTS ( regenie_log_parser_java )
-
     //==== PREPARE GENOTYPE DATA FOR STEP1 ====
     qc_input_ch = genotyped_plink_ch
         .join(project_data.map { tuple(it[0], it[1]) })
@@ -53,10 +48,7 @@ workflow REGENIE_STEP1_WF {
 
         REGENIE_STEP1 (step1_input_ch)
 
-        REGENIE_LOG_PARSER_STEP1 (
-            REGENIE_STEP1.out.regenie_step1_out_log,
-            CACHE_JBANG_SCRIPTS.out.compiled_jar
-        )
+        REGENIE_LOG_PARSER_STEP1 ( REGENIE_STEP1.out.regenie_step1_out_log )
 
         regenie_step1_out_ch = REGENIE_STEP1.out.regenie_step1_out
         regenie_step1_parsed_logs_ch = REGENIE_LOG_PARSER_STEP1.out.regenie_step1_parsed_logs

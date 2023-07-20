@@ -3,7 +3,7 @@ process REGENIE_STEP2_GWAS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_gwas" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  label "step2_gwas" //TODO Can we adjust label to use different resources when running by chunk or whole dataset?
   tag "${project_id}_${chrom}_${chunk}"
 
   input:
@@ -66,7 +66,7 @@ process REGENIE_STEP2_RAREVARS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_rarevar" //FIXME Need to use a params to select based on running by chunk or whole dataset
+  label "step2_rarevar" //TODO Can we adjust label to use different resources when running by chunk or whole dataset?
   tag "${project_id}_chr${chrom}_chunk${task.index}"
 
   input:

@@ -6,13 +6,12 @@ process VALIDATE_PHENOTYPES {
 
   input:
     tuple val(project_id), file(phenotypes_file), val(pheno_meta)
-    path regenie_validate_input_jar
 
   output:
     tuple val(project_id), file("${phenotypes_file.baseName}.pheno.validated.txt"), val(pheno_meta), emit: phenotypes_file_validated
     tuple val(project_id), path("${phenotypes_file.baseName}.pheno.validated.log"), emit: phenotypes_file_validated_log
 
   """
-  java -jar ${regenie_validate_input_jar}  --input ${phenotypes_file} --output  ${phenotypes_file.baseName}.pheno.validated.txt --type phenotype
+  RegenieValidateInput.py --input ${phenotypes_file} --output ${phenotypes_file.baseName}.pheno.validated.txt --type phenotype
   """
   }

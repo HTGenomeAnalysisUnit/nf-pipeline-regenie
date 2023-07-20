@@ -1,7 +1,4 @@
-//Check accessory scripts
-regenie_validate_input_java = file("$projectDir/bin/RegenieValidateInput.java", checkIfExists: true)
 
-include { CACHE_JBANG_SCRIPTS       } from '../modules/local/cache_jbang_scripts'
 include { CHECK_PROJECT             } from '../modules/local/check_project'
 include { VALIDATE_PHENOTYPES       } from '../modules/local/validate_phenotypes'
 include { VALIDATE_COVARIATS        } from '../modules/local/validate_covariates'
@@ -84,15 +81,9 @@ workflow PREPARE_PROJECT {
 
     }
 
-    //==== PREPARE SCRIPTS ====
-    CACHE_JBANG_SCRIPTS (
-        regenie_validate_input_java
-    )
-
     //==== VALIDATE PHENOTYPE INPUT ====
     VALIDATE_PHENOTYPES (
-        phenotype_data,
-        CACHE_JBANG_SCRIPTS.out.compiled_jar
+        phenotype_data
     )
 
     //==== VALIDATE COVARIATE INPUT ====
@@ -102,8 +93,7 @@ workflow PREPARE_PROJECT {
     }.set { validate_covars_inputs }
 
     VALIDATE_COVARIATS (
-        validate_covars_inputs.with_covars,
-        CACHE_JBANG_SCRIPTS.out.compiled_jar
+        validate_covars_inputs.with_covars
     )
 
     validated_covars = VALIDATE_COVARIATS.out.covariates_file_validated

@@ -1,6 +1,4 @@
-regenie_log_parser_java  = file("$projectDir/bin/RegenieLogParser.java", checkIfExists: true)
 
-include { CACHE_JBANG_SCRIPTS         } from '../modules/local/cache_jbang_scripts'
 include { REGENIE_LOG_PARSER_STEP2 as GWAS_LOG_PARSER_STEP2     } from '../modules/local/regenie_log_parser_step2'  addParams(logdir: "${params.logdir}")
 include { REGENIE_LOG_PARSER_STEP2 as RAREVAR_LOG_PARSER_STEP2  } from '../modules/local/regenie_log_parser_step2'  addParams(logdir: "${params.logdir}")
 include { CONCAT_STEP2_RESULTS as CONCAT_GWAS_RESULTS           } from '../modules/local/concat_step2_results'      addParams(outdir: "${params.outdir}", rarevar_results: false)
@@ -17,18 +15,13 @@ workflow REGENIE_STEP2_WF {
     step2_log = Channel.empty()
     step2_results_by_pheno = Channel.empty()
 
-    CACHE_JBANG_SCRIPTS (
-        regenie_log_parser_java
-    )
-
     //==== REGENIE STEP 2 FOR COMMON VARS ====
     if (params.run_gwas) {
         REGENIE_STEP2_GWAS ( processed_genotypes_ch )
 
         //Parse log file 
         GWAS_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }, //.first(),
-            CACHE_JBANG_SCRIPTS.out.compiled_jar
+            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }
         )
 
         //Concatenate results
@@ -56,8 +49,7 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file
         RAREVAR_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }, //.first(),
-            CACHE_JBANG_SCRIPTS.out.compiled_jar
+            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }
         )
         //Concatenate results
         concat_rarevar_results_ch = REGENIE_STEP2_RAREVARS.out.regenie_step2_out.transpose()
