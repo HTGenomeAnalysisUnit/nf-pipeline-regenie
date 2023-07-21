@@ -52,8 +52,6 @@ process REPORT_RAREVAR {
     path "${project_id}.${regenie_merged_results.baseName}.html"
 
   script:
-      def annotation_as_string = params.manhattan_annotation_enabled.toString().toUpperCase()
-
   """
   quarto render ${report_template} \
     -P project:'${project_id}' \

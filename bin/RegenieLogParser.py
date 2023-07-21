@@ -40,10 +40,13 @@ def main():
 						isRegenieCall = True
 						continue
 
-					if "-summary : bgen file" in line:
-						value = line.split()[14].strip()
-						countVariants += int(value)
-					elif "n_snps" in line and "pvar" in line:
+					if "-summary :" in line:
+						pattern = r'([0-9]+) variants'
+						match = re.search(pattern, line)
+						if match:
+							value = match.group(1).strip()
+							countVariants += int(value)
+					elif "n_snps =" in line and "pvar" in line:
 						value = line.split("=")[1].strip()
 						countVariants += int(value)
 					elif "WARNING:" in line:
@@ -83,17 +86,23 @@ def main():
 						value = line.split("=")[1].strip()
 						writer.writerow(["Phenotyped individuals used", int(value)])
 					elif "--minMAC" in line:
-						value = line.split()[2].strip()
-						writer.writerow(["MAC limit", int(value)])
+						pattern = r'--minMAC\s+([0-9]+)'
+						match = re.search(pattern, line)
+						if match:
+							value = match.group(1).strip()
+							writer.writerow(["MAC limit", value])
 					elif "--minINFO" in line and "is skipped" not in line:
-						value = line.split()[2].strip()
-						writer.writerow(["Imputation info score limit", float(value)])
+						pattern = r'--minINFO\s+([0-9.]+)'
+						match = re.search(pattern, line)
+						if match:
+							value = match.group(1).strip()
+							writer.writerow(["Imputation info score limit", value])
 					elif "Number of ignored SNPs due to low MAC or info score" in line:
 						value = line.split(":")[1].strip()
-						writer.writerow(["Variants ignored (low MAC or low info score)", int(value)])
+						writer.writerow(["Variants ignored (low MAC or low info score)", value])
 					elif "Number of ignored tests due to low MAC or info score" in line:
 						value = line.split(":")[1].strip()
-						writer.writerow(["Variants ignored (low MAC or low info score)", int(value)])
+						writer.writerow(["Variants ignored (low MAC or low info score)", value])
 
 		if countVariants > 0:
 			writer.writerow(["Variants used (*.bgen or *.pvar)", countVariants])
