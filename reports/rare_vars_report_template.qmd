@@ -45,6 +45,7 @@ significance_stat_test = "FDR_bygroup"
 genome_build = "hg19"
 sumstat_format = "regenie"
 sig_value_column = sig_value_column_dict[significance_stat_test]
+gwaslab_data_dir = None
                             
 #conda: python <3.10 matplotlib==3.5.0 mscorefonts tabix pip: skimpy gwaslab papermill
 ```
@@ -57,6 +58,9 @@ import os
 from skimpy import skim
 from IPython.display import display, Markdown
 from statsmodels.sandbox.stats.multicomp import multipletests
+
+if gwaslab_data_dir:
+  gl.options.set_option('data_directory', gwaslab_data_dir)
 ```
 
 ```{python datatypes}

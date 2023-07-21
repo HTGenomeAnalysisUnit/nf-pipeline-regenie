@@ -32,6 +32,7 @@ process REPORT_GWAS {
     -P max_loci:'${params.n_top_loci_plot}' \
     -P regional_plot_window_kb:'${params.regional_plot_window_kb}' \
     -P genome_build:'${params.genotypes_build}' \
+    -P gwaslab_data_dir:'/gwaslab_data/' \
     --to html
     
     mv ${report_template.baseName}.html ${project_id}.${regenie_merged_results.baseName}.html
@@ -69,6 +70,7 @@ process REPORT_RAREVAR {
     -P tophits_min_value:'${params.rarevar_min_log10p}' \
     -P sig_value_threshold:'${params.rarevar_stat_test_threshold}' \
     -P significance_stat_test:'${params.rarevar_stat_test}' \
+    -P gwaslab_data_dir:'/gwaslab_data/' \
     --to html
     
   mv ${report_template.baseName}.html ${project_id}.${regenie_merged_results.baseName}.html

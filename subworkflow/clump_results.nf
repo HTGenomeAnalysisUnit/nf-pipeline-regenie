@@ -41,7 +41,7 @@ workflow CLUMP_RESULTS {
         CHECK_CHANNEL_SIZE(ld_panel_filtered_ch.count(), params.chromosomes.size(), "LD panel files")
         clump_input_ch = results.combine(ld_panel_filtered_ch)
         PLINK_CLUMPING(clump_input_ch, genes_interval_hg19, genes_interval_hg38)
-        merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple(by: [0,1])
+        merge_input_ch = PLINK_CLUMPING.out.chrom_clump_results.groupTuple(by: [0,1], size: params.chromosomes.size())
         MERGE_CLUMP_RESULTS(merge_input_ch)
     
     emit:

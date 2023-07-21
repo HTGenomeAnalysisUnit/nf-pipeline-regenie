@@ -42,8 +42,9 @@ RUN wget https://github.com/samtools/htslib/releases/download/1.15/htslib-1.15.t
     && make install
 
 # Install python packages
-RUN pip install matplotlib==3.5.0 papermill && \
-    pip install skimpy gwaslab==3.4.19
+RUN pip install matplotlib==3.5.0 skimpy==0.0.9 papermill==2.4.0 && \
+    pip install gwaslab==3.4.19 && \
+    pip install pandas==1.4.4 
 
 # Install reference data for gwaslab
 RUN mkdir /gwaslab_data && chmod a+wr /gwaslab_data
