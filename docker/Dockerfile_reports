@@ -50,5 +50,13 @@ RUN mkdir /gwaslab_data && chmod a+wr /gwaslab_data
 
 WORKDIR /opt
 COPY get_reference_data.py .
-RUN mkdir reference_data && \
-    python get_reference_data.py
+RUN python get_reference_data.py && \
+    cd /gwaslab_data && \
+    mkdir -p recombination/hg19 && \
+    mkdir -p recombination/hg38 && \
+    mv recombination_hg19.tar.gz recombination/hg19 && \
+    mv recombination_hg38.tar.gz recombination/hg38 && \
+    cd /gwaslab_data/recombination/hg19 && \
+    tar -zxvf recombination_hg19.tar.gz && rm recombination_hg19.tar.gz && \
+    cd /gwaslab_data/recombination/hg38 && \
+    tar -zxvf recombination_hg38.tar.gz && rm recombination_hg38.tar.gz
