@@ -5,7 +5,6 @@
 ========================================================================================
     GitHub : https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie
     Author : Edoardo Giacopuzzi
-    Original concept GitHub : https://github.com/genepi/nf-gwas
     ---------------------------
 */
 
