@@ -2,7 +2,7 @@
 
 A nextflow pipeline to perform genome-wide association studies (GWAS) and rare variant association analysis using [regenie](https://github.com/rgcgithub/regenie) at high speed.
 
-<img src="docs/images/regenie_pipeline.png" width="800" height="300">
+![pipeline_diagram](docs/images/regenie_pipeline.png)
 
 ## Main features:
 
