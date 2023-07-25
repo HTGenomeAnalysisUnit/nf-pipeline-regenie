@@ -26,7 +26,7 @@ nav:
       - "Full genetic dataset": input-full-data.md
       - "Independent QCed SNPs": input-indep-snps.md
       - "LD panel (optional)": input-ld-panel.md
-      - "Inputs for rare variants tests": input-rare_variants.md
+      - "Inputs for rare variants tests": input-rare-variants.md
       - "Models table (multi models run)": input-models-table.md
       - "Re-use step1 predictions": input-reuse-step1.md
     - Configuration:
