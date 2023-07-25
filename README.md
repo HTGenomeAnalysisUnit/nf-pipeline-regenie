@@ -332,6 +332,8 @@ By default the pipeline will generate all results in a folder named according to
 |   `-- step2_rarevar_logs
 |-- regenie_step1_preds
 |-- reports
+|   |-- gwas
+|   `-- rarevar
 |-- results
 |   |-- gwas
 |   |   |-- tophits

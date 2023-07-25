@@ -1,0 +1,44 @@
+site_name: nf-regenie-gwas
+site_author: Edoardi Giacopuzzi
+repo_name: 'GitHub'
+repo_url: https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie
+edit_uri: ""
+copyright: "This pipeline is licensed under the MIT license"
+theme:
+  name: material
+  features:
+    - navigation.tabs
+  font:
+    code: Roboto Mono
+    text: Roboto
+  palette:
+    primary: blue
+    accent: blue
+    
+nav:
+    - Home: index.md
+    - Quick start: quick-start.md
+    - Running mode:
+      - "single model": single-model.md
+      - "multi models": multi-models.md
+    - Input files:
+      - "Phenotype / Covariate file": input-phenotype-file.md
+      - "Full genetic dataset": input-full-data.md
+      - "Independent QCed SNPs": input-indep-snps.md
+      - "LD panel (optional)": input-ld-panel.md
+      - "Inputs for rare variants tests": input-rare_variants.md
+      - "Models table (multi models run)": input-models-table.md
+      - "Re-use step1 predictions": input-reuse-step1.md
+    - Configuration:
+      - "main parameters": main-parameters.md
+      - "tower monitoring": tower-monitoring.md
+      - "define HPC profile": hpc-profile.md
+      - "adjust parallelization": parallelization.md
+      - "top hits annotation": top-hits-annotation.md
+      - "full list of params": full-params-list.md
+    - Output files: outputs.md
+    - Additional notes: additional-notes.md
+
+markdown_extensions:
+  - toc:
+      toc_depth: 3
