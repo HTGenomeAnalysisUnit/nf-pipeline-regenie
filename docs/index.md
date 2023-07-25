@@ -2,9 +2,9 @@
 
 A nextflow pipeline to perform genome-wide association studies (GWAS) and rare variant association analysis using [regenie](https://github.com/rgcgithub/regenie) at high speed.
 
-![pipeline_diagram](images/regenie_pipeline.png)
+<img src="images/regenie_pipeline.png" width="800" height="300">
 
-Main features:
+## Main features:
 
 - The pipeline is optimized for massive scaling, by chunking operations as much as possible. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks (see the [adjust parallelization section](parallelization.md)).
 - All major data types are accepted as input, including plink1 binary dataset (bed/bim/fam), plink2 binary dataset (pgen/pvar/psam), bgen format (bgen/bgi/sample), and vcf.gz format.
