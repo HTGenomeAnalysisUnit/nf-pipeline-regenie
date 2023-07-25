@@ -12,4 +12,14 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 - Results include summary statistics, but also filtered tophits and loci annotaed with neary genes and an HTML report for each phenotype with Manhattan plot and regional plots for the best loci.
 - Two running modes are available: [**single project mode**](single-model.md) and [**multi models mode**](multi-models.md). Using the multi models mode it is possible fully automate the test of multiple association models for a cohort. You just need to provide a trait table with phenotype and covariates and a model table containing all the desired combinations of models. The pipeline will take care of settin up uniform analysis groups.
 
+## How to use
+
+The suggested way to run the pipeline is to create a config file defining your computations environment (see the [hpc profile section](hpc-profile.md)) and a config file for your project (see the [main parameters section](main-parameters.md)). You can use the templates provided in the `templates` folder.
+
+Then you can invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie -profile singularity,myprofile -c your_project.conf -c your_profile.conf`
+
+See the [quick start section](quick-start.md) for a minimal example.
+
+## Credits
+
 The original concept is based on this amazing [github repository](https://github.com/genepi/nf-gwas) from Institute of Genetic Epidemiology, Innsbruck maintained by Sebastian Schönherr and Lukas Forer.

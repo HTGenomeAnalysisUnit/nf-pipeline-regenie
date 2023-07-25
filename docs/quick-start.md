@@ -2,29 +2,36 @@
 
 1. Create a folder for your project (e.g. `yourproject`) 
 
-2. Prepare and configure the required [input data for step 2](input-full-data.md), usually an imputed or sequencing dataset, and [step 1](input-indep-snps.md), usually a QCed and pruned dataset.
+2. Prepare a tab-separated table of phenotypes and eventually covariates (see the [input section](input-phenotype-file.md)).
 
-3. Prepare the [config files](main-parameters.md) for your project in your project folder, including a config file to [define the profile](hpc-profile.md) for your computational environment. You can use the templates provided in the `templates` folder.
+3. Prepare and configure the required [input data for step 2](input-full-data.md), usually an imputed or sequencing dataset, and [step 1](input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](input-ld-panel.md), suggested when analyzing a large dataset with > 100k samples.
 
-4. Invoke the pipeline
+4. If you want to perform a multi-models execution, prepare the [models table](input-models-table.md) to describe your analyses.
 
-   Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler. `myprofile` corresponds to a profile you created for your computational environment:
+5. Prepare the necessary config files, using the templates provided in the `templates` folder:
+   1. A [config file](main-parameters.md) describing settings and inputs for your project 
+   2. A config file to [define the profile](hpc-profile.md) for your computational environment. 
+   3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](tower-monitoring.md)
 
-   ```bash
-   #!/bin/bash
-   #SBATCH --job-name nf-regenie
-   #SBATCH --output nf-regenie_master_%A.log
-   #SBATCH --partition cpuq
-   #SBATCH --cpus-per-task 1
-   #SBATCH --mem 8G
-   #SBATCH --time 1-00:00:00
+6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
 
-   module load nextflow/22.10.1 singularity/3.8.5
+Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler. `myprofile` corresponds to a profile you created for your computational environment:
 
-   export NXF_OPTS="-Xms1G -Xmx8G" 
-   nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
-      -profile singularity,myprofile -c your_project.conf
-   ```
+```bash
+#!/bin/bash
+#SBATCH --job-name nf-regenie
+#SBATCH --output nf-regenie_master_%A.log
+#SBATCH --partition cpuq
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 8G
+#SBATCH --time 1-00:00:00
+
+module load nextflow/22.10.1 singularity/3.8.5
+
+export NXF_OPTS="-Xms1G -Xmx8G" 
+nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie \
+   -profile singularity,myprofile -c your_project.conf
+```
 
 Alternatively, you can clone the latest pipeline version using
 
