@@ -1,17 +1,16 @@
 process REGENIE_LOG_PARSER_STEP2 {
   label 'small_task'
   
-  publishDir "${params.outdir}", mode: 'copy'
+  publishDir "${params.logdir}/${project_id}/logs", mode: 'copy'
 
   input:
-    path regenie_step2_logs
-    path regenie_log_parser_jar
+    tuple val(project_id), path(regenie_step2_logs)
 
   output:
-    path "${params.project}.step2.log", emit: regenie_step2_parsed_logs
+    tuple val(project_id), path("${project_id}.step2.log"), emit: regenie_step2_parsed_logs
 
   """
-  java -jar ${regenie_log_parser_jar} ${regenie_step2_logs} --output ${params.project}.step2.log
+  RegenieLogParser.py ${regenie_step2_logs} --output ${project_id}.step2.log
   """
 
 }

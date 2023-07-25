@@ -1,4 +1,4 @@
-process PREPARE_PROJECTS {
+process SETUP_MULTIPLE_RUNS {
   label 'small_task'
   publishDir "${params.outdir}", mode: 'copy', pattern: 'master_table.tsv'
 
@@ -8,10 +8,9 @@ process PREPARE_PROJECTS {
     file(traits_table)
     file(models_table)
     file(fam_file)
-    file(template_config)
 
   output:
-    path "chunk_*", emit: chunks
+    path "analysis.conf", emit: analysis_config
     path "master_table.tsv", emit: master_table
 
   script:
@@ -26,8 +25,6 @@ process PREPARE_PROJECTS {
     $missing_tolerance
 
   python $prepare_projects_py \
-    master_table.tsv \
-    $template_config \
-    ${params.outdir}
+    master_table.tsv
   """
 }

@@ -1,7 +1,6 @@
-include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_PGEN", publish: params.save_pgen, dosage_from: params.dosage_from)
+include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_pgen", publish: params.save_pgen, dosage_from: params.dosage_from)
 include { MAKE_BGEN_INDEX   } from '../modules/local/make_bgen_index'   addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_index)
 include { MAKE_BGEN_SAMPLE  } from '../modules/local/make_bgen_sample'  addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_sample)
-include { MAKE_SNPLIST      } from '../modules/local/make_snplist'      addParams(outdir: "${params.outdir}/snplist", publish: params.save_snplist)
 include { CHECK_MAX_CHANNEL_SIZE } from '../modules/local/check_channel_size'
 
 workflow PREPARE_GENETIC_DATA {
@@ -14,6 +13,11 @@ workflow PREPARE_GENETIC_DATA {
     if (params.genotypes_data =~ /\{CHROM\}/) {
         def pattern = "${params.genotypes_data.replace('{CHROM}', '(.+)').replace('/', '\\/')}"
         switch(params.input_format) {
+        case "bcf":
+            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
+                .map { tuple(it[0], it[1], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bcf','')) }
+            genotypes_files = input_ch.filter { it[2] in params.chromosomes }
+            break
         case "vcf":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
                 .map { tuple(it[0], it[1], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.vcf.gz','')) }
@@ -30,7 +34,7 @@ workflow PREPARE_GENETIC_DATA {
             genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         case "pgen":
-            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{pgen,pvar,psam}", size:3, flat: true)
+            input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{pgen,psam,pvar}", size:3, flat: true)
                 .map { tuple(it[0], it[1], it[3], it[2], (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.pgen','')) }
             genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
@@ -42,6 +46,10 @@ workflow PREPARE_GENETIC_DATA {
     } else {
     //==== INPUT DATA IS PROVIDED IN A SINGLE FILE ==== 
         switch(params.input_format) {
+        case "bcf":
+            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
+                .map { tuple(it[0], it[1], "ONE_FILE") }
+            break
         case "vcf":
             genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
                 .map { tuple(it[0], it[1], "ONE_FILE") }
@@ -55,8 +63,8 @@ workflow PREPARE_GENETIC_DATA {
                 .map { tuple(it[0], it[1], it[2], it[3], "ONE_FILE") }
             break
         case "pgen":
-            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}.{pgen,pvar,psam}", checkIfExists: true, size:3, flat: true)
-                .map { tuple(it[0], it[1], it[2], it[3], "ONE_FILE") }
+            genotypes_files = Channel.fromFilePairs("${params.genotypes_data}.{pgen,psam,pvar}", checkIfExists: true, size:3, flat: true)
+                .map { tuple(it[0], it[1], it[3], it[2], "ONE_FILE") }
             break
         default:
             log.error "Unknown input format: ${params.input_format}"
@@ -70,7 +78,7 @@ workflow PREPARE_GENETIC_DATA {
     genotypes_plink2_ch = genotypes_files
 
     //==== CONVERT TO PGEN IF INPUT IS VCF ====
-    if (params.input_format == "vcf") {
+    if (params.input_format in ["vcf","bcf"]) {
         CONVERT_TO_PGEN ( genotypes_files )
         genotypes_plink2_ch = CONVERT_TO_PGEN.out.genotypes_data
     } 
@@ -113,5 +121,5 @@ workflow PREPARE_GENETIC_DATA {
     }
 
     emit:
-        processed_genotypes = genotypes_plink2_ch
+        processed_genotypes = genotypes_plink2_ch //[file_prefix, file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom)]
 }

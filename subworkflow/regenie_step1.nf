@@ -1,20 +1,19 @@
-include { QC_FILTER_GENOTYPED                  } from '../modules/local/qc_filter_genotyped'        addParams(logdir: "${params.outdir}/logs")
-include { PRUNE_GENOTYPED                      } from '../modules/local/prune_genotyped'            addParams(logdir: "${params.outdir}/logs")
-include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1'              addParams(outdir: "${params.outdir}/regenie_step1_preds", logdir: "${params.outdir}/logs", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
-include { REGENIE_LOG_PARSER_STEP1             } from '../modules/local/regenie_log_parser_step1'   addParams(logdir: "${params.outdir}/logs")
+include { QC_FILTER_GENOTYPED                  } from '../modules/local/qc_filter_genotyped'        addParams(logdir: "${params.outdir}")
+include { PRUNE_GENOTYPED                      } from '../modules/local/prune_genotyped'            addParams(logdir: "${params.outdir}")
+include { REGENIE_STEP1_SPLIT as REGENIE_STEP1 } from '../modules/local/regenie_step1'              addParams(outdir: "${params.outdir}", logdir: "${params.outdir}", save_step1_predictions: params.save_step1_predictions, use_loocv: params.step1_use_loocv, niter: params.step1_niter, regenie_ref_first: params.regenie_ref_first_step1)
+include { REGENIE_LOG_PARSER_STEP1             } from '../modules/local/regenie_log_parser_step1'   addParams(logdir: "${params.outdir}")
 
 workflow REGENIE_STEP1_WF {
     take:
-        genotyped_plink_ch
-        phenotypes_file_validated
-        covariates_file_validated
-        regenie_log_parser_jar
+        genotyped_plink_ch //[project_id, bed_file, bim_file, fam_file]
+        project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
   
     main:
     //==== PREPARE GENOTYPE DATA FOR STEP1 ====
-    QC_FILTER_GENOTYPED (
-        genotyped_plink_ch, phenotypes_file_validated
-    )
+    qc_input_ch = genotyped_plink_ch
+        .join(project_data.map { tuple(it[0], it[1]) })
+        
+    QC_FILTER_GENOTYPED ( qc_input_ch )
 
     if(params.prune_enabled) {
         PRUNE_GENOTYPED (
@@ -30,8 +29,8 @@ workflow REGENIE_STEP1_WF {
     //==== REGENIE STEP 1 ====
     if (params.regenie_skip_predictions) {
         //skip step 1 predictions completely
-        regenie_step1_out_ch = Channel.fromPath("NO_PREDICTIONS")
-        regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
+        regenie_step1_out_ch = project_data.map{ it + path("NO_PREDICTIONS") }
+        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], path("NO_LOG")) }
     } else if (params.regenie_premade_predictions) {
         /* 
         You can load pre-made regenie level 1 preds. 
@@ -41,28 +40,21 @@ workflow REGENIE_STEP1_WF {
         These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
         used to generate step1 predictions (both files and column designation must match exactly)
         */
-        regenie_step1_out_ch = Channel
-            .fromPath(params.regenie_premade_predictions, checkIfExists: true)
-        regenie_step1_parsed_logs_ch = Channel.fromPath("NO_LOG")
+        regenie_step1_out_ch =  project_data.map{ it + path(params.regenie_premade_predictions, checkIfExists: true) }
+        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], path("NO_LOG")) }
     } else {
-        REGENIE_STEP1 (
-            genotyped_final_ch,
-            QC_FILTER_GENOTYPED.out.genotyped_filtered_snplist_ch,
-            QC_FILTER_GENOTYPED.out.genotyped_filtered_id_ch,
-            phenotypes_file_validated,
-            covariates_file_validated
-        )
 
-        REGENIE_LOG_PARSER_STEP1 (
-            REGENIE_STEP1.out.regenie_step1_out_log,
-            regenie_log_parser_jar
-        )
+        step1_input_ch = project_data.join(genotyped_final_ch)
+
+        REGENIE_STEP1 (step1_input_ch)
+
+        REGENIE_LOG_PARSER_STEP1 ( REGENIE_STEP1.out.regenie_step1_out_log )
 
         regenie_step1_out_ch = REGENIE_STEP1.out.regenie_step1_out
         regenie_step1_parsed_logs_ch = REGENIE_LOG_PARSER_STEP1.out.regenie_step1_parsed_logs
     }
 
     emit:
-        regenie_step1_out = regenie_step1_out_ch
-        regenie_step1_parsed_logs = regenie_step1_parsed_logs_ch
+        regenie_step1_out = regenie_step1_out_ch //[val(project_id), path("regenie_step1_out_*")]
+        regenie_step1_parsed_logs = regenie_step1_parsed_logs_ch //[val(project_id), path(step1_log_file)]
 }

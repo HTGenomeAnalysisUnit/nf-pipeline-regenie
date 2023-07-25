@@ -1,14 +1,14 @@
 process ANNOTATE_FILTERED {
 
-  publishDir "${params.outdir}", mode: 'copy'
+  publishDir "${params.outdir}/${project_id}/results/gwas/tophits", mode: 'copy'
 
   input:
-    tuple val(phenotype), path(regenie_merged)
+    tuple val(project_id), val(phenotype), path(regenie_merged)
     path genes_hg19, stageAs: 'hg19_genes.bed'
     path genes_hg38, stageAs: 'hg38_genes.bed'
 
   output:
-    tuple val(phenotype), path("${regenie_merged.baseName}.annotated.txt.gz"), emit: annotated_ch
+    tuple val(project_id), val(phenotype), path("${regenie_merged.baseName}.annotated.txt.gz"), emit: annotated_ch
 
   script:
   def genes = params.genotypes_build == 'hg19' ? "hg19_genes.bed" : "hg38_genes.bed"

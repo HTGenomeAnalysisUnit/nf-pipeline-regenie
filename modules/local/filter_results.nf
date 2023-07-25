@@ -1,15 +1,15 @@
 process FILTER_RESULTS {
-  tag "${phenotype}"
+  tag "${project_id}_${phenotype}"
   
   if (params.publish) {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir {"${params.outdir}/${project_id}/results/${params.rarevar_results ? 'rarevar' : 'gwas'}/tophits"}, mode: 'copy'
   }
 
   input:
-    tuple val(phenotype), path(regenie_result_gz)
+    tuple val(project_id), val(phenotype), path(regenie_result_gz)
 
   output:
-    tuple val(phenotype), path("${regenie_result_gz.baseName}.filtered.gz"), emit: results_filtered
+    tuple val(project_id), val(phenotype), path("${regenie_result_gz.baseName}.filtered.gz"), emit: results_filtered
     //tuple val(phenotype), path("${regenie_chromosomes}"), emit: results
 
   shell:
