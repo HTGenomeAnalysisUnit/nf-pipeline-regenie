@@ -100,9 +100,8 @@ workflow PREPARE_PROJECT {
         .mix(validate_covars_inputs.no_covars)
     
     validated_covars_logs = VALIDATE_COVARIATS.out.covariates_file_validated_log
-        .mix(validate_covars_inputs.no_covars.map { tuple(it[0], path("NO_COV_LOG")) } )
+        .mix(validate_covars_inputs.no_covars.map { tuple(it[0], file("NO_COV_LOG")) } )
 
-    
     //==== ASSEMBLE OUTPUT CHANNELS ====
     project_data = VALIDATE_PHENOTYPES.out.phenotypes_file_validated
         .join(validated_covars)
