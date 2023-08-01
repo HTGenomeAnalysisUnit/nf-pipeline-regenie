@@ -12,6 +12,10 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 - Results include summary statistics, but also filtered tophits / loci annotated with nearby genes and an HTML report for each phenotype with Manhattan plot and regional plots for the best loci.
 - Two running modes are available: **single project mode** and **multi models mode**. Using the multi models mode it is possible fully automate the test of multiple association models for a cohort. You just need to provide a trait table with phenotype and covariates and a model table containing all the desired combinations of models. The pipeline will take care of setting up uniform analysis groups.
 
+## Documentation
+
+Complete documentation is available in [GitHub pages](https://htgenomeanalysisunit.github.io/nf-pipeline-regenie/)
+
 ## How to use
 
 The suggested way to run the pipeline is to create a config file defining your computations environment and a config file for your project. You can use the templates provided in the `templates` folder.
@@ -22,16 +26,16 @@ Then you can invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pip
 
 1. Create a folder for your project (e.g. `yourproject`) 
 
-2. Prepare a tab-separated table of phenotypes and eventually covariates (see the [input section](input-phenotype-file.md)).
+2. Prepare a tab-separated table of phenotypes and eventually covariates (see the [input section](docs/input-phenotype-file.md)).
 
-3. Prepare and configure the required [input data for step 2](input-full-data.md), usually an imputed or sequencing dataset, and [step 1](input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](input-ld-panel.md), suggested when analyzing a large dataset with > 100k samples.
+3. Prepare and configure the required [input data for step 2](docs/input-full-data.md), usually an imputed or sequencing dataset, and [step 1](docs/input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](docs/input-ld-panel.md), suggested when analyzing a large dataset with > 100k samples.
 
-4. If you want to perform a multi-models execution, prepare the [models table](input-models-table.md) to describe your analyses.
+4. If you want to perform a multi-models execution, prepare the [models table](docs/input-models-table.md) to describe your analyses.
 
 5. Prepare the necessary config files, using the templates provided in the `templates` folder:
-   1. A [config file](main-parameters.md) describing settings and inputs for your project 
-   2. A config file to [define the profile](hpc-profile.md) for your computational environment. 
-   3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](tower-monitoring.md)
+   1. A [config file](docs/main-parameters.md) describing settings and inputs for your project 
+   2. A config file to [define the profile](docs/hpc-profile.md) for your computational environment. 
+   3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](docs/tower-monitoring.md)
 
 6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
 
@@ -62,11 +66,6 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
 `git clone --depth 1 --branch v1.8 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
-
-
-## Documentation
-
-Complete documentation is available in [GitHub pages](https://htgenomeanalysisunit.github.io/nf-pipeline-regenie/)
 
 ## Credits
 
