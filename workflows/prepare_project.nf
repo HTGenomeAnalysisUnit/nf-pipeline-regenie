@@ -88,7 +88,7 @@ workflow PREPARE_PROJECT {
 
     //==== VALIDATE COVARIATE INPUT ====
     covariate_data.branch {
-        with_covars: it[3] != 'NO_COV_FILE'
+        with_covars: it[1].name != 'NO_COV_FILE'
         no_covars: true
     }.set { validate_covars_inputs }
 
