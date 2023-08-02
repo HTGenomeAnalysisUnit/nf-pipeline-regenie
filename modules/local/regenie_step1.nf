@@ -9,8 +9,9 @@ workflow REGENIE_STEP1_SPLIT {
     RUNL0(step1_chunks_ch)
 
     l1_input_ch = RUNL0.out.groupTuple(size: params.step1_n_chunks)
-      .join(SPLITL0.out)
-
+      .map { tuple(it[0], it[1].flatten()) } //We need to flatten the list of files in case there are multiple phenos in a singe project
+      .join(SPLITL0.out)   
+        
     RUNL1(l1_input_ch)
 
   emit:
@@ -60,7 +61,7 @@ process RUNL0 {
     tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
     
   output:
-    tuple val(project_id), file("${master_prefix}_job${job_n}_l0_*")
+    tuple val(project_id), path("${master_prefix}_job${job_n}_l0_*")
 
   script:
   master_prefix = master_file.simpleName
@@ -105,7 +106,7 @@ process RUNL1 {
   }
 
   input:
-    tuple val(project_id), file(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
 
   output:
     tuple val(project_id), path("regenie_step1_out_*"), emit: regenie_step1_out
