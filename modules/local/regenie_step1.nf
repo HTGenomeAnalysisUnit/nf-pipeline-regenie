@@ -27,6 +27,7 @@ process SPLITL0 {
 
   script:
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
+  def make_no_cov_file = covariates_file.name == 'NO_COV_FILE' ? "unlink NO_COV_FILE; touch NO_COV_FILE" : ''
   def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
@@ -47,6 +48,8 @@ process SPLITL0 {
     --bsize ${params.regenie_bsize_step1} \
     --split-l0 regenie_step1,${params.step1_n_chunks} \
     --out regenie_step1_splitl0
+  
+  ${make_no_cov_file}
   """
 }
 
@@ -57,7 +60,7 @@ process RUNL0 {
     tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
     
   output:
-    tuple val(project_id), path("${master_prefix}_job${job_n}_l0_*")
+    tuple val(project_id), file("${master_prefix}_job${job_n}_l0_*")
 
   script:
   master_prefix = master_file.simpleName
@@ -102,7 +105,7 @@ process RUNL1 {
   }
 
   input:
-    tuple val(project_id), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), file(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
 
   output:
     tuple val(project_id), path("regenie_step1_out_*"), emit: regenie_step1_out
