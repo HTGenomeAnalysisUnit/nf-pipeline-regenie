@@ -4,7 +4,7 @@ process MAKE_SNPLIST {
     label 'split_data'
     
     if (params.publish) {
-        publishDir "${params.outdir}", mode: 'copy', pattern: {"${filename}.snplist"}
+        publishDir "${params.outdir}", mode: 'copy', pattern: '*.snplist'
     }
 
     input:

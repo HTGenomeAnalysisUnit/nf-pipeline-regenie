@@ -67,5 +67,5 @@ workflow REGENIE_STEP2_WF {
     
     emit:
         regenie_results = step2_results_by_pheno //[val(project_id), val(pheno), path("${pheno}.${suffix}.regenie.gz")]
-        regenie_log = step2_log
+        regenie_log = step2_log //[val(project_id), val(step2_log)]
 }

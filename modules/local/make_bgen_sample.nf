@@ -1,7 +1,7 @@
 process MAKE_BGEN_SAMPLE {
   label 'small_task'
   if (params.publish) {
-    publishDir "${params.outdir}", mode: 'copy', pattern: {"${bgen_file.baseName}.sample"}
+    publishDir "${params.outdir}", mode: 'copy', pattern: '*.sample'
   }
 
   input:

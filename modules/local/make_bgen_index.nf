@@ -1,7 +1,7 @@
 process MAKE_BGEN_INDEX {
   label 'small_task'
   if (params.publish) {
-    publishDir "${params.outdir}", mode: 'copy', pattern: {"${bgen_file}.bgi"}
+    publishDir "${params.outdir}", mode: 'copy', pattern: '*.bgen.bgi'
   }
 
   input:
