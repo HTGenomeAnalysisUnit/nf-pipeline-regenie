@@ -1,0 +1,782 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/nf-highspeed-gwas/master/nextflow_schema.json",
+  "title": "nf-highspeed-gwas pipeline parameters",
+  "description": "Regenie GWAS at high speed",
+  "type": "object",
+  "definitions": {
+    "general_project_settings": {
+      "title": "General project settings",
+      "type": "object",
+      "description": "General settings for the analysis",
+      "default": "",
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "Project ID - Max 50 chars. No spaces allowed. Use only alphanumeric, underscores or dashes",
+          "help_text": "A unique string to identify your analysis project. This will be shown in the NF tower workflow name. A subfolder named according to your project will be used to save analysis results.",
+          "pattern": "^\\w{1,50}$"
+        },
+        "project_date": {
+          "type": "string",
+          "default": "`date`",
+          "hidden": true,
+          "description": "Set a specific date for the analysis. Used in report."
+        },
+        "chromosomes": {
+          "type": "string",
+          "default": "1-22",
+          "description": "Chromosome(s) to analyze",
+          "help_text": "Chromosomes to be included in the analysis. Accepts a comma-separated list and intervals. For example, any of the following is acceptable: `1,2,3`, `1-20`, `1,2,10-20`"
+        }
+      },
+      "required": ["project", "chromosomes"]
+    },
+    "input_output_options": {
+      "title": "Input/output options",
+      "type": "object",
+      "fa_icon": "fas fa-terminal",
+      "description": "Define where the pipeline should find input data and save output data.",
+      "required": ["outdir"],
+      "properties": {
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "master_log_dir": {
+          "type": "string",
+          "description": "An alternative path to save log files instead of using outdir",
+          "hidden": true,
+          "format": "directory-path"
+        }
+      }
+    },
+    "variants_datasets_input": {
+      "title": "Variants datasets input",
+      "type": "object",
+      "description": "Genetic input datasets used for GWAS or rare variant test",
+      "default": "",
+      "properties": {
+        "genotypes_build": {
+          "type": "string",
+          "description": "Genome build for the input data",
+          "default": "hg38",
+          "enum": ["hg38", "hg19"]
+        },
+        "genotypes_array": {
+          "type": "string",
+          "description": "Prefix of a BED/BIM/FAM dataset of independent SNPs",
+          "help_text": "This is a set of independent SNPs used for step1 in REGENIE analysis. This is usually obtained from genotyped data after standard QC and pruning. The maximum allowed size is 1M SNPs, and it is suggested to use a dataset with about 500k SNPs. \n\n`genotypes_array` expects the prefix of the BED/BIM/FAM dataset. So if your dataset is made of `my/path/step1.bed`, `my/path/step1.bim`, `my/path/step1.fam`, you must use 'my/path/step1' for the genotypes_array parameter."
+        },
+        "genotypes_imputed": {
+          "type": "string",
+          "description": "Input dataset for GWAS in either bgen, pgen, bed or vcf.gz format",
+          "help_text": "Provide the dataset to perform association analysis (step2 of REGENIE). This is usually a dataset of imputed variants.\nThe following pattern is expected:\n\n- bgen or vcf input: path to the input file (my_dataset.bgen / my_dataset.vcf.gz)\n- pgen or bed input: path to the input dataset prefix, without extension (my_dataset)"
+        },
+        "genotypes_imputed_format": {
+          "type": "string",
+          "description": "Format of the imputed input dataset",
+          "enum": ["bgen", "pgen", "bed", "vcf"]
+        },
+        "imputed_sample_file": {
+          "type": "string",
+          "default": "NO_SAMPLE_FILE",
+          "hidden": true,
+          "description": "When imputed data is in BGEN format, a sample file to override samples definition",
+          "format": "file-path",
+          "help_text": "Provide a specific sample file that will be used with the input imputed dataset when the format is bgen.\nBy default, when the input format is bgen, the pipeline will try to load the sample file associated to your dataset following the standard naming convention. Thus it expects my_dataset.bgen / my_dataset.sample. When a sample file is not found, it will generate one from the bgen file. The provided sample file will be used instead when this option is set."
+        },
+        "genotypes_rarevar": {
+          "type": "string",
+          "help_text": "Provide the dataset to perform rare variants analysis (step2 of REGENIE). This is usually a dataset from WGS or WES. \nThe following pattern is expected:\n\n- bgen or vcf input: path to the input file (my_dataset.bgen / my_dataset.vcf.gz)\n- pgen or bed input: path to the input dataset prefix, without extension (my_dataset)",
+          "description": "Input dataset for rare variants test in either bgen, pgen, bed or vcf.gz format"
+        },
+        "genotypes_rarevar_format": {
+          "type": "string",
+          "description": "Format of the rare variants input dataset"
+        },
+        "rarevar_sample_file": {
+          "type": "string",
+          "default": "NO_SAMPLE_FILE",
+          "hidden": true,
+          "description": "When rare variants data is in BGEN format, a sample file to override samples definition",
+          "format": "file-path",
+          "help_text": "Provide a specific sample file that will be used with the input rare variants dataset when the format is bgen.\nBy default, when the input format is bgen, the pipeline will try to load the sample file associated to your dataset following the standard naming convention. Thus it expects my_dataset.bgen / my_dataset.sample. When a sample file is not found, it will generate one from the bgen file. The provided sample file will be used instead when this option is set."
+        },
+        "ld_panel": {
+          "type": "string",
+          "default": "NO_LD_FILE",
+          "description": "An optional reduced version of the imputed dataset used to compute LD",
+          "help_text": "A pattern pointing to a reduced version of the imputed dataset in BED/BIM/FAM format that can be used to compute LD to speed up variants clumping. This represents a subset of the original imputed dataset containing only a few thousand unrelated individuals split by chromosome. Note that the LD panel must contain the same variants as the imputed input dataset. \n\nThe expected pattern is: `/ld_panel/chr{CHROM}_ld_panel` and the `{CHROM}` tag will be automatically replaced with chromosome numbers during the analysis.\n\nYou can generate this using plink like:\n```\nchrom=1 #Chromosome id\nsamples=\"samples.tsv\" #File with a subset of unrelated individuals\n\nplink2 \\\n--bgen input.bgen ref-first \\\n--sample input.sample \\\n--keep ${samples} \\\n--chr ${chrom} \\\n--make-bed \\\n--out chr${chrom}_ld_panel\n```\n\nProviding an LD panel is suggested when the imputed dataset is very large ( > 100k individuals).",
+          "hidden": true
+        },
+        "regenie_premade_predictions": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "genotypes_build",
+        "genotypes_array",
+        "genotypes_imputed",
+        "genotypes_imputed_format",
+        "genotypes_rarevar",
+        "genotypes_rarevar_format"
+      ]
+    },
+    "phenotypes_and_covariates": {
+      "title": "Phenotypes and covariates",
+      "type": "object",
+      "description": "Input for phenotypes and covariates",
+      "default": "",
+      "properties": {
+        "phenotypes_filename": {
+          "type": "string",
+          "description": "Path to a tab-separated file containing phenotypes",
+          "help_text": "This is a tab-separated file containing phenotype values to be tested, with a header. When using multi-models mode, this files must contain both phenotype and covariate values."
+        },
+        "phenotypes_columns": {
+          "type": "string",
+          "description": "Comma-separate list of column names for phenotypes"
+        },
+        "phenotypes_binary_trait": {
+          "type": "boolean",
+          "description": "Set to True when processing binary phenotype(s)"
+        },
+        "covariates_filename": {
+          "type": "string",
+          "default": "NO_COV_FILE",
+          "description": "Path to a tab-separated file containing covariates"
+        },
+        "covariates_columns": {
+          "type": "string",
+          "description": "Comma-separate list of column names of quantitative or binary covariates"
+        },
+        "covariates_cat_columns": {
+          "type": "string",
+          "description": "Comma-separate list of column names of categorical covariates"
+        },
+        "maxCatLevels": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum number of levels allowed for categorical covariates"
+        }
+      },
+      "required": [
+        "phenotypes_filename",
+        "phenotypes_columns",
+        "phenotypes_binary_trait",
+        "maxCatLevels"
+      ]
+    },
+    "rare_variants_configuration_and_inputs": {
+      "title": "Rare variants configuration and inputs",
+      "type": "object",
+      "description": "Additional input files and configurations needed for rare variants analysis",
+      "default": "",
+      "properties": {
+        "rarevar_set_list_file": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Set list file as described in REGENIE docs",
+          "help_text": "Essentially a tab- or space-separated file with four columns: the set/gene name, the chromosome and physical position for the set/gene, and a comma-separated list of variants included in the set/gene. This file is used to define the variant sets to be tested. The chromosome names must be numbers 1-22 for autosomes."
+        },
+        "rarevar_anno_file": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Annotation file as described in REGENIE docs",
+          "help_text": " A tab- or space-separated file with three columns: variant name, the set/gene name, and a single annotation category (for example, missense, LoF, ...). Variants not in this file will be assigned to a default \"NULL\" category. A maximum of 63 annotation categories (+NULL category) is allowed."
+        },
+        "rarevar_mask_file": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Mask file as described in REGENIE docs",
+          "help_text": "A tab- or space-separated file with 2 columns: a mask name followed by a comma-separated list of variant categories included in the mask."
+        },
+        "step2_rarevar_split": {
+          "type": "boolean",
+          "default": true,
+          "description": "Perform analysis in chunks"
+        },
+        "step2_rarevar_chunk_size": {
+          "type": "integer",
+          "default": 200,
+          "description": "Number of genes to test in each chunk",
+          "hidden": true
+        },
+        "regenie_rarevar_min_mac": {
+          "type": "integer",
+          "default": 1,
+          "description": "Min MAC value for variants to be tested in rare variants analysis",
+          "hidden": true
+        },
+        "rarevars_aaf_bins": {
+          "type": "string",
+          "default": "0.01,0.05",
+          "description": "Comma-separated values defining AF bins for gene burden test"
+        },
+        "rarevars_vc_test": {
+          "type": "string",
+          "default": "skat,skato,acatv,acato",
+          "description": "Comma-separated list of VC tests to be performed",
+          "help_text": "Comma-separated list of rare variants tests to perform among those accepted by REGENIE: skat, skato, skato-acat, acatv, acato, acato-full"
+        },
+        "rarevars_vc_maxAAF": {
+          "type": "number",
+          "default": 0.05,
+          "description": "Max AF for variants to be included in VC tests"
+        },
+        "regenie_build_mask": {
+          "type": "string",
+          "default": "max",
+          "description": "How to build mask for rare variant test.",
+          "enum": ["max", "sum", "comphet"]
+        },
+        "rarevars_write_mask_snplist": {
+          "type": "boolean",
+          "description": "Save the list of SNP tested in the different masks",
+          "hidden": true
+        }
+      },
+      "required": [
+        "step2_rarevar_split",
+        "step2_rarevar_chunk_size",
+        "regenie_rarevar_min_mac",
+        "rarevars_aaf_bins",
+        "rarevars_vc_test",
+        "rarevars_vc_maxAAF",
+        "regenie_build_mask",
+        "rarevars_write_mask_snplist"
+      ]
+    },
+    "multi_models_mode_input": {
+      "title": "Multi-models mode input",
+      "type": "object",
+      "description": "Activate multi-models execution",
+      "default": "",
+      "properties": {
+        "models_table": {
+          "type": "string",
+          "description": "A tab-separate file describing models to test",
+          "format": "file-path",
+          "help_text": "When this is null, single project execution is performed."
+        },
+        "pheno_chunk_size": {
+          "type": "integer",
+          "default": 50,
+          "description": "Max number of phenotypes to test in a single execution"
+        },
+        "missing_tolerance": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Max allowed fraction of missing values for phenos tested a single execution"
+        }
+      },
+      "required": ["models_table", "pheno_chunk_size", "missing_tolerance"]
+    },
+    "step1_input_pre_processing": {
+      "title": "step1 input pre-processing",
+      "type": "object",
+      "description": "Configure pre-processing of variants used for step1",
+      "default": "",
+      "properties": {
+        "prune_enabled": {
+          "type": "boolean",
+          "description": "Perform pruning on step1 input variants"
+        },
+        "prune_maf": {
+          "type": "number",
+          "default": 0.01,
+          "hidden": true,
+          "description": "Min MAF when pruning variants"
+        },
+        "prune_window_kbsize": {
+          "type": "integer",
+          "default": 1000,
+          "hidden": true,
+          "description": "Pruning window size in kb"
+        },
+        "prune_step_size": {
+          "type": "integer",
+          "default": 100,
+          "hidden": true,
+          "description": "Pruning step size"
+        },
+        "prune_r2_threshold": {
+          "type": "number",
+          "default": 0.8,
+          "hidden": true,
+          "description": "Pruning r2 threshold"
+        },
+        "qc_maf": {
+          "type": "number",
+          "default": 0.01,
+          "description": "Min MAF for step1 variants"
+        },
+        "qc_mac": {
+          "type": "integer",
+          "default": 100,
+          "description": "Min MAC for step1 variants"
+        },
+        "qc_geno": {
+          "type": "number",
+          "default": 0.05,
+          "description": "Max fraction of missing genotypes per variant"
+        },
+        "qc_hwe": {
+          "type": "number",
+          "default": 1e-15,
+          "description": "P value threshold for HWE test",
+          "hidden": true
+        },
+        "qc_mind": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Max fraction of missing genotypes per sample",
+          "hidden": true
+        }
+      },
+      "required": ["qc_maf", "qc_mac", "qc_geno", "qc_hwe", "qc_mind"]
+    },
+    "regenie_step1_settings": {
+      "title": "REGENIE step1 settings",
+      "type": "object",
+      "description": "Configure REGENIE step1 process",
+      "default": "",
+      "properties": {
+        "regenie_bsize_step1": {
+          "type": "integer",
+          "default": 1000,
+          "hidden": true,
+          "description": "bsize for step1 analysis"
+        },
+        "save_step1_predictions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save the predictions from step1"
+        },
+        "regenie_force_step1": {
+          "type": "boolean",
+          "description": "Force step1 analysis even for large datasets (>1M vars)",
+          "hidden": true
+        },
+        "regenie_ref_first_step1": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Configure how to consider ref allele"
+        },
+        "step1_use_loocv": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Perform LOOCV test"
+        },
+        "step1_niter": {
+          "type": "integer",
+          "default": 30,
+          "hidden": true,
+          "description": "Number of iterations in ridge regression"
+        },
+        "step1_n_chunks": {
+          "type": "integer",
+          "default": 100,
+          "hidden": true,
+          "description": "Number of chunks to split step1 execution"
+        }
+      },
+      "required": [
+        "regenie_bsize_step1",
+        "save_step1_predictions",
+        "step1_niter",
+        "step1_n_chunks"
+      ]
+    },
+    "regenie_step2_settings": {
+      "title": "REGENIE step2 settings",
+      "type": "object",
+      "description": "Configure REGENIE step2 process",
+      "default": "",
+      "properties": {
+        "phenotypes_delete_missings": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Completely remove any sample when there is a missing pheno value"
+        },
+        "regenie_bsize_step2": {
+          "type": "integer",
+          "default": 400,
+          "description": "bsize for step2 analysis",
+          "hidden": true
+        },
+        "regenie_ref_first_step2": {
+          "type": "boolean",
+          "default": true,
+          "description": "How to read ref allele from BGEN input"
+        },
+        "regenie_skip_predictions": {
+          "type": "boolean",
+          "description": "Do not use step1 predictions, perform a standard regression",
+          "hidden": true
+        },
+        "regenie_range": {
+          "type": "string",
+          "hidden": true,
+          "description": "Limit the analysis to a specific genomic range"
+        },
+        "step2_gwas_split": {
+          "type": "boolean",
+          "default": true,
+          "description": "Parallelize step2 analysis by chunk"
+        },
+        "step2_gwas_chunk_size": {
+          "type": "integer",
+          "default": 100000,
+          "description": "N variants to test in each chunk"
+        },
+        "regenie_gwas_test": {
+          "type": "string",
+          "default": "additive",
+          "description": "Type of test to perform for association",
+          "enum": ["additive", "dominant", "recessive"]
+        },
+        "regenie_min_imputation_score": {
+          "type": "integer",
+          "default": 0,
+          "description": "Min INFO score for a variant to be included in results",
+          "hidden": true
+        },
+        "regenie_gwas_min_mac": {
+          "type": "integer",
+          "default": 50,
+          "description": "Min MAC for a variant to be analyzed"
+        },
+        "regenie_firth": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Use Firth correction"
+        },
+        "regenie_firth_approx": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Use Firth approximation"
+        }
+      },
+      "required": [
+        "phenotypes_delete_missings",
+        "regenie_bsize_step2",
+        "regenie_ref_first_step2",
+        "regenie_skip_predictions",
+        "step2_gwas_split",
+        "step2_gwas_chunk_size",
+        "regenie_gwas_test",
+        "regenie_min_imputation_score",
+        "regenie_gwas_min_mac"
+      ]
+    },
+    "vcf_input_conversion_settings": {
+      "title": "VCF input conversion settings",
+      "type": "object",
+      "description": "Configure how VCF input is converted",
+      "default": "",
+      "properties": {
+        "vcf_min_gq": {
+          "type": "integer",
+          "default": 10,
+          "description": "Min GQ value for a genotype to be converted"
+        },
+        "gwas_read_dosage_from": {
+          "type": "string",
+          "description": "Set this to import dosages from one of the FORMAT fields.",
+          "help_text": "When converting VCF to PGEN for imputed data, it is possible to import the dosage for each sample from one of the relevant FORMAT fields. Options are DS / HDS, usually for VCF from imputation, or GP, usually for VCF from sequencing.",
+          "enum": ["DS", "HDS", "GP"]
+        },
+        "rarevar_read_dosage_from": {
+          "type": "string",
+          "enum": ["DS", "HDS", "GP"],
+          "description": "Set this to import dosages from one of the FORMAT fields.",
+          "help_text": "When converting VCF to PGEN for rare variants data, it is possible to import the dosage for each sample from one of the relevant FORMAT fields. Options are DS / HDS, usually for VCF from imputation, or GP, usually for VCF from sequencing."
+        },
+        "import_dosage_certainty": {
+          "type": "string",
+          "help_text": "When using the GP field to import dosages, the certainty threshold to import dosages. If none of the probabilities is above this, the genotype is set to missing. You can leave this to null to import any dosage.",
+          "description": "Certainty threshold to import dosages",
+          "hidden": true
+        },
+        "vcf_fixed_fid": {
+          "type": "string",
+          "help_text": "When null VCF input is converted to PGEN format using `--double-id`. This means that FID and IID will be set equal to the sample ID from the VCF file. When this option is set, FID for all samples is fixed to this value.",
+          "description": "Use this value as a fixed FID for all samples",
+          "hidden": true
+        }
+      },
+      "required": ["vcf_min_gq"]
+    },
+    "variants_clumping": {
+      "title": "Variants clumping",
+      "type": "object",
+      "description": "Configure variants clumping to find independent loci",
+      "default": "",
+      "properties": {
+        "clumping": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activate variant clumping to find significant loci from summary stats"
+        },
+        "clump_p1": {
+          "type": "number",
+          "default": 5e-8,
+          "hidden": true,
+          "description": "Max p value of the index variant for a locus"
+        },
+        "clump_p2": {
+          "type": "number",
+          "default": 0.0001,
+          "hidden": true,
+          "description": "Max p value of variants to be merged in a locus"
+        },
+        "clump_kb": {
+          "type": "integer",
+          "default": 250,
+          "hidden": true,
+          "description": "Variants within this range from index var are clumped"
+        }
+      },
+      "required": ["clumping", "clump_p1", "clump_p2", "clump_kb"]
+    },
+    "annotation_settings": {
+      "title": "Annotation settings",
+      "type": "object",
+      "description": "Configure results annotations for variants and genes",
+      "default": "",
+      "properties": {
+        "genes_bed": {
+          "type": "string",
+          "description": "Optional BED file of genes coordinates for variants annotation",
+          "help_text": "This is a standard BED file with gene name in the 4th column",
+          "hidden": true
+        },
+        "genes_ranges": {
+          "type": "string",
+          "description": "Optional ranges file of genes coordinates for loci annotation",
+          "help_text": "This is a ranges file as described by PLINK documentation",
+          "hidden": true
+        },
+        "genes_group": {
+          "type": "string",
+          "default": "protein_coding",
+          "description": "Genes group used for annotation.",
+          "help_text": "When using pre-made annotation files, it is possible to annotate results considering all genes or only the protein-coding ones",
+          "enum": ["all", "protein_coding"],
+          "hidden": true
+        },
+        "annotation_min_log10p": {
+          "type": "number",
+          "default": 7.3,
+          "description": "Min LOG10P value for variants to be selected as top hits and annotated",
+          "help_text": "The default value 7.3 corresponds to the traditional genome-wide significance threshold of 5e-8"
+        },
+        "annotation_interval_kb": {
+          "type": "integer",
+          "default": 25,
+          "description": "Interval size in kb to annotated nearby genes for variants and loci",
+          "hidden": true
+        },
+        "rarevar_min_log10p": {
+          "type": "integer",
+          "default": 5,
+          "description": "Min LOG10P value for gene test to be selected as top hits"
+        },
+        "rarevar_stat_test": {
+          "type": "string",
+          "default": "BONF_bygroup",
+          "help_text": "Select the corrected significance value to be used when selecting top hits in the reports. Possible values: \"FDR_bygroup\", \"FDR_alltests\", \"BONF_bygroup\", \"BONF_alltests\"",
+          "enum": [
+            "FDR_bygroup",
+            "FDR_alltests",
+            "BONF_bygroup",
+            "BONF_alltests"
+          ],
+          "description": "Corrected significance metric to use for report annotation",
+          "hidden": true
+        },
+        "rarevar_stat_test_threshold": {
+          "type": "number",
+          "default": 1.3,
+          "help_text": "Results with -log10(stat_value) above this will be annotated in a dedicated manhattan plot in the report. The default value of 1.3 corresponds to 0.05.",
+          "description": "Min LOG10P of the selected stat value for a result to be annotated in the reports",
+          "hidden": true
+        }
+      },
+      "required": [
+        "genes_group",
+        "annotation_min_log10p",
+        "annotation_interval_kb",
+        "rarevar_min_log10p",
+        "rarevar_stat_test",
+        "rarevar_stat_test_threshold"
+      ]
+    },
+    "report_settings": {
+      "title": "Report settings",
+      "type": "object",
+      "description": "Configure report plots",
+      "default": "",
+      "properties": {
+        "make_report": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate an HTML report for results"
+        },
+        "manhattan_annotations": {
+          "type": "string",
+          "default": "genes",
+          "hidden": true,
+          "help_text": "This configures how peaks in the Manhattan plot of the GWAS report are annotated.",
+          "enum": ["genes", "snpid"],
+          "description": "How peaks in Manhattan plot are annotated"
+        },
+        "regional_plot_window_kb": {
+          "type": "integer",
+          "default": 300,
+          "hidden": true,
+          "description": "A window in kb around the index SNP when making regional plots"
+        },
+        "n_top_loci_plot": {
+          "type": "integer",
+          "default": 5,
+          "hidden": true,
+          "description": "Number of top loci to plot as regional plots"
+        }
+      },
+      "required": ["make_report"]
+    },
+    "intermediate_files_outputs": {
+      "title": "Intermediate files outputs",
+      "type": "object",
+      "description": "Configure behaviour to intermediate files",
+      "default": "",
+      "properties": {
+        "save_chunks_file": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save file describing chunks generate during step2 parallelization"
+        },
+        "save_step2_logs": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save logs of REGENIE step2"
+        },
+        "save_snplist": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save snplist generated from BGEN input"
+        },
+        "save_bgen_index": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save BGI index generated from BGEN input"
+        },
+        "save_bgen_sample": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save SAMPLE file generated from BGEN input"
+        },
+        "save_pgen": {
+          "type": "boolean",
+          "default": true,
+          "hidden": true,
+          "description": "Save converted PGEN generated from VCF input"
+        }
+      }
+    },
+    "max_job_request_options": {
+      "title": "Max job request options",
+      "type": "object",
+      "fa_icon": "fab fa-acquisitions-incorporated",
+      "description": "Set the top limit for requested resources for any single job.",
+      "help_text": "If you are running on a smaller system, a pipeline step requesting more resources than are available may cause the Nextflow to stop the run with an error. These options allow you to cap the maximum resources requested by any single job so that the pipeline will run on your system.\n\nNote that you can not _increase_ the resources requested by any job using these options. For that you will need your own configuration file. See [the nf-core website](https://nf-co.re/usage/configuration) for details.",
+      "properties": {
+        "max_cpus": {
+          "type": "integer",
+          "description": "Maximum number of CPUs that can be requested for any single job.",
+          "default": 16,
+          "fa_icon": "fas fa-microchip",
+          "hidden": true,
+          "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
+        },
+        "max_memory": {
+          "type": "string",
+          "description": "Maximum amount of memory that can be requested for any single job.",
+          "default": "128.GB",
+          "fa_icon": "fas fa-memory",
+          "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+          "hidden": true,
+          "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+        },
+        "max_time": {
+          "type": "string",
+          "description": "Maximum amount of time that can be requested for any single job.",
+          "default": "240.h",
+          "fa_icon": "far fa-clock",
+          "pattern": "^(\\d+\\.?\\s*(s|m|h|day)\\s*)+$",
+          "hidden": true,
+          "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/general_project_settings"
+    },
+    {
+      "$ref": "#/definitions/input_output_options"
+    },
+    {
+      "$ref": "#/definitions/variants_datasets_input"
+    },
+    {
+      "$ref": "#/definitions/phenotypes_and_covariates"
+    },
+    {
+      "$ref": "#/definitions/rare_variants_configuration_and_inputs"
+    },
+    {
+      "$ref": "#/definitions/multi_models_mode_input"
+    },
+    {
+      "$ref": "#/definitions/step1_input_pre_processing"
+    },
+    {
+      "$ref": "#/definitions/regenie_step1_settings"
+    },
+    {
+      "$ref": "#/definitions/regenie_step2_settings"
+    },
+    {
+      "$ref": "#/definitions/vcf_input_conversion_settings"
+    },
+    {
+      "$ref": "#/definitions/variants_clumping"
+    },
+    {
+      "$ref": "#/definitions/annotation_settings"
+    },
+    {
+      "$ref": "#/definitions/report_settings"
+    },
+    {
+      "$ref": "#/definitions/intermediate_files_outputs"
+    },
+    {
+      "$ref": "#/definitions/max_job_request_options"
+    }
+  ]
+}
