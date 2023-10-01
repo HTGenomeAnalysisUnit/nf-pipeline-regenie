@@ -114,6 +114,20 @@
         },
         "regenie_premade_predictions": {
           "type": "string"
+        },
+        "snplist_file": {
+          "type": "string",
+          "default": null,
+          "description": "A snplist file provided in a custom location",
+          "help_text": "Path to a snplist file generated according to pipeline specifications. This can be used when snplist is saved in a custom location",
+          "hidden": true
+        },
+        "snplist_folder": {
+          "type": "string",
+          "default": null,
+          "description": "A folder containing snplist files to be used with per-chromosome input bgen files",
+          "help_text": "A path containing one snplist file for each bgen input file. Given input file input_chr1.bgen, the expected snplist file name is input_chr1.snplist.",
+          "hidden": true
         }
       },
       "required": [
