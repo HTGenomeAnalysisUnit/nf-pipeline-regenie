@@ -1,34 +1,19 @@
-regenie: v3.2.7
-plink: 20220402 
-plink2: 20220814
-htslib: v1.16
-bedtools: v2.30 
-R: 4.1.0
-R_packages: 
-  CRAN:
-    date: 20220401
-    pkgs:
-      - groundhog 
-      - optparse
-      - stringi
-      - RCurl
-      - rmdformats
-      - knitr
-      - rmarkdown
-      - DT
-      - data.table
-      - R.utils
-      - ggplot2
-      - skimr
-      - dplyr
-      - remotes
-  github:
-    pkgs:
-      - exaexa/scattermore@v0.8
-      - roman-tremmel/ggfastman@v.1.2
-  bioconductor:
-    version: 3.14
-    pkgs:
-      - biovizBase
-      - ggbio
-      - Homo.sapiens
+gwas-pipeline:
+  - regenie: v3.2.7
+  - plink: 20220402 
+  - plink2: 20220814
+  - htslib: v1.16
+  - bedtools: v2.30 
+  - bgenix: v1.1.7
+  - qctool: v2.2.0
+
+reports:
+  - quarto: v1.3.433
+  - htslib: v1.15
+  - python: v3.8.12
+  - pip:
+    - gwaslab: v3.4.19
+    - pandas: v1.4.4
+    - matplotlib: v3.5.0
+    - skimpy: v0.0.9
+    - papermill: v2.4.0

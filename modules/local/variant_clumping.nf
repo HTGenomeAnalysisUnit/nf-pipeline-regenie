@@ -8,10 +8,10 @@ process CONVERT_TO_BED {
         tuple val(chrom), file("${filename}.bed"), file("${filename}.bim"), file("${filename}.fam")
 
     script:
-    def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $sample_psam" : ''
     def format = params.genotypes_imputed_format == 'bgen' ? 'bgen' : 'pfile'
     def fileprefix = bgen_pgen.baseName
-    def extension = params.genotypes_imputed_format == '.bgen' ? '.bgen ref-first' : ''
+    def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen ref-first' : ''
     """
     plink2 \
     --${format} ${fileprefix}${extension} \

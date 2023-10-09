@@ -18,7 +18,7 @@ nextflow.enable.dsl = 2
 
 //Check general required parameters
 requiredParams = [
-  'project', 'genotypes_array', 'genotypes_build',
+  'project', 'genotypes_build',
   'chromosomes',
   'prune_enabled',
   'prune_maf',
@@ -38,9 +38,15 @@ requiredParams = [
 ]
 
 for (param in requiredParams) {
-    if (params[param] == null || params[param] == '') {
-      exit 1, "Parameter ${param} is required."
-    }
+  if (params[param] == null || params[param] == '') {
+    exit 1, "Parameter ${param} is required."
+  }
+}
+
+if (!(params.regenie_skip_predictions || params.regenie_premade_predictions)) {
+  if (params.genotypes_array == null || params.genotypes_array == '') {
+    exit 1, "Parameter genotypes_array is required when regenie_skip_predictions or regenie_premade_predictions are not set"
+  }
 }
 
 if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {

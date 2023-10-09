@@ -18,7 +18,7 @@ if (params.genotypes_imputed) {
       }
   }
 
-  //Check imputed file format is allwed
+  //Check imputed file format is allowed
   if (!(params.genotypes_imputed_format in allowed_input_formats)){
     log.error "File format ${params.genotypes_imputed_format} not supported. Allowed formats are $allowed_input_formats."
     exit 1
@@ -105,6 +105,7 @@ workflow RUN_VARIANT_ANALYSIS {
     genotyped_plink_ch,
     project_data
   )
+  //REGENIE_STEP1_WF.out.regenie_step1_out.view()
   
   //==== STEP2 AND REPORTS - GWAS ====
   if (params.genotypes_imputed) {

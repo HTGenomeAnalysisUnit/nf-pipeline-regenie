@@ -9,28 +9,11 @@ workflow REGENIE_STEP1_WF {
         project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
   
     main:
-    //==== PREPARE GENOTYPE DATA FOR STEP1 ====
-    qc_input_ch = genotyped_plink_ch
-        .join(project_data.map { tuple(it[0], it[1]) })
-        
-    QC_FILTER_GENOTYPED ( qc_input_ch )
-
-    if(params.prune_enabled) {
-        PRUNE_GENOTYPED (
-            QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
-        )
-
-        genotyped_final_ch = PRUNE_GENOTYPED.out.genotypes_pruned_ch
-    } else {
-        //no pruning applied, set QCed directly to genotyped_final_ch
-        genotyped_final_ch = QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
-    }
-
     //==== REGENIE STEP 1 ====
     if (params.regenie_skip_predictions) {
         //skip step 1 predictions completely
-        regenie_step1_out_ch = project_data.map{ it + path("NO_PREDICTIONS") }
-        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], path("NO_LOG")) }
+        regenie_step1_out_ch = project_data.map{ tuple(it[0], file("NO_PREDICTIONS")) }
+        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], file("NO_LOG")) }
     } else if (params.regenie_premade_predictions) {
         /* 
         You can load pre-made regenie level 1 preds. 
@@ -40,10 +23,27 @@ workflow REGENIE_STEP1_WF {
         These can be used in STEP 2 only if phenotypes and covariates are exactly the same 
         used to generate step1 predictions (both files and column designation must match exactly)
         */
-        regenie_step1_out_ch =  project_data.map{ it + path(params.regenie_premade_predictions, checkIfExists: true) }
-        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], path("NO_LOG")) }
+        regenie_step1_out_ch =  project_data.map{ tuple(it[0], file(params.regenie_premade_predictions, checkIfExists: true)) }
+        regenie_step1_parsed_logs_ch = project_data.map{ tuple(it[0], file("NO_LOG")) }
     } else {
+        //==== PREPARE GENOTYPE DATA FOR STEP1 ====
+        qc_input_ch = genotyped_plink_ch
+            .join(project_data.map { tuple(it[0], it[1]) })
+            
+        QC_FILTER_GENOTYPED ( qc_input_ch )
 
+        if(params.prune_enabled) {
+            PRUNE_GENOTYPED (
+                QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
+            )
+
+            genotyped_final_ch = PRUNE_GENOTYPED.out.genotypes_pruned_ch
+        } else {
+            //no pruning applied, set QCed directly to genotyped_final_ch
+            genotyped_final_ch = QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
+        }
+
+        //PERFORM REGENIE STEP1 
         step1_input_ch = project_data.join(genotyped_final_ch)
 
         REGENIE_STEP1 (step1_input_ch)

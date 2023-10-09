@@ -1,0 +1,60 @@
+Oct-06 16:52:12.452 [main] ERROR nextflow.cli.Launcher - @unknown
+java.awt.AWTError: Can't connect to X11 window server using 'localhost:15.0' as the value of the DISPLAY variable.
+	at java.desktop/sun.awt.X11GraphicsEnvironment.initDisplay(Native Method)
+	at java.desktop/sun.awt.X11GraphicsEnvironment$1.run(X11GraphicsEnvironment.java:99)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:312)
+	at java.desktop/sun.awt.X11GraphicsEnvironment.<clinit>(X11GraphicsEnvironment.java:58)
+	at java.desktop/sun.awt.PlatformGraphicsInfo.createGE(PlatformGraphicsInfo.java:36)
+	at java.desktop/java.awt.GraphicsEnvironment$LocalGE.createGE(GraphicsEnvironment.java:93)
+	at java.desktop/java.awt.GraphicsEnvironment$LocalGE.<clinit>(GraphicsEnvironment.java:84)
+	at java.desktop/java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment(GraphicsEnvironment.java:106)
+	at java.desktop/sun.awt.X11.XToolkit.<clinit>(XToolkit.java:223)
+	at java.desktop/sun.awt.PlatformGraphicsInfo.createToolkit(PlatformGraphicsInfo.java:40)
+	at java.desktop/java.awt.Toolkit.getDefaultToolkit(Toolkit.java:597)
+	at java.desktop/javax.swing.UIManager.getSystemLookAndFeelClassName(UIManager.java:665)
+	at javax.swing.UIManager$getSystemLookAndFeelClassName.call(Unknown Source)
+	at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:130)
+	at nextflow.ui.console.ConsoleRunner.run(ConsoleRunner.groovy:40)
+	at nextflow.cli.CmdConsole.run(CmdConsole.groovy:51)
+	at nextflow.cli.Launcher.run(Launcher.groovy:487)
+	at nextflow.cli.Launcher.main(Launcher.groovy:646)
+Oct-06 16:54:54.446 [AWT-EventQueue-0] DEBUG nextflow.Session - Session UUID: fd568c7b-9595-49fd-a7f9-e21f0d48aee0
+Oct-06 16:54:54.456 [AWT-EventQueue-0] DEBUG nextflow.Session - Run name: mighty_mestorf
+Oct-06 16:54:54.456 [AWT-EventQueue-0] DEBUG nextflow.Session - Executor pool size: 2
+Oct-06 16:54:54.481 [AWT-EventQueue-0] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=10; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Oct-06 16:54:54.608 [AWT-EventQueue-0] DEBUG nextflow.Session - Work-dir: /ssu/gassu/pipelines/nf-pipeline-regenie/tests/input/pipeline/work [nfs]
+Oct-06 16:54:54.616 [AWT-EventQueue-0] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Oct-06 16:54:54.624 [AWT-EventQueue-0] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Oct-06 16:54:54.639 [AWT-EventQueue-0] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Oct-06 16:54:54.674 [AWT-EventQueue-0] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 2; maxThreads: 1000
+Oct-06 16:54:54.897 [Thread-3] DEBUG nextflow.Session - Session start
+Oct-06 16:54:55.415 [PathVisitor-1] DEBUG nextflow.file.PathVisitor - files for syntax: glob; folder: ./; pattern: example_chunk*.bgen; options: [checkIfExists:true]
+Oct-06 16:54:55.490 [Thread-3] DEBUG nextflow.Session - Session await
+Oct-06 16:54:55.491 [Thread-3] DEBUG nextflow.Session - Session await > all processes finished
+Oct-06 16:54:55.491 [Thread-3] DEBUG nextflow.Session - Session await > all barriers passed
+Oct-06 16:54:55.537 [Thread-3] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+Oct-06 16:54:55.579 [Thread-3] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Oct-06 16:54:55.579 [Thread-3] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-console@1.0.4'
+Oct-06 16:54:55.580 [Thread-3] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-console
+Oct-06 16:55:47.485 [AWT-EventQueue-0] DEBUG nextflow.Session - Session UUID: 65153804-790e-4caa-b1bb-2bf351f28d08
+Oct-06 16:55:47.493 [AWT-EventQueue-0] DEBUG nextflow.Session - Run name: jolly_lavoisier
+Oct-06 16:55:47.493 [AWT-EventQueue-0] DEBUG nextflow.Session - Executor pool size: 2
+Oct-06 16:55:47.495 [AWT-EventQueue-0] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=10; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Oct-06 16:55:47.517 [AWT-EventQueue-0] DEBUG nextflow.Session - Work-dir: /ssu/gassu/pipelines/nf-pipeline-regenie/tests/input/pipeline/work [nfs]
+Oct-06 16:55:47.517 [AWT-EventQueue-0] WARN  nextflow.executor.ExecutorFactory - Plugin manager not initialised -- Using built-in executors
+Oct-06 16:55:47.521 [AWT-EventQueue-0] DEBUG nextflow.plugin.PluginsFacade - Using Default plugins manager
+Oct-06 16:55:47.525 [AWT-EventQueue-0] INFO  org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Oct-06 16:55:47.525 [AWT-EventQueue-0] INFO  org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Oct-06 16:55:47.526 [AWT-EventQueue-0] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.4.1 in 'deployment' mode
+Oct-06 16:55:47.529 [AWT-EventQueue-0] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Oct-06 16:55:47.529 [AWT-EventQueue-0] DEBUG nextflow.plugin.PluginsFacade - Using Default plugins manager
+Oct-06 16:55:47.529 [AWT-EventQueue-0] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Oct-06 16:55:48.070 [Thread-5] DEBUG nextflow.Session - Session start
+Oct-06 16:55:48.109 [PathVisitor-1] DEBUG nextflow.file.PathVisitor - files for syntax: glob; folder: ./; pattern: example_chunk*.{pgen,psam,pvar}; options: [checkIfExists:true]
+Oct-06 16:55:48.110 [Thread-5] DEBUG nextflow.Session - Session await
+Oct-06 16:55:48.110 [Thread-5] DEBUG nextflow.Session - Session await > all processes finished
+Oct-06 16:55:48.110 [Thread-5] DEBUG nextflow.Session - Session await > all barriers passed
+Oct-06 16:55:48.242 [Thread-5] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+Oct-06 16:55:48.254 [Thread-5] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
