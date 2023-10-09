@@ -71,7 +71,7 @@ workflow PREPARE_GENETIC_DATA {
             exit 1
         }
         //Check we have a single input file
-        CHECK_MAX_CHANNEL_SIZE(genotypes_files.count(), 1, "genotypes_files")
+        //CHECK_MAX_CHANNEL_SIZE(genotypes_files.count(), 1, "genotypes_files")
     }
     
     //==== SET OUTPUT CHANNEL ====
