@@ -32,7 +32,6 @@ workflow REGENIE_STEP2_WF {
             .map{ tuple(it[0][0], it[0][1], it[1]) }
             //.groupTuple(by: [0,1]).map{ tuple(it[0], it[1], it[2].flatten()) }
             
-            
         CONCAT_GWAS_RESULTS(concat_gwas_results_ch)
 
         step2_log = GWAS_LOG_PARSER_STEP2.out.regenie_step2_parsed_logs

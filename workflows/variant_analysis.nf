@@ -105,7 +105,6 @@ workflow RUN_VARIANT_ANALYSIS {
     genotyped_plink_ch,
     project_data
   )
-  //REGENIE_STEP1_WF.out.regenie_step1_out.view()
   
   //==== STEP2 AND REPORTS - GWAS ====
   if (params.genotypes_imputed) {
@@ -237,22 +236,3 @@ workflow.onComplete {
   Results location: ${ params.outdir }
   """.stripIndent()
 }
-
-// workflow.onError {
-//   if (params.master_log_dir != null) {
-//     error_log = file("${master_log_dir}/${project_id}_error.log")
-//     def error_log_msg="""\
-//     ### ERROR MESSAGE ###
-//     ${workflow.errorMessage}
-
-//     ### ERROR REPORT ###
-//     ${workflow.errorReport}
-//     """
-//     .stripIndent()
-//     error_log.append(error_log_msg)
-
-//     master_log = file("${master_log_dir}/job_execution_summary.log")
-//     def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
-//     master_log.append(master_log_msg)
-//   }
-// }

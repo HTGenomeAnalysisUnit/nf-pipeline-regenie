@@ -46,8 +46,13 @@ workflow SPLIT_GWAS_DATA_WF {
 
     //MAKE CHUNKS of N VARIANTS AS SPECIFIED IN PARAMS
     MAKE_VARIANTS_CHUNKS(genotypes_snplist_ch)
+    count_chunks = MAKE_VARIANTS_CHUNKS.out
+        .map{ it[5].readLines().size() } //count number of lines in each chunk
+        .sum() //now sum total number of chunk for this analysis, this is used later for groupTuple
+    
     genotypes_by_chunk_ch = MAKE_VARIANTS_CHUNKS.out
-        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[5].readLines().flatten(), it[5].readLines().size()) }
+        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[5].readLines().flatten()) }
+        .combine(count_chunks)
         .transpose(by: 5)
 
     emit:
