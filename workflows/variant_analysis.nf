@@ -114,8 +114,12 @@ workflow RUN_VARIANT_ANALYSIS {
       SPLIT_GWAS_DATA_WF(PREPARE_GWAS_DATA.out.processed_genotypes)
       processed_gwas_data_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
     } else {
+      //If there is no split, we need to count the number of files provided in input
+      //In this way, if the user provide a dataset spread across multiple files we can merge results correctly with groupTuple
+      count_chunks = PREPARE_GWAS_DATA.out.count()
       processed_gwas_data_ch = PREPARE_GWAS_DATA.out.processed_genotypes
-        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK", 1) }
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+        .combine(count_chunks)
     }
 
     //Run regenie step 2
