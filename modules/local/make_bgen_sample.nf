@@ -5,10 +5,10 @@ process MAKE_BGEN_SAMPLE {
   }
 
   input:
-    tuple val(filename), file(bgen_file), file(bgi_file), val(chrom)
+    tuple val(filename), file(bgen_file), val(chrom)
 
   output:
-    tuple val(filename), path(bgen_file), path(bgi_file), file("${bgen_file.baseName}.sample"), val(chrom)
+    tuple val(filename), path(bgen_file), file("${bgen_file.baseName}.sample"), val(chrom)
 
 script:
 """

@@ -2,16 +2,16 @@ process CONVERT_TO_BED {
     label 'process_plink2'
     
     input:
-        tuple val(filename), file(bgen_pgen), file(bgi_pvar), file(sample_psam), val(chrom)
+        tuple val(chrom), file(bgen_pgen), file(bgi_pvar), file(sample_psam)
 
     output:
-        tuple val(chrom), file("${filename}.bed"), file("${filename}.bim"), file("${filename}.fam")
+        tuple val(chrom), file("${fileprefix}.bed"), file("${fileprefix}.bim"), file("${fileprefix}.fam")
 
     script:
     def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $sample_psam" : ''
     def format = params.genotypes_imputed_format == 'bgen' ? 'bgen' : 'pfile'
-    def fileprefix = bgen_pgen.baseName
     def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen ref-first' : ''
+    fileprefix = bgen_pgen.baseName
     """
     plink2 \
     --${format} ${fileprefix}${extension} \
@@ -19,7 +19,32 @@ process CONVERT_TO_BED {
     --memory ${task.memory.toMega()} \
     --threads ${task.cpus} \
     $bgen_sample \
-    --out ${filename} 
+    --out ${fileprefix} 
+    """
+}
+
+process MERGE_BED_DATASET {
+    label 'process_plink2'
+    
+    input:
+        file(bed_files)
+        file(bim_files)
+        file(fam_files)
+
+    output:
+        tuple file("ld_panel_merged.bed"), file("ld_panel_merged.bim"), file("ld_panel_merged.fam")
+
+    script:
+    def merge_list = bed_files.collect{ "${it.baseName}" }.join(',')
+    """
+    echo "${merge_list}" | tr "," "\\n" | sort -u > files_to_merge.list
+
+    plink \
+    --merge-list files_to_merge.list \
+    --make-bed \
+    --memory ${task.memory.toMega()} \
+    --threads ${task.cpus} \
+    --out ld_panel_merged
     """
 }
 

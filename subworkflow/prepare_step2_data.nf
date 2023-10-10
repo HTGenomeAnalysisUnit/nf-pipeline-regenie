@@ -25,7 +25,7 @@ workflow PREPARE_GENETIC_DATA {
             break
         case "bgen":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
-                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bgen','')) }
+                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), file("${it[1].parent}/${it[1].baseName}.sample"), (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bgen','')) }
             genotypes_files = input_ch.filter { it[3] in params.chromosomes }
             break
         case "bed":
@@ -56,7 +56,7 @@ workflow PREPARE_GENETIC_DATA {
             break
         case "bgen":
             genotypes_files = Channel.fromFilePairs("${params.genotypes_data}", checkIfExists: true, size: 1, flat: true)
-                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), "ONE_FILE") }
+                .map { tuple(it[0], it[1], file("${it[1]}.bgi"), file("${it[1].parent}/${it[1].baseName}.sample"), "ONE_FILE") }
             break
         case "bed":
             genotypes_files = Channel.fromFilePairs("${params.genotypes_data}.{bed,bim,fam}", checkIfExists: true, size:3, flat: true)
@@ -85,7 +85,7 @@ workflow PREPARE_GENETIC_DATA {
     
     if (params.input_format == "bgen") {
         //==== MAKE BGI INDEX IF MISSING ====
-        genotypes_files
+        genotypes_files.map { tuple(it[0], it[1], it[2], it[4]) }
             .branch {
                     found: it[2].exists()
                     missing: true
@@ -103,18 +103,21 @@ workflow PREPARE_GENETIC_DATA {
                 .map{ tuple(it[0], it[1], it[2], file(params.bgen_sample_file, checkIfExists: true), it[3]) }
         } else {
         //Otherwise check that a sample file exists and make one when missing
-            bgen_bgi_ch
-            .map { tuple(it[0], it[1], it[2], file("${it[1].parent}/${it[1].baseName}.sample"), it[3]) }
+            genotypes_files.map { tuple(it[0], it[1], it[3], it[4]) }
             .branch {
-                    found: it[3].exists()
+                    found: it[2].exists()
                     missing: true
                 }
             .set { check_sample_ch }
 
-            MAKE_BGEN_SAMPLE(check_sample_ch.missing.map { tuple(it[0], it[1], it[2], it[4]) } )
+            MAKE_BGEN_SAMPLE(check_sample_ch.missing.map { tuple(it[0], it[1], it[3]) } )
             
-            genotypes_bgen_and_sample = check_sample_ch.found
+            bgen_sample_ch = check_sample_ch.found
                 .mix(MAKE_BGEN_SAMPLE.out)
+
+            //put together bgi index and sample file for all datasets
+            genotypes_bgen_and_sample = bgen_bgi_ch.join(bgen_sample_ch, by: [0,1,3])
+                .map { tuple(it[0], it[1], it[3], it[4], it[2]) }
         }
 
         genotypes_plink2_ch = genotypes_bgen_and_sample
