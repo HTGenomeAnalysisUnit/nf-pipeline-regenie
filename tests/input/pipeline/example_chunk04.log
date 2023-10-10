@@ -1,24 +1,21 @@
 PLINK v2.00a3LM AVX2 Intel (17 Dec 2021)
 Options in effect:
   --export bgen-1.2 bits=8
-  --extract snp_chunk04
   --out example_chunk04
-  --pfile example
+  --pfile example_chunk04
 
-Hostname: hnode02
+Hostname: cnode24
 Working directory: /ssu/gassu/pipelines/nf-pipeline-regenie/tests/input/pipeline
-Start time: Fri Oct  6 12:39:15 2023
+Start time: Tue Oct 10 14:12:21 2023
 
-Random number seed: 1696588755
-385179 MiB RAM detected; reserving 192589 MiB for main workspace.
-Using up to 40 threads (change this with --threads).
+Random number seed: 1696939941
+579860 MiB RAM detected; reserving 289930 MiB for main workspace.
+Using up to 32 threads (change this with --threads).
 500 samples (0 females, 0 males, 500 ambiguous; 500 founders) loaded from
-example.psam.
-1000 variants loaded from example.pvar.
+example_chunk04.psam.
+200 variants loaded from example_chunk04.pvar.
 Note: No phenotype data present.
---extract: 202 variants remaining.
-202 variants remaining after main filters.
 Writing example_chunk04.bgen ... done.
 Writing example_chunk04.sample ... done.
 
-End time: Fri Oct  6 12:39:15 2023
+End time: Tue Oct 10 14:12:21 2023
