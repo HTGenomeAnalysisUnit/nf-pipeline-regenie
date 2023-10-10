@@ -115,7 +115,7 @@ workflow RUN_VARIANT_ANALYSIS {
       processed_gwas_data_ch = SPLIT_GWAS_DATA_WF.out.processed_genotypes
     } else {
       processed_gwas_data_ch = PREPARE_GWAS_DATA.out.processed_genotypes
-        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK") }
+        .map { tuple (it[0], it[1], it[2], it[3], it[4], "SINGLE_CHUNK", 1) }
     }
 
     //Run regenie step 2
