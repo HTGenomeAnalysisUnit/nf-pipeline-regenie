@@ -17,7 +17,7 @@ workflow CLUMP_RESULTS {
             //remap to [chrom, file(bed_bgen_pgen), file(bim_bgi_pvam), file(fam_sample_psam)]
             input_ch = processed_gwas_genotypes
                 .map { tuple(it[4], it[1], it[2], it[3]) }
-            
+
             //convert to bed if needed to speed up plink1.9 clumping
             if (params.genotypes_imputed_format != 'bed') {   
                 CONVERT_TO_BED(input_ch)

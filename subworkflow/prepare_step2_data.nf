@@ -116,8 +116,8 @@ workflow PREPARE_GENETIC_DATA {
                 .mix(MAKE_BGEN_SAMPLE.out)
 
             //put together bgi index and sample file for all datasets
-            genotypes_bgen_and_sample = bgen_bgi_ch.join(bgen_sample_ch, by: [0,1,3])
-                .map { tuple(it[0], it[1], it[3], it[4], it[2]) }
+            genotypes_bgen_and_sample = bgen_bgi_ch.join(bgen_sample_ch, by: [0,3])
+                .map { tuple(it[0], it[2], it[3], it[5], it[1]) }
         }
 
         genotypes_plink2_ch = genotypes_bgen_and_sample
