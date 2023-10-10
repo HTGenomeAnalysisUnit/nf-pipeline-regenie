@@ -4,14 +4,14 @@ process REGENIE_STEP2_GWAS {
   }
 
   label "step2_gwas" //TODO Can we adjust label to use different resources when running by chunk or whole dataset?
-  tag "${project_id}_${chrom}_${chunk}"
+  tag "${project_id}_${chrom}_${task.index}"
 
   input:
 	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
 
   output:
-    tuple val(project_id), val(chrom), val(chunk), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
-    tuple val(project_id), path("${project_id}_${chrom}_${chunk}.log"), emit: regenie_step2_out_log
+    tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
+    tuple val(project_id), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_imputed_format}"
@@ -57,7 +57,7 @@ process REGENIE_STEP2_GWAS {
     $predictions \
     $refFirst \
     $maxCatLevels \
-    --out ${project_id}_${chrom}_${chunk}
+    --out ${project_id}_${chrom}_${task.index}
   """
 }
 
