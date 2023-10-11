@@ -19,7 +19,7 @@ def min_gq_opt = params.vcf_min_gq ? "--vcf-min-gq ${params.vcf_min_gq}" : ''
 """
 plink2 \
   --${params.input_format} $vcf_file ${dosage_opt} \
-  --make-pgen \
+  --make-pgen 'psam-cols=fid,sex,phenos' \
   ${sample_id_opt} \
   ${min_gq_opt} \
   ${dosage_certainty_opt} \
