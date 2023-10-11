@@ -18,8 +18,8 @@ process MAKE_VARIANTS_CHUNKS {
     """
     if [[ "${params.snplist_type}" == "bgen" ]]
     then
-        sed -i 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' ${make_chunks_sql}
-        sqlite3 snplist < ${make_chunks_sql}
+        sed 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' ${make_chunks_sql} > task_configured.sql
+        sqlite3 snplist < task_configured.sql
         mv intervals.txt ${filename}.GWAS-chunks.txt
     else
         grep -v "#" snplist | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'

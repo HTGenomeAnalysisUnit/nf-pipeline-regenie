@@ -20,7 +20,7 @@ WITH
 			SELECT
 				chromosome,
 				position,
-				(ROW_NUMBER() OVER (PARTITION BY chromosome ORDER BY position) - 1) / 100 AS interval
+				(ROW_NUMBER() OVER (PARTITION BY chromosome ORDER BY position) - 1) / %CHUNK_SIZE% AS interval
 			FROM positions
 		)
 		GROUP BY chromosome, interval
