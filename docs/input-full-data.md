@@ -4,7 +4,7 @@ To perform genetic association or rare variants analysis (regenie step 2) you mu
 
 Input dataset for GWAS analysis is defined by `genotypes_imputed` and `genotypes_imputed_format` parameters, while input dataset for rare variants analysis is defined by `genotypes_rarevar` and `genotypes_rarevar_format`. The format parameter accepts 4 possible formats: vcf, bgen, pgen or bed.
 
-The input dataset can be provided as a single file or split by chromosome including a `{CHROM}` tag in the input filename (see below).
+The input dataset can be provided as a single file, split in multiple chunk files, or split by chromosome including a `{CHROM}` tag in the input filename (see below).
 
 ## Input formats
 
@@ -13,7 +13,7 @@ The input dataset can be provided as a single file or split by chromosome includ
 - input format: `'vcf'`
 - input dataset: `'path/to/my_data.vcf.gz'`
 
-The input VCF will be converted to `pgen` format using plink2 and `--double-id` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
+The input VCF will be converted to `pgen` format using plink2 and `--const-fid 0` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
 
 - `vcf_min_gq`: minimum genotype quality (GQ) for a genotype to be included in the PGEN output.
 - `gwas_read_dosage_from` / `rarevar_read_dosage_from`: these params can be set to decide from which field to read GT probabilities when converting VCF for the GWAS and rare variants input datasets, respectively. Accepted options are `'HDS'` (default) which usually works for VCF from Minimac4 imputation, `'DS'` for Minimac3 dosages or `'GP'` for genotype probabilities (to use with VCF from sequencing). Default is `null`, actual genotypes will be imported.
@@ -22,7 +22,10 @@ The input VCF will be converted to `pgen` format using plink2 and `--double-id` 
 
 The converted dataset is saved to output folder when `save_pgen = true` (default).
 
-**NB.** There are some aspects to keep in mind about the conversion from VCF to pgen format (see [plink2 docs](https://www.cog-genomics.org/plink/2.0/input#vcf) for more details):
+**NB1.** Using the default setting the resulting pgen dataset will have constant FID set to '0' and IID corresponding to the sample IDs in the VCF. You need to be sure that this nomenclature is consistent with the covariates and phenotype input files.
+
+**NB2.** There are some aspects to keep in mind about the conversion from VCF to pgen format (see [plink2 docs](https://www.cog-genomics.org/plink/2.0/input#vcf) for more details):
+
 - PGEN can store genotype dosage, but not genotype probabilities, thus probabilities are collapsed to dosages during conversion, which is usually fine for most analyses.
 - When using `DS` or `HDS` during import, the dosage are read directly from the VCF.
 - When using `GP`, the genotype probabilites are converted to dosages according to the `import_dosage_certainty` parameter. The default value of `0.7` means that a genotype dosage are set only if the probability of the most likely genotype is >= 0.7, otherwise teh whole genotype is set to missing.
@@ -34,18 +37,12 @@ The converted dataset is saved to output folder when `save_pgen = true` (default
 
 Some additional files are expected when using bgen format:
 
-1. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). You can use something like `bgenix -g my_data.bgen -index`. 
-2. A sample file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.sample`. This is standard sample file defined for the bgen format which contains sample level information. 
-3. A SNP list for your dataset. This is a tab-separated file without header containing 6 columns: chr, id, cm, pos, ref, alt for all SNPs in your data, with chromosome in column 1 and position in column 4. Given a dataset named `my_dataset.bgen` the expected name of the snplist is `my_dataset.snplist`. You can generate a snplits from bgi index using
+1. A bgi index for you bgen file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.bgen.bgi`. You can generate this using [bgenix tool](https://enkre.net/cgi-bin/code/bgen/dir?ci=trunk). You can use something like `bgenix -g my_data.bgen -index`.
+2. A sample file. For a dataset named `my_dataset.bgen` the expected name of index is `my_dataset.sample`. This is standard sample file defined for the bgen format which contains sample level information.
 
-   ```bash
-   bgenix -g my_dataset.bgen -list | tail -n+3 \
-   | awk '{OFS="\t"}; {print $3, $2, 0, $4, $6, $7}' | sed '$d' > my_dataset.snplist
-   ```
+**NB:** When using BGEN input, make sure that the sample ID in the BGEN or sample file can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. Using a `.sample` file can help to have better control on the sample IDs.
 
-**NB:** When using BGEN input, make sure that the sample ID in the BGEN or sample file can match FID + IID present in the covariates and phenotype input files, otherwise the pipeline will fail. Using a `.sample` file can help to have better control on the sample IDs. 
-
-If any of these files is missing, the pipeline will generate them automatically and save them in the output folder by default. This behaviour can be controlled by `save_bgen_index`, `save_bgen_sample`, `save_snplist` parameters. Keep in mind that these steps can add a significant amount of time to the overall execution for large datasets, so it is suggested to prepare these files in advance.
+If any of these files is missing, the pipeline will generate them automatically and save them in the output folder by default. This behaviour can be controlled by `save_bgen_index`, `save_bgen_sample` parameters. Keep in mind that these steps can add a significant amount of time to the overall execution for large datasets, so it is suggested to prepare these files in advance.
 
 ### pgen format
 
@@ -65,7 +62,7 @@ For bed input, you have to specify only the basename of the dataset. Given a inp
 
 If your input dataset is split by chromosome across multiple files, you can use the `{CHROM}` tag in your input file name. This tag must be placed corresponding to the number of chromosome in the filename. When using this method be careful that the chromosome names captured from the filename correspond to numbers 1-22 for autosomes. 
 
-For example, if you have a dataset split by chromosome in the following way: 
+For example, if you have a dataset split by chromosome in the following way:
 
 - `my_dataset_chr1.bgen`
 - `my_dataset_chr2.bgen`

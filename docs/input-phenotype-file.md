@@ -27,3 +27,7 @@ Note that **no missing values** are allowed in this table.
 - Samples listed in pheno file that are not in bgen/bed/pgen file are ignored. Genotyped samples that are not in the pheno file are removed from the analysis.
 - With quantitative traits, missing values are mean-imputed in Step 1 and they are dropped when testing each phenotype in Step 2
 - With binary traits, missing values are mean-imputed in Step 1 when fitting the level 0 linear ridge regression and they are dropped when fitting the level 1 logistic ridge regression for each trait. In Step 2, missing values are dropped when testing each trait.
+
+## Note when using VCF files as input
+
+When you use VCF files as input, these are internally converted to PGEN format. By default, the resulting dataset will have constant FID set to '0' and IID corresponding to the sample IDs in the VCF. You need to be sure that this nomenclature is consistent with the covariates and phenotype input files.

@@ -8,43 +8,8 @@ workflow SPLIT_GWAS_DATA_WF {
                     // chrom = "ONE_FILE" if we don't split by chromosome
 
     main:
-    /*
-    if (params.input_format == 'bgen') {
-    //==== MAKE A SNPLIST IF INPUT IS BGEN ====
-        // If a .snplist file is provided we use it
-        if (params.snplist_file) {
-            snplist_file = file(params.snplist_file, checkIfExists: true)
-            genotypes_files
-                .map{ tuple(it[0], it[1], it[2], it[3], it[4], snplist_file) }
-        } else if (params.snplist_folder) {
-        // If a folder is provided we use the .snplist files inside
-            genotypes_files
-                .map{ tuple(it[0], it[1], it[2], it[3], it[4], file("${params.snplist_folder}/${it[1].baseName}.snplist")) }
-                .branch {
-                    found: it[5].exists()
-                    missing: true
-                }
-                .set { snplist_files_ch }
-        } else {
-        //Search for .snplist file based on input bgen file
-            genotypes_files
-                .map{ tuple(it[0], it[1], it[2], it[3], it[4], file("${it[1].parent}/${it[1].baseName}.snplist")) }
-                .branch {
-                    found: it[5].exists()
-                    missing: true
-                }
-            .set { snplist_files_ch }
-        }
-
-        //Make a snplist file if it doesn't exist
-        new_snplist_ch = MAKE_SNPLIST(snplist_files_ch.missing.map { tuple(it[0], it[1], it[2], it[3], it[4]) })
-        genotypes_snplist_ch = snplist_files_ch.found.mix(new_snplist_ch)
-    } else {
-    */
-    //==== WITH BED / PGEN USE BIM / PVAR DIRECTLY ====
-        genotypes_snplist_ch = genotypes_files
-            .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[2]) }
-    //}
+    genotypes_snplist_ch = genotypes_files
+        .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[2]) }
 
     //MAKE CHUNKS of N VARIANTS AS SPECIFIED IN PARAMS
     MAKE_VARIANTS_CHUNKS(genotypes_snplist_ch, file("$projectDir/bin/get_intervals.sql", checkIfExists: true))
