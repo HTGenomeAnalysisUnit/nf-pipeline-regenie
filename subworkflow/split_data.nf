@@ -8,6 +8,7 @@ workflow SPLIT_GWAS_DATA_WF {
                     // chrom = "ONE_FILE" if we don't split by chromosome
 
     main:
+    /*
     if (params.input_format == 'bgen') {
     //==== MAKE A SNPLIST IF INPUT IS BGEN ====
         // If a .snplist file is provided we use it
@@ -39,13 +40,14 @@ workflow SPLIT_GWAS_DATA_WF {
         new_snplist_ch = MAKE_SNPLIST(snplist_files_ch.missing.map { tuple(it[0], it[1], it[2], it[3], it[4]) })
         genotypes_snplist_ch = snplist_files_ch.found.mix(new_snplist_ch)
     } else {
+    */
     //==== WITH BED / PGEN USE BIM / PVAR DIRECTLY ====
         genotypes_snplist_ch = genotypes_files
             .map{ tuple(it[0], it[1], it[2], it[3], it[4], it[2]) }
-    }
+    //}
 
     //MAKE CHUNKS of N VARIANTS AS SPECIFIED IN PARAMS
-    MAKE_VARIANTS_CHUNKS(genotypes_snplist_ch)
+    MAKE_VARIANTS_CHUNKS(genotypes_snplist_ch, file("$projectDir/bin/get_intervals.sql", checkIfExists: true))
     count_chunks = MAKE_VARIANTS_CHUNKS.out
         .map{ it[5].readLines().size() } //count number of lines in each chunk
         .sum() //now sum total number of chunk for this analysis, this is used later for groupTuple

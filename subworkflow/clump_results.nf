@@ -26,24 +26,33 @@ workflow CLUMP_RESULTS {
                 bed_input_ch = input_ch
             }   
             
-            //branch here based on bed_files_ch it[0] one_file or chrom
-            bed_input_ch.branch {
-                single_files: it[0] == 'ONE_FILE'
-                by_chrom: true
-            }.set{ bed_processed_ch }
-
-            //merge the bed files when input are multiple files not by chromosome
-            //merge_input_ch = bed_processed_ch.single_files.toList().transpose().toList()
-            merge_bed_files = bed_processed_ch.single_files.map{ it[1] }.collect()
-            merge_bim_files = bed_processed_ch.single_files.map{ it[2] }.collect()
-            merge_fam_files = bed_processed_ch.single_files.map{ it[3] }.collect()
-
-            MERGE_BED_DATASET(merge_bed_files, merge_bim_files, merge_fam_files)
             chromosomes_ch = Channel.fromList(params.chromosomes)
-            merged_bed_by_chrom = chromosomes_ch.combine(MERGE_BED_DATASET.out)
+            extension = params.input_format == 'vcf' ? 'vcf.gz' : "${params.input_format}"
+            filename = params.input_files.replaceFirst(/(\.bgen|\.vcf\.gz|\.bcf)$/, "")
             
-            //mix the channels to ensure we have all files
-            ld_panel_files_ch = merged_bed_by_chrom.mix(bed_processed_ch.by_chrom)            
+            //Count number of input files
+            input_files = []
+            input_files = input_files + file("${filename}.${extension}").name
+            
+            //When input is by chromosome we can use the converted BED directly
+            if (params.input_files =~ /\{CHROM\}/) {
+                ld_panel_files_ch = bed_input_ch
+            } else if (input_files.size() > 1) { 
+            //Otherwise, if we have more than 1 input file we need to merge converted BED
+                merge_bed_files = bed_input_ch.map{ it[1] }.collect()
+                merge_bim_files = bed_input_ch.map{ it[2] }.collect()
+                merge_fam_files = bed_input_ch.map{ it[3] }.collect()
+
+                MERGE_BED_DATASET(merge_bed_files, merge_bim_files, merge_fam_files)
+                
+                merged_bed_by_chrom = chromosomes_ch.combine(MERGE_BED_DATASET.out)
+                
+                //mix the channels to ensure we have all files
+                ld_panel_files_ch = merged_bed_by_chrom 
+            } else {
+            //Finally, if input is not by chromosome and we have only 1 input file we can use it directly
+                ld_panel_files_ch = chromosomes_ch.combine(bed_input_ch.map { tuple(it[1], it[2], it[3]) })
+            }          
 
         } else {
             //If LD panel provided we use it to perform clumping

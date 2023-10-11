@@ -2,6 +2,7 @@
 def allowed_input_formats = ['vcf', 'bgen', 'pgen', 'bed']
 def allowed_rarevar_stats = ["FDR_bygroup","FDR_alltests","BONF_bygroup","BONF_alltests"]
 quarto_report_css = file("$projectDir/reports/quarto_report.css", checkIfExists: true)
+make_chunks_sql = file("$projectDir/bin/get_intervals.sql", checkIfExists: true)
 
 //Check required parameters for GWAS analysis
 if (params.genotypes_imputed) {
@@ -79,7 +80,7 @@ include { REPORT_RAREVAR              } from '../modules/local/report'
 //gwas sub wf and modules
 include { PREPARE_GENETIC_DATA as PREPARE_GWAS_DATA } from '../subworkflow/prepare_step2_data' addParams(genotypes_data: params.genotypes_imputed, input_format: params.genotypes_imputed_format, bgen_sample_file: params.imputed_sample_file, chromosomes: chromosomes, dosage_from: params.gwas_read_dosage_from)
 include { SPLIT_GWAS_DATA_WF          } from '../subworkflow/split_data' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format)
-include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, input_format: params.genotypes_imputed_format, rarevar_results: false, annotation_min_log10p: params.annotation_min_log10p)
+include { PROCESS_GWAS_RESULTS_WF          } from '../subworkflow/process_results' addParams(chromosomes: chromosomes, rarevar_results: false, input_format: params.genotypes_imputed_format, input_files: params.genotypes_imputed, annotation_min_log10p: params.annotation_min_log10p)
 include { REGENIE_STEP2_WF as REGENIE_STEP2_GWAS_WF } from '../subworkflow/regenie_step2' addParams(chromosomes: chromosomes, run_gwas: true, run_rarevar: false)
 
 //rare variant sub wf and modules

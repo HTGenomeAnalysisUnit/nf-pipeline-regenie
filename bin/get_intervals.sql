@@ -10,7 +10,7 @@ WITH
 	positions AS (
 		SELECT chromosome, position FROM Variant
 	),
-	-- Generate intervals of size 100 for each chromosome
+	-- Generate intervals of size %CHUNK_SIZE% for each chromosome
 	intervals AS (
 		SELECT
 			chromosome,

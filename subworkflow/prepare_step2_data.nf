@@ -26,7 +26,7 @@ workflow PREPARE_GENETIC_DATA {
         case "bgen":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}", size: 1, flat: true)
                 .map { tuple(it[0], it[1], file("${it[1]}.bgi"), file("${it[1].parent}/${it[1].baseName}.sample"), (("${it[1]}" =~ /${pattern}/)[ 0 ][ 1 ]).replace('.bgen','')) }
-            genotypes_files = input_ch.filter { it[3] in params.chromosomes }
+            genotypes_files = input_ch.filter { it[4] in params.chromosomes }
             break
         case "bed":
             input_ch = Channel.fromFilePairs("${params.genotypes_data.replace('{CHROM}','*')}.{bed,bim,fam}", size:3, flat: true)

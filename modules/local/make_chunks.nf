@@ -6,25 +6,33 @@ process MAKE_VARIANTS_CHUNKS {
     }
 
     input:
-        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(snplist_file, stageAs: 'snplist.tsv')
+        tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path(snplist_file, stageAs: 'snplist')
+        file(make_chunks_sql)
 
     output:
         tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path("${filename}.GWAS-chunks.txt")
 
     script:
-    def pos_idx = params.snplist_type == "pgen" ? 2 : 4
+    def pos_idx = params.snplist_type in ["pgen", "vcf", "bcf"] ? 2 : 4
     def chromosomes_list = chrom == "ONE_FILE" ? params.chromosomes.join(" ") : "$chrom"
     """
-    grep -v "#"  snplist.tsv | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'
-    for c in $chromosomes_list
-    do 
-        if [ -f \$c.snps ]
-        then
-            awk 'NR == 1 {start=\$2}; NR > 1 && !(NR%${params.step2_gwas_chunk_size}) {print \$1":"start"-"\$2; start = \$2+1}; END { if (NR%${params.step2_gwas_chunk_size}) {print \$1":"start"-"\$2} }' \$c.snps > \$c.intervals 
-        fi
-    done
+    if [[ "${params.snplist_type}" == "bgen" ]]
+    then
+        sed -i 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' ${make_chunks_sql}
+        sqlite3 snplist < ${make_chunks_sql}
+        mv intervals.txt ${filename}.GWAS-chunks.txt
+    else
+        grep -v "#" snplist | awk '{print \$1, \$${pos_idx} >> \$1".snps"}'
+        for c in $chromosomes_list
+        do 
+            if [ -f \$c.snps ]
+            then
+                awk 'NR == 1 {start=\$2}; NR > 1 && !(NR%${params.step2_gwas_chunk_size}) {print \$1":"start"-"\$2; start = \$2+1}; END { if (NR%${params.step2_gwas_chunk_size}) {print \$1":"start"-"\$2} }' \$c.snps > \$c.intervals 
+            fi
+        done
 
-    cat *.intervals | sort -V > ${filename}.GWAS-chunks.txt
+        cat *.intervals | sort -V > ${filename}.GWAS-chunks.txt
+    fi
     """
 }
 
