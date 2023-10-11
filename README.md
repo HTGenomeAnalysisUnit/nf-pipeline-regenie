@@ -4,7 +4,7 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 
 ![pipeline_diagram](docs/images/regenie_pipeline.png)
 
-## Main features:
+## Main features
 
 - The pipeline is optimized for massive scaling, by chunking operations as much as possible. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks.
 - All major data types are accepted as input, including plink1 binary dataset (bed/bim/fam), plink2 binary dataset (pgen/pvar/psam), bgen format (bgen/bgi/sample), and vcf.gz format.
@@ -24,7 +24,7 @@ Then you can invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pip
 
 ## Quick Start
 
-1. Create a folder for your project (e.g. `yourproject`) 
+1. Create a folder for your project (e.g. `yourproject`)
 
 2. Prepare a tab-separated table of phenotypes and eventually covariates (see the [input section](docs/input-phenotype-file.md)).
 
@@ -33,8 +33,8 @@ Then you can invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pip
 4. If you want to perform a multi-models execution, prepare the [models table](docs/input-models-table.md) to describe your analyses.
 
 5. Prepare the necessary config files, using the templates provided in the `templates` folder:
-   1. A [config file](docs/main-parameters.md) describing settings and inputs for your project 
-   2. A config file to [define the profile](docs/hpc-profile.md) for your computational environment. 
+   1. A [config file](docs/main-parameters.md) describing settings and inputs for your project
+   2. A config file to [define the profile](docs/hpc-profile.md) for your computational environment.
    3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](docs/tower-monitoring.md)
 
 6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
@@ -65,7 +65,7 @@ This will create a new folder called `nf-pipeline-regenie` in the current folder
 
 You can eventually chose a specific version of the pipeline using the `--branch` option
 
-`git clone --depth 1 --branch v1.8 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
+`git clone --depth 1 --branch v1.8.2 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
 
 ## Credits
 
