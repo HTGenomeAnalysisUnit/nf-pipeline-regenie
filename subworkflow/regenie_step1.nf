@@ -30,17 +30,21 @@ workflow REGENIE_STEP1_WF {
         qc_input_ch = genotyped_plink_ch
             .join(project_data.map { tuple(it[0], it[1]) })
             
-        QC_FILTER_GENOTYPED ( qc_input_ch )
+        if (params.perform_step1_qc) {
+            QC_FILTER_GENOTYPED ( qc_input_ch )
 
-        if(params.prune_enabled) {
-            PRUNE_GENOTYPED (
-                QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
-            )
+            if(params.prune_enabled) {
+                PRUNE_GENOTYPED (
+                    QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
+                )
 
-            genotyped_final_ch = PRUNE_GENOTYPED.out.genotypes_pruned_ch
+                genotyped_final_ch = PRUNE_GENOTYPED.out.genotypes_pruned_ch
+            } else {
+                //no pruning applied, set QCed directly to genotyped_final_ch
+                genotyped_final_ch = QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
+            }
         } else {
-            //no pruning applied, set QCed directly to genotyped_final_ch
-            genotyped_final_ch = QC_FILTER_GENOTYPED.out.genotyped_filtered_files_ch
+            genotyped_final_ch = input_ch.map{ tuple(it[0], it[2], it[1], it[3]) }
         }
 
         //PERFORM REGENIE STEP1 

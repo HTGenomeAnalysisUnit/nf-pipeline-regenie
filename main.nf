@@ -9,6 +9,7 @@
 */
 
 nextflow.enable.dsl = 2
+import java.text.SimpleDateFormat
 
 /*
 ======================================================================
@@ -55,10 +56,12 @@ if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rare
 }
 
 //Set output and logs directories
+def date = new Date()
+def formatted_date = new SimpleDateFormat("yyyyMMdd_HHmmss")
 if(params.outdir == null) {
-  outdir = "${params.project}"
+  outdir = "pipeline_results_${formatted_date}"
 } else {
-  outdir = "${params.outdir}/${params.project}"
+  outdir = "${params.outdir}"
 }
 
 if (params.master_log_dir == null) {

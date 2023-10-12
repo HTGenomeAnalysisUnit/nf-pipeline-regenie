@@ -283,7 +283,8 @@
       "properties": {
         "prune_enabled": {
           "type": "boolean",
-          "description": "Perform pruning on step1 input variants"
+          "default": false,
+          "description": "Perform pruning on step1 input variants. Applied only when perform_step1_qc is true"
         },
         "prune_maf": {
           "type": "number",
@@ -308,6 +309,11 @@
           "default": 0.8,
           "hidden": true,
           "description": "Pruning r2 threshold"
+        },
+        "perform_step1_qc": {
+          "type": "boolean",
+          "default": true,
+          "description": "Perform qc on input genotyped date before running step1"
         },
         "qc_maf": {
           "type": "number",

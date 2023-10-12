@@ -1,6 +1,6 @@
 # Outputs
 
-By default, the pipeline will generate all results in a folder named according to `project` parameter. When you provide the `outdir` parameter, the output folder will be created as `<outdir>/<project>`. 
+By default, the pipeline will generate all results in a folder named `pipeline_results_<timestamp>`. Main results of variant analysis are then stored in this folder using the `project` parameter (i.e. `<outdir>/<project>`). When you provide the `outdir` parameter, this will be used as the main output folder.
 
 When you are running in multi models mode, one folder will be created for each run_id under the main output folder.
 
