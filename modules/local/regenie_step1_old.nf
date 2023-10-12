@@ -10,24 +10,13 @@ workflow REGENIE_STEP1_SPLIT {
 
     l1_input_ch = RUNL0.out.groupTuple(size: params.step1_n_chunks)
       .map { tuple(it[0], it[1].flatten()) } //We need to flatten the list of files in case there are multiple phenos in a singe project
-      .join(SPLITL0.out)
-      .map { tuple(it[0], it[3].cols.split(',').size(), it[3].cols.split(',').toList(), it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9], it[10])}
-      .transpose(by: 2)
+      .join(SPLITL0.out)   
+        
     RUNL1(l1_input_ch)
 
-    CONCAT_PRED_LISTS(RUNL1.out.regenie_step1_out_pred_list.groupTuple(by: [0,1]))
-
-    output_log_ch = RUNL1.out.regenie_step1_out_log.groupTuple().map{ tuple(it[0], it[1][0]) }
-    output_step1_out_ch = RUNL1.out.regenie_step1_out_gz
-      .mix(CONCAT_PRED_LISTS.out)
-      .map{ project, n_phenos, step1_files -> [groupKey(project, n_phenos+1), step1_files] }
-      .groupTuple()
-
-    output_step1_out_ch.view()
-  
   emit:
-    regenie_step1_out = output_step1_out_ch
-    regenie_step1_out_log = output_log_ch
+    regenie_step1_out = RUNL1.out.regenie_step1_out
+    regenie_step1_out_log = RUNL1.out.regenie_step1_out_log
 }
 
 process SPLITL0 {
@@ -111,18 +100,17 @@ process RUNL1 {
   label 'step1_runl1'
   stageInMode 'copy'
   
-  publishDir {"${params.logdir}/${project_id}/logs"}, mode: 'copy', pattern: 'regenie_step1_out_*.log'
+  publishDir {"${params.logdir}/${project_id}/logs"}, mode: 'copy', pattern: 'regenie_step1_out.log'
   if (params.save_step1_predictions) {
-    publishDir {"${params.outdir}/${project_id}/regenie_step1_preds"}, mode: 'copy', pattern: 'regenie_step1_out_*.gz'
+    publishDir {"${params.outdir}/${project_id}/regenie_step1_preds"}, mode: 'copy', pattern: 'regenie_step1_out_*'
   }
 
   input:
-    tuple val(project_id), val(n_phenos), val(single_pheno), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
 
   output:
-    tuple val(project_id), val(n_phenos), path("regenie_step1_out_*.gz"), emit: regenie_step1_out_gz
-    tuple val(project_id), val(n_phenos), path("regenie_step1_out_${single_pheno}_pred.list"), emit: regenie_step1_out_pred_list
-    tuple val(project_id), path("regenie_step1_out_${single_pheno}.log"), emit: regenie_step1_out_log
+    tuple val(project_id), path("regenie_step1_out_*"), emit: regenie_step1_out
+    tuple val(project_id), path("regenie_step1_out.log"), emit: regenie_step1_out_log
 
   script:
   master_prefix = master_file.simpleName
@@ -142,7 +130,6 @@ process RUNL1 {
     --bed ${file_bed.baseName} \
     --phenoFile ${phenotypes_file} \
     --phenoColList ${pheno_meta.cols} \
-    --l1-phenoList ${single_pheno} \
     $covariants \
     $cat_covariates \
     $deleteMissings \
@@ -156,9 +143,9 @@ process RUNL1 {
     --niter ${params.niter} \
     --run-l1 ${master_file} \
     --keep-l0 --gz --verbose \
-    --out regenie_step1_out_${single_pheno}
+    --out regenie_step1_out
 
-    sed -i "s|\$PWD/||g" regenie_step1_out_${single_pheno}_pred.list
+    sed -i "s|\$PWD/||g" regenie_step1_out_pred.list
   """
 }
 
@@ -170,10 +157,10 @@ process CONCAT_PRED_LISTS {
   }
 
   input:
-    tuple val(project_id), val(n_phenos), path(pred_list_files)
+    tuple val(project_id), path(pred_list_files)
 
   output:
-    tuple val(project_id), val(n_phenos), path("regenie_step1_out_pred.list")
+    tuple val(project_id), path("regenie_step1_out_pred.list")
   
   script:
   """

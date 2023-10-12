@@ -100,7 +100,6 @@ These are mandatory when running rare var analysis
     regenie_range                         = '' // when splitting is not active you can use this to specify a genomic range for step2 analysis
     save_chunks_file                      = true
     save_step2_logs                       = true
-    save_snplist                          = true
     save_bgen_index                       = true
     save_bgen_sample                      = true    
     save_pgen                             = true
