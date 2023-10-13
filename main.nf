@@ -57,9 +57,9 @@ if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rare
 
 //Set output and logs directories
 def date = new Date()
-def formatted_date = new SimpleDateFormat("yyyyMMdd_HHmmss")
+def date_format = new SimpleDateFormat("yyyyMMdd_HHmmss")
 if(params.outdir == null) {
-  outdir = "pipeline_results_${formatted_date}"
+  outdir = "pipeline_results_${date_format.format(date)}"
 } else {
   outdir = "${params.outdir}"
 }

@@ -15,15 +15,18 @@ workflow REGENIE_STEP1_SPLIT {
       .transpose(by: 2)
     RUNL1(l1_input_ch)
 
-    CONCAT_PRED_LISTS(RUNL1.out.regenie_step1_out_pred_list.groupTuple(by: [0,1]))
+    runl1_pred_lists_ch = RUNL1.out.regenie_step1_out_pred_list
+      .map{ project, n_phenos, step1_list_files -> [groupKey(project, n_phenos), n_phenos, step1_list_files] }
+      .groupTuple()
+      .map{ project, n_phenos, step1_list_files -> [project, n_phenos[0], step1_list_files]}
+    
+    CONCAT_PRED_LISTS(runl1_pred_lists_ch)
 
     output_log_ch = RUNL1.out.regenie_step1_out_log.groupTuple().map{ tuple(it[0], it[1][0]) }
     output_step1_out_ch = RUNL1.out.regenie_step1_out_gz
       .mix(CONCAT_PRED_LISTS.out)
       .map{ project, n_phenos, step1_files -> [groupKey(project, n_phenos+1), step1_files] }
       .groupTuple()
-
-    output_step1_out_ch.view()
   
   emit:
     regenie_step1_out = output_step1_out_ch
@@ -109,7 +112,7 @@ process RUNL0 {
 
 process RUNL1 {
   label 'step1_runl1'
-  stageInMode 'copy'
+  //stageInMode 'copy'
   
   publishDir {"${params.logdir}/${project_id}/logs"}, mode: 'copy', pattern: 'regenie_step1_out_*.log'
   if (params.save_step1_predictions) {
