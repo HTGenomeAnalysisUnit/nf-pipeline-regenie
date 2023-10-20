@@ -8,6 +8,8 @@ Here is a list of the main parameters you need to adjust for a new analysis:
 
 - Set `chromosomes` to represent the list of chromosome to be included in the analysis. You can use a comma-separated list of chromosome numbers, a range like `1-22` or a mix like `1,4,11-18`.
 
+- You can eventually restrict the analysis to a specific genomic range, or a specific list of SNP IDs or gene IDs using the `regenie_range`, `regenie_extract_snps` and `regenie_extract_genes` options. Keep in mind that in this case you must ensure that the provided SNPs/genes/region are present in the genotype dataset you provided as input and in the specified chromosomes. Otherwise, the pipeline will fail due to SNPs remaining for step2 analysis.
+
 - Set `genotypes_build` to the build of your genotype data, either hg19 or hg38.
 
 - Set `step2_gwas_chunk_size` and `step2_rarevar_chunk_size` according to the size of your dataset. These control how the dataset is split for step2 analysis. Teh default values usually work fine, but you can increase/decrease them if you have very large or small datasets. Keep in mind that a small chunk size may result in a very large amount of parallel jobs. By default the pipeline job submission rate is limited to 200 concurrent jobs. The total number of jobs will be *N_SNPs/gwas_chunk_size* for GWAS and *N_genes/rare_chunk_size* for rare variant analysis.
@@ -28,7 +30,7 @@ Here is a list of the main parameters you need to adjust for a new analysis:
 
 - If you have categorical covariates, the maximum number of allowed categories is set to 10 bu default. You can adjsut this using the `maxCatLevels` parameter.
 
-## Input files 
+## Input files
 
 Adjust the input files as described in the input files sections.
 

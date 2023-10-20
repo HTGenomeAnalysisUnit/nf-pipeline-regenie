@@ -56,7 +56,7 @@ if ((params.regenie_range != '' || params.regenie_extract_snps != '') && params.
 }
 
 if ((params.regenie_range != '' || params.regenie_extract_genes != '') && params.step2_rarevar_split ) {
-  log.error "You cannot set regenie_range or regenie_extract_snps when step2_rarevar_split is active"
+  log.error "You cannot set regenie_range or regenie_extract_genes when step2_rarevar_split is active"
   exit 1
 }
 
