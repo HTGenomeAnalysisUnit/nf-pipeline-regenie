@@ -24,6 +24,7 @@ process REGENIE_STEP2_GWAS {
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
+    def extract_snps = params.regenie_extract_snps != '' ? "--extract $params.regenie_extract_snps" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
     def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
@@ -51,6 +52,7 @@ process REGENIE_STEP2_GWAS {
     $bgen_sample \
     $chromosome \
     $range \
+    $extract_snps \
     $covariants \
     $cat_covariates \
     $deleteMissingData \
@@ -100,6 +102,7 @@ process REGENIE_STEP2_RAREVARS {
     def vc_maxAAF = params.rarevars_vc_maxAAF ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
+    def extract_genes = params.regenie_extract_genes != '' ? "--extract-sets $params.regenie_extract_genes" : ''
 
   """
   regenie \
@@ -123,6 +126,7 @@ process REGENIE_STEP2_RAREVARS {
     $binaryTrait \
     $bgen_sample \
     $range \
+    $extract_genes \
     $covariants \
     $cat_covariates \
     $deleteMissingData \

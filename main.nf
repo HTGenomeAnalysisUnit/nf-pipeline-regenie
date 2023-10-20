@@ -50,16 +50,19 @@ if (!(params.regenie_skip_predictions || params.regenie_premade_predictions)) {
   }
 }
 
-if (params.regenie_range != '' && ( params.step2_gwas_split || params.step2_rarevar_split )) {
-  log.error "You cannot set regenie_range when step2_gwas_split and/or step2_rarevar_split is active"
+if ((params.regenie_range != '' || params.regenie_extract_snps != '') && params.step2_gwas_split ) {
+  log.error "You cannot set regenie_range or regenie_extract_snps when step2_gwas_split is active"
+  exit 1
+}
+
+if ((params.regenie_range != '' || params.regenie_extract_genes != '') && params.step2_rarevar_split ) {
+  log.error "You cannot set regenie_range or regenie_extract_snps when step2_rarevar_split is active"
   exit 1
 }
 
 //Set output and logs directories
-def date = new Date()
-def date_format = new SimpleDateFormat("yyyyMMdd_HHmmss")
 if(params.outdir == null) {
-  outdir = "pipeline_results_${date_format.format(date)}"
+  outdir = "nf-regenie-pipeline_results"
 } else {
   outdir = "${params.outdir}"
 }

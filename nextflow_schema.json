@@ -429,6 +429,18 @@
           "hidden": true,
           "description": "Limit the analysis to a specific genomic range"
         },
+        "regenie_extract_snps": {
+          "type": "string",
+          "format": "file-path",
+          "hidden": true,
+          "description": "A file containing a list of SNP IDs to restrict the step2 gwas analysis"
+        },
+        "regenie_extract_genes": {
+          "type": "string",
+          "format": "file-path",
+          "hidden": true,
+          "description": "A file containing a list of gene IDs to restrict the step2 rare variants analysis"
+        },
         "step2_gwas_split": {
           "type": "boolean",
           "default": true,
