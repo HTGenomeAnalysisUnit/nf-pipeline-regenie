@@ -33,7 +33,7 @@ nav:
       - "main parameters": main-parameters.md
       - "tower monitoring": tower-monitoring.md
       - "define HPC profile": hpc-profile.md
-      - "adjust parallelization": parallelization.md
+      - "optimize parallelization": parallelization.md
       - "top hits annotation": top-hits-annotation.md
       - "full list of params": full-params-list.md
     - Output files: outputs.md

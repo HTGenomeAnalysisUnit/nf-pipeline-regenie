@@ -4,9 +4,9 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 
 <img src="images/regenie_pipeline.png" width="800" height="300">
 
-## Main features:
+## Main features
 
-- The pipeline is optimized for massive scaling, by chunking operations as much as possible. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks (see the [adjust parallelization section](parallelization.md)).
+- The pipeline allows great flexibility in how operation are parallelized to allow balacing resource usage and speed and to accomodate different dataset sizes. The default settings are optimized for biobank scale data, but you can adjust resources as needed to further cut down run time or to process smaller datasets (see the [optimize parallelization section](parallelization.md)).
 - All major data types are accepted as input, including plink1 binary dataset (bed/bim/fam), plink2 binary dataset (pgen/pvar/psam), bgen format (bgen/bgi/sample), and vcf.gz format.
 - The pipeline can perform both standard GWAS analysis on single variants, and aggregated rare variant tests using burden test and any of the tests available in regenie, namely skat, skato, sakto-acat, acatv, acato, acato-full.
 - Results include summary statistics, but also filtered tophits / loci annotated with nearby genes and an HTML report for each phenotype with Manhattan plot and regional plots for the best loci.
