@@ -8,7 +8,7 @@ Here is a list of the main parameters you need to adjust for a new analysis:
 
 - Set `chromosomes` to represent the list of chromosome to be included in the analysis. You can use a comma-separated list of chromosome numbers, a range like `1-22` or a mix like `1,4,11-18`.
 
-- You can eventually restrict the analysis to a specific genomic range, or a specific list of SNP IDs or gene IDs using the `regenie_range`, `regenie_extract_snps` and `regenie_extract_genes` options. Keep in mind that in this case you must ensure that the provided SNPs/genes/region are present in the genotype dataset you provided as input and in the specified chromosomes. Otherwise, the pipeline will fail due to SNPs remaining for step2 analysis.
+- You can eventually restrict the analysis to a specific genomic range, or a specific list of SNP IDs or gene IDs using the `regenie_range`, `regenie_extract_snps` and `regenie_extract_genes` options. This requires `step2_gwas_split` and `step2_rarevar_split` to be set to `false`. Keep in mind that in this case you must ensure that the provided SNPs/genes/region are present in the genotype dataset you provided as input and in the specified chromosomes. Otherwise, the pipeline will fail due to SNPs remaining for step2 analysis.
 
 - Set `genotypes_build` to the build of your genotype data, either hg19 or hg38.
 
@@ -22,22 +22,33 @@ Here is a list of the main parameters you need to adjust for a new analysis:
 
 - Set `annotation_min_log10p` to the min value ( -log10(pval) ) for top hit SNPs from GWAS results. These SNPs are also annotated in the manhattan plot in the HTML report.
 
-- Set `rarevar_min_log10p` to the min value ( -log10(pval) ) for top hit genes from rare variants analysis. These genes are also annotated in the general manhattan plot in the HTML report.      
+- Set `rarevar_min_log10p` to the min value ( -log10(pval) ) for top hit genes from rare variants analysis. These genes are also annotated in the general manhattan plot in the HTML report.
 
 - Set `clump_p1` to the maximum pvalue allowed for index SNPs during plink clumping to define top loci
 
-- If you are analyzing many phenotypes, it may be useful to set `make_report` to false. Generating the HTML graphical report can add a considerable amount of time for large datasets with many millions SNPs thus slowing down the overall execution.
+- If you are analyzing many phenotypes on a large dataset, we suggest to set `make_report` to false or at least disable the generation of the locus zoom plots by setting `n_top_loci_plot` to zero. Generating the HTML graphical report and especially the regional plots, can add a considerable amount of time when many phenotypes are tested together on a large dataset.
 
 - If you have categorical covariates, the maximum number of allowed categories is set to 10 bu default. You can adjsut this using the `maxCatLevels` parameter.
 
 ## Input files
 
-Adjust the input files as described in the input files sections.
+Set the input files parameters as described in the input files sections.
+
+- The [full genetic dataset](input-full-data.md) to perform GWAS analysis
+- The [reduced SNPs dataset](input-indep-snps.md) to perform REGENIE step1 regression
+- The [rare variants dataset and annotations](input-rarevars-data.md) to perform rare variant tests
+- An optional set of files representing your [LD panel](input-ld-panel.md) to perform loci clumping
 
 ## Multi-models run
 
-In case you want to configure a multi-models run you also need to set the following parameters:
+In case you want to configure a you also need to set the following parameters:
 
 - Set `models_table` to a tab-separated file defining the models to test
   
 - Set `missing_tolerance` to the maximum allowed fraction of missing phenotype values when collecting uniform group of phenotypes for a run.
+
+## Multi-projects run
+
+In case you want to configure a multi-projects run you also need to set the following parameters:
+
+- Set `projects_table` to a tab-separated file defining the projects to test

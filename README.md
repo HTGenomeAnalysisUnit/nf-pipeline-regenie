@@ -67,6 +67,10 @@ You can eventually chose a specific version of the pipeline using the `--branch`
 
 `git clone --depth 1 --branch v1.8.2 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie.git`
 
+## Performances
+
+Using the default settings, 100 quantitative phenotypes can be analyzed on the full UKBB dataset (about 500k individuals and 45M SNPs) including tophit annotation and top loci identification (but without HTML reports) in ~7h applying a limit of 200 concurrent tasks (peak of 800 CPUs usage).
+
 ## Credits
 
 The original concept is based on this amazing [github repository](https://github.com/genepi/nf-gwas) from Institute of Genetic Epidemiology, Innsbruck maintained by Sebastian Schönherr and Lukas Forer.

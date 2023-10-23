@@ -80,13 +80,14 @@ process RUNL0 {
   script:
   master_prefix = master_file.simpleName
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
+  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
+  def condition_list = covar_meta.condition_list == '' || covar_meta.condition_list == null ? '' : "--condition-list ${covar_meta.condition_list}"
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -103,6 +104,7 @@ process RUNL0 {
     $useLoocv \
     $maxCatLevels \
     $binary \
+    $condition_list \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     --run-l0 ${master_file},${job_n} \
@@ -130,13 +132,14 @@ process RUNL1 {
   script:
   master_prefix = master_file.simpleName
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
+  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
+  def condition_list = covar_meta.condition_list == '' || covar_meta.condition_list == null ? '' : "--condition-list ${covar_meta.condition_list}"
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -154,6 +157,7 @@ process RUNL1 {
     $useLoocv \
     $maxCatLevels \
     $binary \
+    $condition_list \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     --niter ${params.niter} \

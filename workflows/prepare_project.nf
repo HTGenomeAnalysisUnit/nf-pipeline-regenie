@@ -43,10 +43,42 @@ workflow PREPARE_PROJECT {
                 file(row[0][5]),
                 [
                     cols: row[0][6],
-                    cat_cols: row[0][7]
+                    cat_cols: row[0][7],
+                    gxe: params.interaction_cov,
+                    gxg: params.interaction_snp,
+                    condition_list: params.condition_list
                 ]
             )} 
 
+    } else if (params.projects_table) {
+        log.info "==> INIT RUN: Using multi-project mode with projects table ${params.projects_table}"
+
+        //header: ['project_id','pheno_file','pheno_cols','pheno_binary','pheno_model','cov_file','cov_cols','cov_cat_cols']
+        phenotype_data = Channel.fromPath(params.projects_table, checkIfExists: true)
+            .splitCsv(sep: '\t', header: true)
+            .map{ row -> tuple(
+                row['project_id'],
+                file(row['pheno_file']),
+                [
+                    cols: row['pheno_cols'],
+                    binary: "${row['pheno_binary'] == 'True' ? true : false}",
+                    model: row['pheno_model']
+                ]
+            )} 
+
+        covariate_data = Channel.fromPath(params.projects_table, checkIfExists: true)
+            .splitCsv(sep: '\t', header: true)
+            .map{ row -> tuple(
+                row['project_id'],
+                file(row['cov_file']),
+                [
+                    cols: row['cov_cols'],
+                    cat_cols: row['cov_cat_cols'],
+                    gxe: row['interaction_cov'],
+                    gxg: row['interaction_snp'],
+                    condition_list: row['condition_list']
+                ]
+            )} 
     } else {
         log.info "==> INIT RUN: Using single run execution"
 
@@ -75,7 +107,10 @@ workflow PREPARE_PROJECT {
             covariates_file,
             [ 
                 cols: params.covariates_columns, 
-                cat_cols: params.covariates_cat_columns
+                cat_cols: params.covariates_cat_columns,
+                gxe: params.interaction_cov,
+                gxg: params.interaction_snp,
+                condition_list: params.condition_list
             ]
         ])
 

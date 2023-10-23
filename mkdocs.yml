@@ -19,8 +19,9 @@ nav:
     - Home: index.md
     - Quick start: quick-start.md
     - Running mode:
-      - "single model": single-model.md
-      - "multi models": multi-models.md
+      - "single model": running-modes.md
+      - "multi projects": running-modes.md
+      - "multi models": running-modes.md
     - Input files:
       - "Phenotype / Covariate file": input-phenotype-file.md
       - "Full genetic dataset": input-full-data.md
@@ -28,6 +29,7 @@ nav:
       - "LD panel (optional)": input-ld-panel.md
       - "Inputs for rare variants tests": input-rare-variants.md
       - "Models table (multi models run)": input-models-table.md
+      - "Project table (multi projects run)": input-projects-table.md
       - "Re-use step1 predictions": input-reuse-step1.md
     - Configuration:
       - "main parameters": main-parameters.md

@@ -15,4 +15,4 @@ Another important aspect to consider is the maximum number of jobs submitted sim
 
 To further increase speed, you can eventually adjust the default amount of resources requested for regenie step1 and regenie step2 operations by editing the file `conf/base.config`. The default here are sensible for most cases, but you can increase the amount of memory and CPUs requested for each task to reduce computation time.
 
-In our tests using the default settings one can analyze 100 quantitative phenotypes on the full UKBB dataset (about 500k individuals and 40M SNPs) including loci identification, but withouth HTML reports, in ~6h under normal HPC load considering a limit of 200 concurrent tasks.
+In our tests using the default settings one can analyze 100 quantitative phenotypes on the full UKBB dataset (about 500k individuals and 45M SNPs) including loci identification, but withouth HTML reports, in ~7h under normal HPC load considering a limit of 200 concurrent tasks (peak of 800 CPUs usage).

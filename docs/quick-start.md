@@ -1,16 +1,16 @@
 # Quick Start
 
-1. Create a folder for your project (e.g. `yourproject`) 
+1. Create a folder for your project (e.g. `yourproject`)
 
 2. Prepare a tab-separated table of phenotypes and eventually covariates (see the [input section](input-phenotype-file.md)).
 
-3. Prepare and configure the required [input data for step 2](input-full-data.md), usually an imputed or sequencing dataset, and [step 1](input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](input-ld-panel.md), suggested when analyzing a large dataset with > 100k samples.
+3. Prepare and configure the required [input data for step 2](input-full-data.md), usually an imputed or sequencing dataset, and [step 1](input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](input-ld-panel.md), suggested if you want to run loci clumping when analyzing a large dataset with > 100k samples.
 
-4. If you want to perform a multi-models execution, prepare the [models table](input-models-table.md) to describe your analyses.
+4. If you want to perform a multi-models or multi-projects execution, prepare the [models table](input-models-table.md) or [projects table](input-projects-table.md) to describe your analyses.
 
 5. Prepare the necessary config files, using the templates provided in the `templates` folder:
-   1. A [config file](main-parameters.md) describing settings and inputs for your project 
-   2. A config file to [define the profile](hpc-profile.md) for your computational environment. 
+   1. A [config file](main-parameters.md) describing settings and inputs for your project.
+   2. A config file to [define the profile](hpc-profile.md) for your computational environment.
    3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](tower-monitoring.md)
 
 6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`

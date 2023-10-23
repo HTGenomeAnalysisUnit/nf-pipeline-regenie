@@ -100,6 +100,9 @@ These are mandatory when running rare var analysis
     regenie_range                         = '' // when splitting is not active you can use this to specify a genomic range for step2 analysis
     regenie_extract_snps                  = '' // when splitting is not active you can specify a file containing a list of variant IDs to restrict step2 analysis
     regenie_extract_genes                 = '' // when splitting is not active you can use this to specify a file containing a list of genes to restrict step2 analysis
+    interaction_cov                       = null // run GxE test in GWAS specifying the interacting covariate from covariate table
+    interaction_snp	                      = null // run GxG test in GWAS specifying the interacting variant ID
+    condition_list                        = null // run conditional analysis in GWAS specifying a files with variant IDs to condition on
     save_chunks_file                      = true
     save_step2_logs                       = true
     save_bgen_index                       = true
