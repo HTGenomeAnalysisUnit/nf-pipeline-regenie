@@ -1,6 +1,6 @@
 workflow REGENIE_STEP1_SPLIT {
   take:
-    project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), file_bim, file_bed, file_fam]
+    project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [accessory_files], file_bim, file_bed, file_fam]
   
   main:
     SPLITL0(project_data)
@@ -11,7 +11,7 @@ workflow REGENIE_STEP1_SPLIT {
     l1_input_ch = RUNL0.out.groupTuple(size: params.step1_n_chunks)
       .map { tuple(it[0], it[1].flatten()) } //We need to flatten the list of files in case there are multiple phenos in a singe project
       .join(SPLITL0.out)
-      .map { tuple(it[0], it[3].cols.split(',').size(), it[3].cols.split(',').toList(), it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9], it[10])}
+      .map { tuple(it[0], it[3].cols.split(',').size(), it[3].cols.split(',').toList(), it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9], it[10], it[11])}
       .transpose(by: 2)
     RUNL1(l1_input_ch)
 
@@ -35,14 +35,14 @@ workflow REGENIE_STEP1_SPLIT {
 
 process SPLITL0 {
   input:
-    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(accessory_files), path(file_bim), path(file_bed), path(file_fam)
 
   output:
-    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path("regenie_step1.master"), path("regenie_step1*.snplist"), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(accessory_files), path("regenie_step1.master"), path("regenie_step1*.snplist"), path(file_bim), path(file_bed), path(file_fam)
 
   script:
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-  def make_no_cov_file = covariates_file.name == 'NO_COV_FILE' ? "unlink NO_COV_FILE; touch NO_COV_FILE" : ''
+  //def make_no_cov_file = covariates_file.name == 'NO_COV_FILE' ? "unlink NO_COV_FILE; touch NO_COV_FILE" : ''
   def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
@@ -63,8 +63,6 @@ process SPLITL0 {
     --bsize ${params.regenie_bsize_step1} \
     --split-l0 regenie_step1,${params.step1_n_chunks} \
     --out regenie_step1_splitl0
-  
-  ${make_no_cov_file}
   """
 }
 
@@ -72,7 +70,7 @@ process RUNL0 {
   label 'step1_runl0'
   
   input:
-    tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(job_n), val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
     
   output:
     tuple val(project_id), path("${master_prefix}_job${job_n}_l0_*")
@@ -80,14 +78,14 @@ process RUNL0 {
   script:
   master_prefix = master_file.simpleName
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
+  def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
-  def condition_list = covar_meta.condition_list == '' || covar_meta.condition_list == null ? '' : "--condition-list ${covar_meta.condition_list}"
+  def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -122,7 +120,7 @@ process RUNL1 {
   }
 
   input:
-    tuple val(project_id), val(n_phenos), val(single_pheno), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
+    tuple val(project_id), val(n_phenos), val(single_pheno), path(runl0_files), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(master_file), path(snpfile), path(file_bim), path(file_bed), path(file_fam)
 
   output:
     tuple val(project_id), val(n_phenos), path("regenie_step1_out_*.gz"), emit: regenie_step1_out_gz
@@ -132,14 +130,14 @@ process RUNL1 {
   script:
   master_prefix = master_file.simpleName
   def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-  def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
+  def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def useLoocv = params.use_loocv ? "--loocv" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
-  def condition_list = covar_meta.condition_list == '' || covar_meta.condition_list == null ? '' : "--condition-list ${covar_meta.condition_list}"
+  def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)

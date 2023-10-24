@@ -22,7 +22,17 @@ process CONCAT_STEP2_RESULTS {
     headerfile=\$(ls *${pheno}.regenie.gz | head -1)
 
     zcat \$headerfile | head -n ${n_head_lines} | sed 's/ /\t/g' > header.txt
-    (cat header.txt && sed 's/ /\t/g' ${pheno}.tmp | sort -S ${task.memory.toGiga() - 1}G -k1,1V -k2,2n -T tmp_sort) | bgzip -c > ${pheno}.${suffix}.regenie.gz 
+    (cat header.txt && sed 's/ /\t/g' ${pheno}.tmp | sort -S ${task.memory.toGiga() - 1}G -k1,1V -k2,2n -T tmp_sort) | bgzip -c > ${pheno}.${suffix}.regenie.gz
+    
+    # Check sort exit status, this is need to properly capture OOM errors on sort by returning the actual exit status
+    # Without this check, the exit status of sort is always 0 due to pipe
+    sort_exit=\${PIPESTATUS[0]}
+    if [[ \$sort_exit -ne 0 ]]
+    then 
+        echo "ERROR CODE: \$sort_exit"
+        exit \$sort_exit
+    fi
+
     tabix -f -b 2 -e 2 -s 1 -S 1 ${pheno}.${suffix}.regenie.gz
     """
 }

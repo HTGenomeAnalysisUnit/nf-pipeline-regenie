@@ -6,7 +6,7 @@ include { REGENIE_LOG_PARSER_STEP1             } from '../modules/local/regenie_
 workflow REGENIE_STEP1_WF {
     take:
         genotyped_plink_ch //[project_id, bed_file, bim_file, fam_file]
-        project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
+        project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [accessory_files]]
   
     main:
     //==== REGENIE STEP 1 ====

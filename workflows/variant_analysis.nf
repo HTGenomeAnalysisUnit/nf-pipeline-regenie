@@ -92,7 +92,7 @@ include { REGENIE_STEP2_WF as REGENIE_STEP2_RAREVAR_WF } from '../subworkflow/re
 //==== WORKFLOW ====
 workflow RUN_VARIANT_ANALYSIS {   
   take:
-  project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
+  project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [accessory_files]]
   input_validation_logs //[project_id, pheno_validation_log, covar_validation_log]
 
   main:

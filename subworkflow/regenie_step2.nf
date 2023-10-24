@@ -8,7 +8,7 @@ include { REGENIE_STEP2_RAREVARS                                } from '../modul
 
 workflow REGENIE_STEP2_WF {
     take:
-        processed_genotypes_ch //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)]
+        processed_genotypes_ch //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [file(accessory_files)], path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)]
 
     main:
     //==== INITIALIZATION ====
@@ -21,7 +21,10 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file 
         GWAS_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }
+            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.
+            .map{ project, n_chunks, log_file -> [groupKey(project, n_chunks), log_file] }
+            .groupTuple()
+            .map { tuple(it[0], it[1][0]) }
         )
 
         //Concatenate results
@@ -48,7 +51,10 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file
         RAREVAR_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log.groupTuple().map { tuple(it[0], it[1][0]) }
+            REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log
+            .map{ project, n_chunks, log_file -> [groupKey(project, n_chunks), log_file] }
+            .groupTuple()
+            .map { tuple(it[0], it[1][0]) }
         )
         //Concatenate results
         concat_rarevar_results_ch = REGENIE_STEP2_RAREVARS.out.regenie_step2_out.transpose()

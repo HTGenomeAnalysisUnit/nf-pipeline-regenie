@@ -6,13 +6,19 @@ include { SETUP_MULTIPLE_RUNS       } from '../modules/local/setup_multiple_runs
 
 workflow PREPARE_PROJECT {
     main:
+    //Make dummy files in case some optional files are not provided
+    tmp_files = [:]
+    for (x in ['COV', 'CONDITION']) {
+        tmp_filename = "${workflow.workDir}/NO_${x}_FILE"
+        tmp_files[x] = file(tmp_filename)
+        file(tmp_filename).append('')
+    }
+
     if (params.models_table) {
         log.info "==> INIT RUN: Using multi-model mode with models table ${params.models_table}"
 
         pheno_chunker_r = file("$projectDir/bin/pheno_chunker.R", checkIfExists: true)
         prepare_projects_py = file("$projectDir/bin/prepare_projects.py", checkIfExists: true)
-        //conf_template = file("$projectDir/templates/run_parameters.conf", checkIfExists: true)
-        //shared_config_file = file(params.shared_config_file, checkIfExists: true)
         models_table = file(params.models_table, checkIfExists: true)
         traits_table = file(params.phenotypes_filename, checkIfExists: true)
         fam_file = file("${params.genotypes_array}.fam", checkIfExists: true)
@@ -40,14 +46,14 @@ workflow PREPARE_PROJECT {
             .toList().transpose()
             .map{ row -> tuple(
                 row[0][0],
-                file(row[0][5]),
+                file("${!row[0][5] || row[0][5] == 'NA' || row[0][5] == '' ? tmp_files['COV'] : row[0][5]}", checkIfExists: true),
                 [
                     cols: row[0][6],
                     cat_cols: row[0][7],
                     gxe: params.interaction_cov,
-                    gxg: params.interaction_snp,
-                    condition_list: params.condition_list
-                ]
+                    gxg: params.interaction_snp
+                ],
+                [file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true)]
             )} 
 
     } else if (params.projects_table) {
@@ -70,14 +76,14 @@ workflow PREPARE_PROJECT {
             .splitCsv(sep: '\t', header: true)
             .map{ row -> tuple(
                 row['project_id'],
-                file(row['cov_file']),
+                file("${!row['cov_file'] || row['cov_file'] == 'NA' || row['cov_file'] == '' ? tmp_files['COV'] : row['cov_file']}", checkIfExists: true),
                 [
                     cols: row['cov_cols'],
                     cat_cols: row['cov_cat_cols'],
                     gxe: row['interaction_cov'],
-                    gxg: row['interaction_snp'],
-                    condition_list: row['condition_list']
-                ]
+                    gxg: row['interaction_snp']
+                ],
+                [file("${!row['condition_list'] || row['condition_list'] == 'NA' || row['condition_list'] == '' ? tmp_files['CONDITION'] : row['condition_list']}", checkIfExists: true)]
             )} 
     } else {
         log.info "==> INIT RUN: Using single run execution"
@@ -95,23 +101,16 @@ workflow PREPARE_PROJECT {
             ])
 
         //Covariates
-        if (params.covariates_filename == 'NO_COV_FILE') {
-            covar_tmp_file = file("${workflow.workDir}/NO_COV_FILE")
-            covar_tmp_file.append('')
-            covariates_file = file("$covar_tmp_file")
-        } else {
-            covariates_file = file(params.covariates_filename, checkIfExists: true)
-        }
         covariate_data = Channel.of([
             params.project,
-            covariates_file,
+            file("${!params.covariates_filename || params.covariates_filename == 'NA' || params.covariates_filename == '' ? tmp_files['COV'] : params.covariates_filename}", checkIfExists: true),
             [ 
                 cols: params.covariates_columns, 
                 cat_cols: params.covariates_cat_columns,
                 gxe: params.interaction_cov,
-                gxg: params.interaction_snp,
-                condition_list: params.condition_list
-            ]
+                gxg: params.interaction_snp
+            ],
+            [file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true)]
         ])
 
     }
@@ -145,8 +144,9 @@ workflow PREPARE_PROJECT {
         .join(validated_covars_logs)
 
     CHECK_PROJECT(project_data.count(), project_data)
-
+    project_data.view()
+    
     emit:
-    project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols)]
+    project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [accessory_files]]
     input_validation_logs //[project_id, pheno_log_file, covar_log_file]
 }

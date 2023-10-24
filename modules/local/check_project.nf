@@ -3,7 +3,7 @@ process CHECK_PROJECT {
 	
 	input:
 	val(project_size)
-	tuple val(project_id), path(pheno_file), val(pheno_meta), path(covar_file), val(covar_meta)
+	tuple val(project_id), path(pheno_file), val(pheno_meta), path(covar_file), val(covar_meta), path(accessory_files)
 
 	exec:
 	pipeline_log_dir = file("${params.logdir}/analysis_config")

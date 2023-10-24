@@ -3,15 +3,15 @@ process REGENIE_STEP2_GWAS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_gwas" //TODO Can we adjust label to use different resources when running by chunk or whole dataset?
+  label "step2_gwas"
   tag "${project_id}_${chrom}_${task.index}"
 
   input:
-	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
+	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
 
   output:
     tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
-    tuple val(project_id), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
+    tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_imputed_format}"
@@ -26,15 +26,15 @@ process REGENIE_STEP2_GWAS {
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def extract_snps = params.regenie_extract_snps != '' ? "--extract $params.regenie_extract_snps" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-    def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
+    def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
     def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
     def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
-    def interaction_cov = covar_meta.gxe == '' || covar_meta.gxe == null ? '' : "--interaction ${covar_meta.gxe}"
-    def interaction_snp = covar_meta.gxg == '' || covar_meta.gxg == null ? '' : "--interaction-snp ${covar_meta.gxg}"
-    def condition_list = covar_meta.condition_list == '' || covar_meta.condition_list == null ? '' : "--condition-list ${covar_meta.condition_list}"
+    def interaction_cov = !covar_meta.gxe || covar_meta.gxe == '' || covar_meta.gxe == 'NA' ? '' : "--interaction ${covar_meta.gxe}"
+    def interaction_snp = !covar_meta.gxg || covar_meta.gxg == '' || covar_meta.gxg == 'NA' ? '' : "--interaction-snp ${covar_meta.gxg}"
+    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
   """
   regenie \
     --step 2 \
@@ -73,18 +73,18 @@ process REGENIE_STEP2_RAREVARS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
   }
 
-  label "step2_rarevar" //TODO Can we adjust label to use different resources when running by chunk or whole dataset?
+  label "step2_rarevar"
   tag "${project_id}_chr${chrom}_chunk${task.index}"
 
   input:
-	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene), val(n_chunks)
+	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene), val(n_chunks)
     path rarevars_set_list
     path rarevars_anno_file
     path rarevars_mask_file
 
   output:
     tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
-    tuple val(project_id), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
+    tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_rarevar_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_rarevar_format}"
@@ -108,6 +108,7 @@ process REGENIE_STEP2_RAREVARS {
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def extract_genes = params.regenie_extract_genes != '' ? "--extract-sets $params.regenie_extract_genes" : ''
+    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
   """
   regenie \
     --step 2 \
@@ -139,6 +140,7 @@ process REGENIE_STEP2_RAREVARS {
     $maxCatLevels \
     $build_mask \
     $write_mask_snplist \
+    $condition_list \
     --out ${project_id}_${chrom}_${task.index}
   """
 }

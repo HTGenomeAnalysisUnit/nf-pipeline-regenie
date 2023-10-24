@@ -62,7 +62,7 @@ if ((params.regenie_range != '' || params.regenie_extract_genes != '') && params
 
 //Set output and logs directories
 if(params.outdir == null) {
-  outdir = "nf-regenie-pipeline_results"
+  outdir = "${params.project}_output"
 } else {
   outdir = "${params.outdir}"
 }
