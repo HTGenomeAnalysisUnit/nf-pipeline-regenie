@@ -50,6 +50,7 @@ import gwaslab as gl
 import os
 from skimpy import skim
 from IPython.display import display, Markdown
+import gc
 
 if gwaslab_data_dir:
   gl.options.set_option('data_directory', gwaslab_data_dir)
@@ -102,6 +103,12 @@ if (n_unique == 2):
 else:
   #Plot histogram
   phenotypeTable[phenotype].plot(kind='hist')
+```
+
+```{python clean_memory}
+#Clean memory
+del phenotypeTable
+gc.collect()
 ```
 
 ## Main results
@@ -204,6 +211,13 @@ figure, log = regenieTable.plot_mqq(
 display(figure)
 ```
 
+```{python clean_memory2}
+#Clean memory
+del figure
+del top_snp_per_gene
+gc.collect()
+```
+
 ## Genes on top SNPs
 
 ```{python tophits_md}
@@ -233,6 +247,13 @@ topHitsGroupedByGene
 ```
 
 :::
+
+```{python clean_memory3}
+#Clean memory
+del annotated_tophits
+del topHitsGroupedByGene
+gc.collect()
+```
 
 ## Top Loci
 

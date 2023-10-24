@@ -22,10 +22,12 @@ When using multi-models execution mode one can test any number of arbitrary mode
 Based on this information we first perform a preparing step that configure uniform analysis runs by grouping together compatible models. The process works as follows:
 
 1. Models with the same phenotyped data type, the same genetic model and the same set of covariates are grouped together
-2. For each model a matrix is generated containing all the phenotype variables and covariates used in the model
-3. Such model matrixes are then grouped to create multi-phenotype analysis in which none of the tested phenotype has more then the allowed fraction of missing values and no missing values are present in any covariates
+2. For each model a matrix is generated containing the phenotype variables and all the covariates used in the model. Individuals with any missing value in any covariate are then excluded.
+3. The resulting model matrixes are then grouped to create multi-phenotype analysis in which none of the tested phenotype has more then the allowed fraction of missing values and no missing values are present in any covariates
 4. Analysis chunks are then prepared based on the configured phenotype batch size
 5. The resulting analysis chunks are automatically submitted to the pipeline for association analysis
+
+**NB.** The pipeline removes individuals with any missing value in covariates, to be consistent with the REGENIE behaviour. As a result of this process the final sample size available for the analysis may be largely reduced if you use covariates with a large fraction of missing values. In this case we suggeste to pre-process covariate data to impute missing values or remove the covariates with a large fraction of missing values.
 
 A main result folder is created under `outdir` (or using the default nf-regenie-pipeline_results) where models configuration is saved. Then results for each analysis chunk are saved in a separate sub-folder containing the configuration and the exact tables of phenotypes and covariates used in the execution.
 

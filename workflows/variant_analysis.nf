@@ -228,16 +228,11 @@ workflow.onComplete {
   versions_yml = file("${projectDir}/conf/main_tools_versions.yml")
   versions_yml.copyTo("${pipeline_log_dir}/main_tools_versions.yml")
 
-  //if (params.master_log_dir != null) {
-    // master_log = file("${master_log_dir}/job_execution_summary.log")
-    // def master_log_msg="${params.project}\t${workflow.launchDir}\t${ workflow.success ? 'OK' : 'failed' }\n"
-    // master_log.append(master_log_msg)
-  //}
-
   //CLOSE MESSAGE
   log.info """
   ==============================
   ANALYSIS COMPLETE!
+  Execution status: ${ workflow.success ? 'OK' : 'FAILED' }
   Results location: ${ params.outdir }
   """.stripIndent()
 }

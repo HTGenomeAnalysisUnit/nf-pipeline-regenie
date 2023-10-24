@@ -1,8 +1,8 @@
 # Models table
 
-When executing a multi-models run you need to provide all phenotypes and covariates in a single file using the `phenotypes_filename` parameter. The exact data types and column names for phenotypes and covariates are then configured in the models table. 
+When executing a multi-models run you need to provide all phenotypes and covariates in a single file using the `phenotypes_filename` parameter. The exact data types and column names for phenotypes and covariates are then configured in the models table.
 
-The parameter `models_table` is used to activate a multi-models run by configuring a models table. The models table is a tab-separated file with header and columns names: model_id, model, trait_type, genetic_model, cat_var. 
+The parameter `models_table` is used to activate a multi-models run by configuring a models table. The models table is a tab-separated file with header and columns names: model_id, model, trait_type, genetic_model, cat_var.
 
 - model_id: a **unique** identifier for the model.
 - model: model descrition using col names from the phenotype table in the form `phenotype ~ covar1 + covar2 + ...`. Use `phenotype ~ 1` if you don't have any covariate

@@ -144,7 +144,6 @@ workflow PREPARE_PROJECT {
         .join(validated_covars_logs)
 
     CHECK_PROJECT(project_data.count(), project_data)
-    project_data.view()
     
     emit:
     project_data //[project_id, pheno_file, pheno_meta(cols, binary, model), covar_file, covar_meta(cols, cat_cols), [accessory_files]]

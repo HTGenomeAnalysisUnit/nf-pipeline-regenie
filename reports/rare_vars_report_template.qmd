@@ -55,6 +55,7 @@ import pandas as pd
 import numpy as np
 import gwaslab as gl
 import os
+import gc
 from skimpy import skim
 from IPython.display import display, Markdown
 from statsmodels.sandbox.stats.multicomp import multipletests
@@ -111,6 +112,12 @@ else:
   phenotypeTable[phenotype].plot(kind='hist')
 ```
 
+```{python clean_memory}
+#Clean memory
+del phenotypeTable
+gc.collect()
+```
+
 ## Main results
 
 Following plots summarise results across all tests and AF bins by plotting only the most significant result for each gene. Note that in case of ties all results with the same pvalue are plotted. 
@@ -158,6 +165,12 @@ fdr_sorted_df = dt_clean.sort_values(by=['LOG10P_FDR_alltests'], ascending=False
 test_fdr_value = fdr_sorted_df[fdr_sorted_df['LOG10P_FDR_alltests'] >= -np.log10(0.05)].index.max()
 fdr_global_threshold = None if np.isnan(test_fdr_value) else fdr_sorted_df.loc[test_fdr_value, 'LOG10P']
 # END: ed8c6549bwf9
+```
+
+```{python clean_memory2}
+#Clean memory
+del dt
+gc.collect()
 ```
 
 ### Manhattan plot - overall results
@@ -237,6 +250,12 @@ figure, log = regenieTable.plot_mqq(
 display(figure)
 ```
 
+```{python clean_memory3}
+#Clean memory
+del figure
+gc.collect()
+```
+
 ### Manhattan plot - configured statistics
 
 ```{python global_results_md}
@@ -288,6 +307,12 @@ figure, log = regenieTable.plot_mqq(
 #| fig-height: 5
 
 display(figure)
+```
+
+```{python clean_memory4}
+#Clean memory
+del figure
+gc.collect()
 ```
 
 ## Detailed results
@@ -350,6 +375,13 @@ for m in masks:
 ```
 
 ::: {.callout-tip collapse="true"}
+
+```{python clean_memory5}
+#Clean memory
+del burden_dt
+gc.collect()
+```
+
 ## Expand here to see results
 
 ```{python burden_plot_display}
@@ -361,6 +393,12 @@ for burden_plot in burden_plots:
 ```
 
 :::
+
+```{python clean_memory6}
+#Clean memory
+del burden_plots
+gc.collect()
+```
 
 ### Other rare variants tests
 
@@ -417,6 +455,12 @@ for t in tests:
 ```
 
 ::: {.callout-tip collapse="true"}
+```{python clean_memory7}
+#Clean memory
+del tests_dt
+gc.collect()
+```
+
 ## Expand here to see results
 
 ```{python othertests_plot_display}

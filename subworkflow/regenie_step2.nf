@@ -21,7 +21,7 @@ workflow REGENIE_STEP2_WF {
 
         //Parse log file 
         GWAS_LOG_PARSER_STEP2 (
-            REGENIE_STEP2_GWAS.out.regenie_step2_out_log.
+            REGENIE_STEP2_GWAS.out.regenie_step2_out_log
             .map{ project, n_chunks, log_file -> [groupKey(project, n_chunks), log_file] }
             .groupTuple()
             .map { tuple(it[0], it[1][0]) }
