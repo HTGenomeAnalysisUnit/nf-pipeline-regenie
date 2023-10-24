@@ -275,6 +275,21 @@
       },
       "required": ["models_table", "pheno_chunk_size", "missing_tolerance"]
     },
+    "multi_projects_mode_input": {
+      "title": "Multi-projects mode input",
+      "type": "object",
+      "description": "Activate multi-projects execution",
+      "default": "",
+      "properties": {
+        "projects_table": {
+          "type": "string",
+          "description": "A tab-separate file describing projects to run",
+          "format": "file-path",
+          "help_text": "When this is null, single project execution is performed."
+        }
+      },
+      "required": ["projects_table"]
+    },
     "step1_input_pre_processing": {
       "title": "step1 input pre-processing",
       "type": "object",
@@ -778,6 +793,9 @@
     },
     {
       "$ref": "#/definitions/multi_models_mode_input"
+    },
+    {
+      "$ref": "#/definitions/multi_projects_mode_input"
     },
     {
       "$ref": "#/definitions/step1_input_pre_processing"
