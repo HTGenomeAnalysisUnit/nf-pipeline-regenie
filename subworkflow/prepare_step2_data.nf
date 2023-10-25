@@ -1,4 +1,4 @@
-include { CONVERT_TO_PGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_pgen", publish: params.save_pgen, dosage_from: params.dosage_from)
+include { CONVERT_TO_BGEN   } from '../modules/local/imputed_to_plink2' addParams(outdir: "${params.outdir}/converted_bgen", publish: params.save_converted_bgen, dosage_from: params.dosage_from)
 include { MAKE_BGEN_INDEX   } from '../modules/local/make_bgen_index'   addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_index)
 include { MAKE_BGEN_SAMPLE  } from '../modules/local/make_bgen_sample'  addParams(outdir: "${params.outdir}/bgen_dataset", publish: params.save_bgen_sample)
 include { CHECK_MAX_CHANNEL_SIZE } from '../modules/local/check_channel_size'
@@ -79,8 +79,8 @@ workflow PREPARE_GENETIC_DATA {
 
     //==== CONVERT TO PGEN IF INPUT IS VCF ====
     if (params.input_format in ["vcf","bcf"]) {
-        CONVERT_TO_PGEN ( genotypes_files )
-        genotypes_plink2_ch = CONVERT_TO_PGEN.out.genotypes_data
+        CONVERT_TO_BGEN ( genotypes_files )
+        genotypes_plink2_ch = CONVERT_TO_BGEN.out.genotypes_data
     } 
     
     if (params.input_format == "bgen") {

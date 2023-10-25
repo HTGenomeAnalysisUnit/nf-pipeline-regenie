@@ -1,4 +1,4 @@
-# Full genotype data 
+# Full genotype data
 
 To perform genetic association or rare variants analysis (regenie step 2) you must provide the full genetic dataset for your study, usually a large genetic dataset from imputation or sequencing. No QC is performed on teh full genetic dataset so ensure it is clean.
 
@@ -13,12 +13,12 @@ The input dataset can be provided as a single file, split in multiple chunk file
 - input format: `'vcf'`
 - input dataset: `'path/to/my_data.vcf.gz'`
 
-The input VCF will be converted to `pgen` format using plink2 and `--const-fid 0` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
+The input VCF must be in .vcf.gz format and will be converted to `bgen` format using plink2 and `--const-fid 0` option. The following parameters are used to control the conversion (see [relevant plink2 documentation](https://www.cog-genomics.org/plink/2.0/input#vcf)):
 
 - `vcf_min_gq`: minimum genotype quality (GQ) for a genotype to be included in the PGEN output.
 - `gwas_read_dosage_from` / `rarevar_read_dosage_from`: these params can be set to decide from which field to read GT probabilities when converting VCF for the GWAS and rare variants input datasets, respectively. Accepted options are `'HDS'` (default) which usually works for VCF from Minimac4 imputation, `'DS'` for Minimac3 dosages or `'GP'` for genotype probabilities (to use with VCF from sequencing). Default is `null`, actual genotypes will be imported.
 - `import_dosage_certainty`: when `read_dosage_from = 'GP'` this parameter controls the minimum probability accepted to set a genotype. You can set to null to remove this filter. Suggetion is to use `0.7`.
-- `vcf_fixed_fid`: when `null` the conversion is performed using `--double-id` option, so that sample IDs in the VCF are used also for FID. If you set a string (like `'0'`) than the FID column in the VCF is fixe and set to this value for all samples. Default is `null`.
+- `vcf_fixed_fid`: when `null` the conversion is performed using `--double-id` option, so that sample IDs in the VCF are used also for FID. If you set a string (like `'0'`) than the FID column in the VCF is fixed and set to this value for all samples. Default is `0`.
 
 The converted dataset is saved to output folder when `save_pgen = true` (default).
 

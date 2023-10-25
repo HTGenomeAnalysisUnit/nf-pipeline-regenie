@@ -731,11 +731,11 @@
           "hidden": true,
           "description": "Save SAMPLE file generated from BGEN input"
         },
-        "save_pgen": {
+        "save_converted_bgen": {
           "type": "boolean",
           "default": true,
           "hidden": true,
-          "description": "Save converted PGEN generated from VCF input"
+          "description": "Save converted BGEN generated from VCF input"
         }
       }
     },

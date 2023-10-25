@@ -107,7 +107,7 @@ These are mandatory when running rare var analysis
     save_step2_logs                       = true
     save_bgen_index                       = true
     save_bgen_sample                      = true    
-    save_pgen                             = true
+    save_converted_bgen                   = true
 
 ### VCF to PGEN conversion settings
 

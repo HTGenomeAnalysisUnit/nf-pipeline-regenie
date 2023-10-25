@@ -113,6 +113,8 @@ else:
 ```
 
 ```{python clean_memory}
+#| include: false
+
 #Clean memory
 del phenotypeTable
 gc.collect()
@@ -168,6 +170,8 @@ fdr_global_threshold = None if np.isnan(test_fdr_value) else fdr_sorted_df.loc[t
 ```
 
 ```{python clean_memory2}
+#| include: false
+
 #Clean memory
 del dt
 gc.collect()
@@ -246,11 +250,15 @@ figure, log = regenieTable.plot_mqq(
 ```{python manhattan_display}
 #| fig-width: 12
 #| fig-height: 5
+#| out-width: 12
+#| out-height: 5
 
 display(figure)
 ```
 
 ```{python clean_memory3}
+#| include: false
+
 #Clean memory
 del figure
 gc.collect()
@@ -310,6 +318,8 @@ display(figure)
 ```
 
 ```{python clean_memory4}
+#| include: false
+
 #Clean memory
 del figure
 gc.collect()
@@ -377,6 +387,8 @@ for m in masks:
 ::: {.callout-tip collapse="true"}
 
 ```{python clean_memory5}
+#| include: false
+
 #Clean memory
 del burden_dt
 gc.collect()
@@ -395,6 +407,8 @@ for burden_plot in burden_plots:
 :::
 
 ```{python clean_memory6}
+#| include: false
+
 #Clean memory
 del burden_plots
 gc.collect()
@@ -455,7 +469,10 @@ for t in tests:
 ```
 
 ::: {.callout-tip collapse="true"}
+
 ```{python clean_memory7}
+#| include: false
+
 #Clean memory
 del tests_dt
 gc.collect()
@@ -482,6 +499,8 @@ if any(file_paths):
   display(Markdown("## Validation and Logs\n\n"))
 ```
 
+:::{.scrolling}
+
 ```{python log1}
 if phenotype_log:
   if os.path.exists(phenotype_log):
@@ -491,6 +510,8 @@ if phenotype_log:
   else:
     display(Markdown("**Phenotype log file not found**\n\n"))
 ```
+
+:::
 
 ```{python log2} 
 if covariate_log:
