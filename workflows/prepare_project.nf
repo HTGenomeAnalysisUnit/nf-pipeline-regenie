@@ -46,7 +46,7 @@ workflow PREPARE_PROJECT {
             .toList().transpose()
             .map{ row -> tuple(
                 row[0][0],
-                file("${!row[0][5] || row[0][5] == 'NA' || row[0][5] == '' ? tmp_files['COV'] : row[0][5]}", checkIfExists: true),
+                file("${!row[0][5] || row[0][5] == 'NA' || row[0][5] == '' || row[0][5] == 'NO_COV_FILE' ? tmp_files['COV'] : row[0][5]}", checkIfExists: true),
                 [
                     cols: row[0][6],
                     cat_cols: row[0][7],
@@ -76,7 +76,7 @@ workflow PREPARE_PROJECT {
             .splitCsv(sep: '\t', header: true)
             .map{ row -> tuple(
                 row['project_id'],
-                file("${!row['cov_file'] || row['cov_file'] == 'NA' || row['cov_file'] == '' ? tmp_files['COV'] : row['cov_file']}", checkIfExists: true),
+                file("${!row['cov_file'] || row['cov_file'] == 'NA' || row['cov_file'] == '' || row['cov_file'] == 'NO_COV_FILE' ? tmp_files['COV'] : row['cov_file']}", checkIfExists: true),
                 [
                     cols: row['cov_cols'],
                     cat_cols: row['cov_cat_cols'],
@@ -103,7 +103,7 @@ workflow PREPARE_PROJECT {
         //Covariates
         covariate_data = Channel.of([
             params.project,
-            file("${!params.covariates_filename || params.covariates_filename == 'NA' || params.covariates_filename == '' ? tmp_files['COV'] : params.covariates_filename}", checkIfExists: true),
+            file("${!params.covariates_filename || params.covariates_filename == 'NA' || params.covariates_filename == '' || params.covariates_filename == 'NO_COV_FILE' ? tmp_files['COV'] : params.covariates_filename}", checkIfExists: true),
             [ 
                 cols: params.covariates_columns, 
                 cat_cols: params.covariates_cat_columns,

@@ -47,7 +47,6 @@ workflow CLUMP_RESULTS {
                 
                 merged_bed_by_chrom = chromosomes_ch.combine(MERGE_BED_DATASET.out)
                 
-                //mix the channels to ensure we have all files
                 ld_panel_files_ch = merged_bed_by_chrom 
             } else {
             //Finally, if input is not by chromosome and we have only 1 input file we can use it directly

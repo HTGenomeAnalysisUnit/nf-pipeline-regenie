@@ -129,7 +129,7 @@ if manhattan_annotation_type == "genes":
   Annotated SNPs represent the configured top hits (SNPs with LOG10P above {annotation_min_log10p}) processed as follows:
 
   1. the SNP with the highest LOG10P value is selected for each gene
-  2. the resulting SNPs are further grouped by 500kb windows and the SNP with the highest LOG10P value is then annotated in the plot with the name of the closest gene
+  2. the genes overlapping the top 25 SNPs are then annotated in the plot
 
     """
   ))
@@ -167,10 +167,13 @@ if annotated_tophits_filename:
 if manhattan_annotation_type == "genes" and not annotated_tophits.empty:
   #Group by gene name and select the top hit
   top_snp_per_gene = annotated_tophits.groupby('CLOSEST_GENE_NAME').apply(lambda x: x.loc[x['LOG10P'].idxmax()]).loc[:, ['CHROM','GENPOS','SNPID','LOG10P']].reset_index()
-
+  
+  #Select only the top 25 SNPs
+  top_snp_per_gene = top_snp_per_gene.sort_values(by='LOG10P', ascending=False).head(25)
+  
   #To avoid overlapping SNPs, group by 500kb windows
-  top_snp_per_gene['group'] = (top_snp_per_gene['GENPOS'] // 500000).astype(int)
-  top_snp_per_gene = top_snp_per_gene.groupby(['CHROM','group']).apply(lambda x: x.loc[x['LOG10P'].idxmax()])
+  #top_snp_per_gene['group'] = (top_snp_per_gene['GENPOS'] // 500000).astype(int)
+  #top_snp_per_gene = top_snp_per_gene.groupby(['CHROM','group']).apply(lambda x: x.loc[x['LOG10P'].#idxmax()])
 
   #Reset index and select only the SNPID column
   top_snp_per_gene = top_snp_per_gene.loc[:, ['SNPID','CLOSEST_GENE_NAME']].reset_index(drop=True)
@@ -209,8 +212,8 @@ figure, log = regenieTable.plot_mqq(
 ```{python manhattan_display}
 #| fig-width: 12
 #| fig-height: 5
-#| out-width: 12
-#| out-height: 5
+#| out-width: 100%
+#| out-height: 50
 
 display(figure)
 
@@ -231,7 +234,7 @@ gc.collect()
 
 display(Markdown(
   f"""
-This table summarises the closest genes for configured top hits (SNPs with LOG10P above {annotation_min_log10p}).It reports the list of genes overlapped by top hits and for each
+This table summarises the closest genes for the top 100 SNPs among top hits (SNPs with LOG10P above {annotation_min_log10p}).It reports the list of genes overlapped by top hits and for each
 
 - the number of top hit SNPs in the gene (VARIANTS). 
 - the P-value of the most associated SNP (GENE_LOG10P) 
@@ -249,8 +252,9 @@ This table summarises the closest genes for configured top hits (SNPs with LOG10
 topHitsGroupedByGene = annotated_tophits.groupby(['CLOSEST_GENE_NAME', 'CLOSEST_GENE_CHROMOSOME', 'CLOSEST_GENE_START', 'CLOSEST_GENE_END']).agg({'LOG10P': 'max', 'SNPID': 'count', 'CLOSEST_GENE_DISTANCE': 'min'}).reset_index()
 topHitsGroupedByGene = topHitsGroupedByGene.rename(columns={'LOG10P': 'GENE_LOG10P', 'SNPID': 'VARIANTS', 'CLOSEST_GENE_DISTANCE': 'MIN_DISTANCE'})
 topHitsGroupedByGene = topHitsGroupedByGene.sort_values(by='GENE_LOG10P', ascending=False)
+topHitsGroupedByGene = topHitsGroupedByGene.head(100)
 # END: ed8c6549bwf9
-topHitsGroupedByGene
+display(Markdown(topHitsGroupedByGene.to_markdown()))
 ```
 
 :::
@@ -270,7 +274,7 @@ gc.collect()
 
 display(Markdown(
   f"""
-This table lists top associated loci after clumping using plink. 
+This table lists up to 100 top associated loci after clumping using plink. 
 The minimum log10 p-value for index SNPs is {annotation_min_log10p}
   """
 ))
@@ -284,7 +288,8 @@ The minimum log10 p-value for index SNPs is {annotation_min_log10p}
 if os.path.exists(annotated_toploci_filename):
   annotatedTopLoci = pd.read_csv(annotated_toploci_filename, sep="\t")
   annotatedTopLoci = annotatedTopLoci.sort_values(by=['P'], ascending=True)
-  display(annotatedTopLoci)
+  annotatedTopLoci = annotatedTopLoci.head(100)
+  display(Markdown(annotatedTopLoci.to_markdown()))
 else:
   display(Markdown("**No clumping loci available**"))
 ```

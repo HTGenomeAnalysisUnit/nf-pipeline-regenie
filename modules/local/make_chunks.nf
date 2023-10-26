@@ -13,10 +13,11 @@ process MAKE_VARIANTS_CHUNKS {
         tuple val(filename), path(bed_bgen_pgen), path(bim_bgi_pvar), path(fam_sample_psam), val(chrom), path("${filename}.GWAS-chunks.txt")
 
     script:
-    def pos_idx = params.snplist_type in ["pgen", "vcf", "bcf"] ? 2 : 4
+    def pos_idx = params.snplist_type == "pgen" ? 2 : 4
+    def use_sql = params.snplist_type in ["bgen", "vcf", "bcf"] ? "TRUE" : "FALSE"
     def chromosomes_list = chrom == "ONE_FILE" ? params.chromosomes.join(" ") : "$chrom"
     """
-    if [[ "${params.snplist_type}" == "bgen" ]]
+    if [[ "${use_sql}" == "TRUE" ]]
     then
         sed 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' ${make_chunks_sql} > task_configured.sql
         sqlite3 snplist < task_configured.sql

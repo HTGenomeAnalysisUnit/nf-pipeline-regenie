@@ -9,8 +9,8 @@ process CONVERT_TO_BED {
 
     script:
     def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $sample_psam" : ''
-    def format = params.genotypes_imputed_format == 'bgen' ? 'bgen' : 'pfile'
-    def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen ref-first' : ''
+    def format = params.genotypes_imputed_format == 'pgen' ? 'pfile' : 'bgen'
+    def extension = params.genotypes_imputed_format in ['bgen','vcf','bcf'] ? '.bgen ref-first' : ''
     fileprefix = bgen_pgen.baseName
     """
     plink2 \
@@ -19,7 +19,7 @@ process CONVERT_TO_BED {
     --memory ${task.memory.toMega()} \
     --threads ${task.cpus} \
     $bgen_sample \
-    --out ${fileprefix} 
+    --out ${fileprefix}
     """
 }
 

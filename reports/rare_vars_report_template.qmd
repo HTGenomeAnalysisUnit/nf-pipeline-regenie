@@ -250,8 +250,8 @@ figure, log = regenieTable.plot_mqq(
 ```{python manhattan_display}
 #| fig-width: 12
 #| fig-height: 5
-#| out-width: 12
-#| out-height: 5
+#| out-width: 100%
+#| out-height: 50
 
 display(figure)
 ```
@@ -313,6 +313,8 @@ figure, log = regenieTable.plot_mqq(
 ```{python manhattan_display2}
 #| fig-width: 12
 #| fig-height: 5
+#| out-width: 100%
+#| out-height: 50
 
 display(figure)
 ```

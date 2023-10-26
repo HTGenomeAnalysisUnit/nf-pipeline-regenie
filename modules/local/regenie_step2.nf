@@ -14,11 +14,11 @@ process REGENIE_STEP2_GWAS {
     tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_imputed_format}"
+    def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'bgen' : "${params.genotypes_imputed_format}"
     def fileprefix = bed_bgen_pgen.baseName
-    def extension = params.genotypes_imputed_format == 'bgen' ? '.bgen' : ''
+    def extension = params.genotypes_imputed_format in ['bgen','vcf','bcf'] ? '.bgen' : ''
     def split_region = chunk == 'SINGLE_CHUNK' ? '' : "--range $chunk"
-    def bgen_sample = params.genotypes_imputed_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def bgen_sample = params.genotypes_imputed_format in ['bgen','vcf','bcf'] ? "--sample $fam_sample_psam" : ''
     def test = pheno_meta.model != 'additive' ? "--test ${pheno_meta.model}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
@@ -87,12 +87,12 @@ process REGENIE_STEP2_RAREVARS {
     tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
-    def format = params.genotypes_rarevar_format in ['vcf','bcf'] ? 'pgen' : "${params.genotypes_rarevar_format}"
+    def format = params.genotypes_rarevar_format in ['vcf','bcf'] ? 'bgen' : "${params.genotypes_rarevar_format}"
     def fileprefix = bed_bgen_pgen.baseName
-    def extension = params.genotypes_rarevar_format == 'bgen' ? '.bgen' : ''
+    def extension = params.genotypes_rarevar_format in ['bgen','vcf','bcf'] ? '.bgen' : ''
     def split_genes = gene == 'SINGLE_CHUNK' ? '' : "--extract-sets $gene"
     def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
-    def bgen_sample = params.genotypes_rarevar_format == 'bgen' ? "--sample $fam_sample_psam" : ''
+    def bgen_sample = params.genotypes_rarevar_format in ['bgen','vcf','bcf'] ? "--sample $fam_sample_psam" : ''
     def build_mask = params.regenie_build_mask ? "--build-mask ${params.regenie_build_mask}" : ''
     def firthApprox = params.regenie_firth_approx ? "--approx" : ""
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
