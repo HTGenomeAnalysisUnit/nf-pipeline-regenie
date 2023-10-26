@@ -9,6 +9,7 @@ A nextflow pipeline to perform genome-wide association studies (GWAS) and rare v
 - The pipeline is optimized for massive scaling, by chunking operations as much as possible. When computational resources are available, you can cut down run time by increasing the limit on concurrent tasks.
 - All major data types are accepted as input, including plink1 binary dataset (bed/bim/fam), plink2 binary dataset (pgen/pvar/psam), bgen format (bgen/bgi/sample), and vcf.gz format.
 - The pipeline can perform both standard GWAS analysis on single variants, and aggregated rare variant tests using burden test and any of the tests available in regenie, namely skat, skato, sakto-acat, acatv, acato, acato-full.
+- Taking advantage of regenie you can also perform GxE and GxG interaction analysis and conditional analysis providing a list of variants to condition on.
 - Results include summary statistics, but also filtered tophits / loci annotated with nearby genes and an HTML report for each phenotype with Manhattan plot and regional plots for the best loci.
 - Two running modes are available: **single project mode** and **multi models mode**. Using the multi models mode it is possible fully automate the test of multiple association models for a cohort. You just need to provide a trait table with phenotype and covariates and a model table containing all the desired combinations of models. The pipeline will take care of setting up uniform analysis groups.
 
@@ -30,14 +31,14 @@ Then you can invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pip
 
 3. Prepare and configure the required [input data for step 2](docs/input-full-data.md), usually an imputed or sequencing dataset, and [step 1](docs/input-indep-snps.md), usually a QCed and pruned dataset. You can eventually prepare also a [set of files for LD computation](docs/input-ld-panel.md), suggested when analyzing a large dataset with > 100k samples.
 
-4. If you want to perform a multi-models execution, prepare the [models table](docs/input-models-table.md) to describe your analyses.
+4. If you want to perform a multi-models or multi-projects execution, prepare the [models table](docs/input-models-table.md) or the [projects table](docs/input-projects-table.md) to describe your analyses.
 
 5. Prepare the necessary config files, using the templates provided in the `templates` folder:
    1. A [config file](docs/main-parameters.md) describing settings and inputs for your project
    2. A config file to [define the profile](docs/hpc-profile.md) for your computational environment.
    3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](docs/tower-monitoring.md)
 
-6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
+6. Invoke the pipeline using for example `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie -profile singularity,slurm -c my_project.conf`. We have basic executors already configured (namely slurm, sge and lsf), but it is suggested to prepare a speific profile for your computational environment like suggested in point 5.
 
 Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler. `myprofile` corresponds to a profile you created for your computational environment:
 
