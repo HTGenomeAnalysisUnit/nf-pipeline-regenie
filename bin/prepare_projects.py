@@ -49,7 +49,9 @@ with open("analysis.conf", "w") as outf:
             cat_covars = []
 
         covars = ''
+        covars_file = 'NO_COV_FILE'
         if row['cov_file'] != "NO_COV_FILE":
+            covars_file = os.path.abspath(row['cov_file'])
             with open(row['cov_file']) as f:
                 first_line = tokenize(f.readline())
                 covars = first_line[2:]
@@ -66,6 +68,6 @@ with open("analysis.conf", "w") as outf:
             phenos,
             str(row['trait_type'] == "log"),
             row['genetic_model'],
-            os.path.abspath(row['cov_file']),
+            covars_file,
             covars,
             row['cat_var']]) + '\n')
