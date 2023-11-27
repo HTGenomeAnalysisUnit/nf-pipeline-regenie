@@ -472,6 +472,17 @@
           "hidden": true,
           "description": "A file containing a list of variant IDs to condition on. Max 10000 variants are allowed"
         },
+        "additional_geno_file": {
+          "type": "string",
+          "hidden": true,
+          "description": "Prefix of the genotype dataset containing variants in condition_list or interaction_snp. This is mandatory for conditional or interaction analysis"
+        },
+        "additional_geno_format": {
+          "type": "string",
+          "hidden": true,
+          "description": "Format of the additional_geno_file dataset. Sample file and bgi index are expected when format is bgen",
+          "enum": ["bgen", "pgen", "bed"]
+        },
         "step2_gwas_split": {
           "type": "boolean",
           "default": true,

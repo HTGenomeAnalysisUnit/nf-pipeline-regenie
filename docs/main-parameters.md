@@ -52,3 +52,18 @@ In case you want to configure a you also need to set the following parameters:
 In case you want to configure a multi-projects run you also need to set the following parameters:
 
 - Set `projects_table` to a tab-separated file defining the projects to test
+
+## Conditional and interaction analysis
+
+In case you want to perform conditional or interaction analysis, you can configure the following parameters:
+
+- `interaction_cov`: run GxE test specifying the interacting covariate from covariate table
+- `interaction_snp`: run GxG test specifying the interacting variant ID
+- `condition_list`: run conditional analysis specifying a file with variant IDs to condition on
+
+Note that to perform conditional/interaction analysis, an additional genotype dataset must be provided containing the SNP(s) used for conditioning/interaction. This can be configured using the following parameters:
+
+- `additional_geno_file`: prefix of the genotype dataset containing vars in condition_list or interaction var. This is mandatory for conditional or interaction analysis
+- `additional_geno_format`: can be bgen, pgen or bed.
+
+See the [conditional analysis section](input-conditional-analysis.md) for more details.

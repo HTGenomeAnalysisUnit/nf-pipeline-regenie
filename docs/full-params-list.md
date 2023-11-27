@@ -103,6 +103,8 @@ These are mandatory when running rare var analysis
     interaction_cov                       = null // run GxE test in GWAS specifying the interacting covariate from covariate table
     interaction_snp	                      = null // run GxG test in GWAS specifying the interacting variant ID
     condition_list                        = null // run conditional analysis in GWAS specifying a files with variant IDs to condition on
+    additional_geno_file                  = null // prefix of the genotype dataset containing vars in condition_list or interaction var. This is mandatory for conditional or interaction analysis
+    additional_geno_format                = null // can be bgen, pgen or bed.
     save_chunks_file                      = true
     save_step2_logs                       = true
     save_bgen_index                       = true

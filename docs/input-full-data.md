@@ -60,7 +60,7 @@ For bed input, you have to specify only the basename of the dataset. Given a inp
 
 ## Input dataset split by chromosome
 
-If your input dataset is split by chromosome across multiple files, you can use the `{CHROM}` tag in your input file name. This tag must be placed corresponding to the number of chromosome in the filename. When using this method be careful that the chromosome names captured from the filename correspond to numbers 1-22 for autosomes. 
+If your input dataset is split by chromosome across multiple files, you can use the `{CHROM}` tag in your input file name. This tag must be placed corresponding to the number of chromosome in the filename. When using this method be careful that the chromosome names captured from the filename correspond to numbers 1-22 for autosomes.
 
 For example, if you have a dataset split by chromosome in the following way:
 
@@ -71,7 +71,7 @@ For example, if you have a dataset split by chromosome in the following way:
 
 You can specify the input dataset as `my_dataset_chr{CHROM}.bgen` and the pipeline will automatically replace `{CHROM}` with the chromosome number.
 
-## Performance tips 
+## Performance tips
 
 Note that the pipeline will do highly parallelized access to the input dataset. Thus, especially if you are using a single file as input and when step 2 chunk size is small, it is reccomended to use a high performance filesystem optimized for parallel access.
 

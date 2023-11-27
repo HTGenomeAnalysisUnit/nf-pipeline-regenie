@@ -34,7 +34,11 @@ process REGENIE_STEP2_GWAS {
     def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
     def interaction_cov = !covar_meta.gxe || covar_meta.gxe == '' || covar_meta.gxe == 'NA' ? '' : "--interaction ${covar_meta.gxe}"
     def interaction_snp = !covar_meta.gxg || covar_meta.gxg == '' || covar_meta.gxg == 'NA' ? '' : "--interaction-snp ${covar_meta.gxg}"
-    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
+    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]} --condition-file ${params.additional_geno_format},${accessory_files[1]}" : ''
+    def additional_geno_fileprefix = accessory_files[1].baseName
+    def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
+    def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
+    def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
   """
   regenie \
     --step 2 \
@@ -64,6 +68,8 @@ process REGENIE_STEP2_GWAS {
     $interaction_cov \
     $interaction_snp \
     $condition_list \
+    $additional_genotypes \
+    $additional_sample_file \
     --out ${project_id}_${chrom}_${task.index}
   """
 }
@@ -109,6 +115,10 @@ process REGENIE_STEP2_RAREVARS {
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def extract_genes = params.regenie_extract_genes != '' ? "--extract-sets $params.regenie_extract_genes" : ''
     def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
+    def additional_geno_fileprefix = accessory_files[1].baseName
+    def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
+    def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
+    def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
   """
   regenie \
     --step 2 \
@@ -141,6 +151,8 @@ process REGENIE_STEP2_RAREVARS {
     $build_mask \
     $write_mask_snplist \
     $condition_list \
+    $additional_genotypes \
+    $additional_sample_file \
     --out ${project_id}_${chrom}_${task.index}
   """
 }

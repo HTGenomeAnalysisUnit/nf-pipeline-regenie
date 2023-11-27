@@ -3,8 +3,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL author="Edoardo Giacopuzzi"
 LABEL contact="edoardo.giacopuzzi@fht.org"
-LABEL image_version="0.5"
-LABEL regenie_version="3.2.7"
+LABEL image_version="0.6"
+LABEL regenie_version="3.3"
 LABEL bgenix_version="1.1.7"
 LABEL R_version="4.1.0"
 
@@ -44,7 +44,7 @@ RUN apt-get update && \
 
 # Install regenie
 WORKDIR /opt
-ENV REGENIE_VERSION "3.2.7"
+ENV REGENIE_VERSION "3.3"
 RUN mkdir regenie && cd regenie && \
     wget https://github.com/rgcgithub/regenie/releases/download/v${REGENIE_VERSION}/regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
     unzip -q regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \

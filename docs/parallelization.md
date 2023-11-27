@@ -2,7 +2,7 @@
 
 The pipeline optimize the run time by splitting heavy tasks into small chunks. The default settings are optimized for biobank scale data, but you can adjust resources as needed to further cut down run time or to process smaller datasets. You can change the default minimum resources used at each step by editing the file `conf/base.config`, or providing a new config file with the `-c` option when you run the pipeline.
 
-First of all, keep in mind that the analysis of binary phenotypes rquires much more resources and take longer times. In general we suggest to analyze not more than 100 quantitative phenotypes or 50 binary phenotypes in a single run. If you need to analyze more phenotypes, you can take advatnge of the multi-model run mode to split the analysis in multiple runs.
+First of all, keep in mind that the analysis of binary phenotypes requires much more resources and take longer time. In general we suggest to analyze not more than 100 quantitative phenotypes or 50 binary phenotypes in a single run. If you need to analyze more phenotypes, you can take advantage of the multi-model run mode to split the analysis in multiple runs.
 
 You can optimize the pipeline scaling by adjusting the following parameters:
 

@@ -8,12 +8,14 @@
 
 4. If you want to perform a multi-models or multi-projects execution, prepare the [models table](input-models-table.md) or [projects table](input-projects-table.md) to describe your analyses.
 
-5. Prepare the necessary config files, using the templates provided in the `templates` folder:
+5. If you want to perform conditional or interaction analysis, prepare the additional genotype dataset and eventually conditional variant list as described in the [conditional analysis section](input-conditional-analysis.md).
+
+6. Prepare the necessary config files, using the templates provided in the `templates` folder:
    1. A [config file](main-parameters.md) describing settings and inputs for your project.
    2. A config file to [define the profile](hpc-profile.md) for your computational environment.
    3. Optionally, you can also add configuration to enable execution monitoring using [Nextflow Tower](tower-monitoring.md)
 
-6. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
+7. Invoke the pipeline using `nextflow run HTGenomeAnalysisUnit/nf-pipeline-regenie`
 
 Usually, you want to prepare a script to submit the pipeline in your project folder. In this example we use `sbatch` submission system, but this can be adapted to any scheduler. `myprofile` corresponds to a profile you created for your computational environment:
 

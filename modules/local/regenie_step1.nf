@@ -47,6 +47,11 @@ process SPLITL0 {
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def refFirst = params.regenie_ref_first  ? "--ref-first" : ''
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
+  def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
+  def additional_geno_fileprefix = accessory_files[1].baseName
+  def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
+  def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
+  def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -60,6 +65,9 @@ process SPLITL0 {
     $deleteMissings \
     $refFirst \
     $maxCatLevels \
+    $condition_list \
+    $additional_genotypes \
+    $additional_sample_file \
     --bsize ${params.regenie_bsize_step1} \
     --split-l0 regenie_step1,${params.step1_n_chunks} \
     --out regenie_step1_splitl0
@@ -86,6 +94,10 @@ process RUNL0 {
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
   def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
+  def additional_geno_fileprefix = accessory_files[1].baseName
+  def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
+  def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
+  def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -103,6 +115,8 @@ process RUNL0 {
     $maxCatLevels \
     $binary \
     $condition_list \
+    $additional_genotypes \
+    $additional_sample_file \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     --run-l0 ${master_file},${job_n} \
@@ -138,6 +152,10 @@ process RUNL1 {
   def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
   def binary = pheno_meta.binary == 'true' ? '--bt' : ''
   def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
+  def additional_geno_fileprefix = accessory_files[1].baseName
+  def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
+  def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
+  def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -156,6 +174,8 @@ process RUNL1 {
     $maxCatLevels \
     $binary \
     $condition_list \
+    $additional_genotypes \
+    $additional_sample_file \
     --threads ${task.cpus} \
     --bsize ${params.regenie_bsize_step1} \
     --niter ${params.niter} \

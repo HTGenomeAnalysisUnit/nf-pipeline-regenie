@@ -30,6 +30,7 @@ nav:
       - "Inputs for rare variants tests": input-rare-variants.md
       - "Models table (multi models run)": input-models-table.md
       - "Project table (multi projects run)": input-projects-table.md
+      - "Conditional / interaction analysis": input-conditional-analysis.md
       - "Re-use step1 predictions": input-reuse-step1.md
     - Configuration:
       - "main parameters": main-parameters.md

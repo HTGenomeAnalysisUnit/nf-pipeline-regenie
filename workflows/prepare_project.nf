@@ -8,10 +8,33 @@ workflow PREPARE_PROJECT {
     main:
     //Make dummy files in case some optional files are not provided
     tmp_files = [:]
-    for (x in ['COV', 'CONDITION']) {
+    for (x in ['COV', 'CONDITION', 'ADDITIONAL_GENO', 'ADDITIONAL_GENO_SAMPLE']) {
         tmp_filename = "${workflow.workDir}/NO_${x}_FILE"
         tmp_files[x] = file(tmp_filename)
         file(tmp_filename).append('')
+    }
+
+    //Set additional genotype files for conditional / interaction analysis
+    if (!params.additional_geno_file || params.additional_geno_file == 'NA' || params.additional_geno_file == '') {
+        additional_bgen_pgen_bed = file(tmp_files['ADDITIONAL_GENO'], checkIfExists: true)
+        additional_sample_psam_fam = file("${tmp_files['ADDITIONAL_GENO']}.sample")
+        additional_bgi_pvar_bim = file("${tmp_files['ADDITIONAL_GENO']}.bgi")
+    } else {
+        if(params.additional_geno_format == 'bgen') {
+            additional_bgen_pgen_bed = file("${params.additional_geno_file}.bgen", checkIfExists: true)
+            additional_sample_psam_fam = file("${params.additional_geno_file}.sample", checkIfExists: true)
+            additional_bgi_pvar_bim = file("${params.additional_geno_file}.bgen.bgi", checkIfExists: true)
+        }
+        if(params.additional_geno_format == 'bed') {
+            additional_bgen_pgen_bed = file("${params.additional_geno_file}.bed", checkIfExists: true)
+            additional_sample_psam_fam = file("${params.additional_geno_file}.fam", checkIfExists: true)
+            additional_bgi_pvar_bim = file("${params.additional_geno_file}.bim", checkIfExists: true)
+        }
+        if(params.additional_geno_format == 'pgen') {
+            additional_bgen_pgen_bed = file("${params.additional_geno_file}.pgen", checkIfExists: true)
+            additional_sample_psam_fam = file("${params.additional_geno_file}.psam", checkIfExists: true)
+            additional_bgi_pvar_bim = file("${params.additional_geno_file}.pvar", checkIfExists: true)
+        }   
     }
 
     if (params.models_table) {
@@ -53,7 +76,12 @@ workflow PREPARE_PROJECT {
                     gxe: params.interaction_cov,
                     gxg: params.interaction_snp
                 ],
-                [file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true)]
+                [
+                    file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true),
+                    additional_bgen_pgen_bed,
+                    additional_sample_psam_fam,
+                    additional_bgi_pvar_bim
+                ]
             )} 
 
     } else if (params.projects_table) {
@@ -83,7 +111,12 @@ workflow PREPARE_PROJECT {
                     gxe: row['interaction_cov'],
                     gxg: row['interaction_snp']
                 ],
-                [file("${!row['condition_list'] || row['condition_list'] == 'NA' || row['condition_list'] == '' ? tmp_files['CONDITION'] : row['condition_list']}", checkIfExists: true)]
+                [
+                    file("${!row['condition_list'] || row['condition_list'] == 'NA' || row['condition_list'] == '' ? tmp_files['CONDITION'] : row['condition_list']}", checkIfExists: true),
+                    additional_bgen_pgen_bed,
+                    additional_sample_psam_fam,
+                    additional_bgi_pvar_bim
+                ]
             )} 
     } else {
         log.info "==> INIT RUN: Using single run execution"
@@ -110,7 +143,12 @@ workflow PREPARE_PROJECT {
                 gxe: params.interaction_cov,
                 gxg: params.interaction_snp
             ],
-            [file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true)]
+            [
+                file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true),
+                additional_bgen_pgen_bed,
+                additional_sample_psam_fam,
+                additional_bgi_pvar_bim
+            ]
         ])
 
     }
