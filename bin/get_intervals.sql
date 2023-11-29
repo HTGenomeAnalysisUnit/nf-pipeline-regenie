@@ -29,6 +29,7 @@ WITH
 SELECT
 	chromosome || ':' || start || '-' || end AS interval_name
 FROM intervals
+WHERE chromosome IN (%CHROMOSOMES%)
 ORDER BY chromosome, start;
 
 .quit

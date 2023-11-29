@@ -19,7 +19,17 @@ process MAKE_VARIANTS_CHUNKS {
     """
     if [[ "${use_sql}" == "TRUE" ]]
     then
-        sed 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' ${make_chunks_sql} > task_configured.sql
+        chromosome_sql=""
+        for c in $chromosomes_list
+        do 
+            if [[ \$chromosome_sql == "" ]]
+            then 
+                chromosome_sql="'\$c'"
+            else 
+                chromosome_sql="\$chromosome_sql,'\$c'"
+            fi
+        done
+        sed -e 's/%CHUNK_SIZE%/${params.step2_gwas_chunk_size}/' -e "s/%CHROMOSOMES%/\$chromosome_sql/" ${make_chunks_sql} > task_configured.sql
         sqlite3 snplist < task_configured.sql
         mv intervals.txt ${filename}.GWAS-chunks.txt
     else

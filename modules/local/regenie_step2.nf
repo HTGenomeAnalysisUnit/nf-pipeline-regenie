@@ -4,14 +4,14 @@ process REGENIE_STEP2_GWAS {
   }
 
   label "step2_gwas"
-  tag "${project_id}_${chrom}_${task.index}"
+  tag "${project_id}_${chrom}_chunk${task.index}"
 
   input:
 	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
 
   output:
-    tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
-    tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
+    tuple val(project_id), val(filename), val(chunk), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
+    tuple val(project_id), val(n_chunks), path("${project_id}_${filename}_${chunk}.log"), emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_imputed_format in ['vcf','bcf'] ? 'bgen' : "${params.genotypes_imputed_format}"
@@ -34,7 +34,7 @@ process REGENIE_STEP2_GWAS {
     def chromosome = chrom == "ONE_FILE" ? '' : "--chr $chrom"
     def interaction_cov = !covar_meta.gxe || covar_meta.gxe == '' || covar_meta.gxe == 'NA' ? '' : "--interaction ${covar_meta.gxe}"
     def interaction_snp = !covar_meta.gxg || covar_meta.gxg == '' || covar_meta.gxg == 'NA' ? '' : "--interaction-snp ${covar_meta.gxg}"
-    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]} --condition-file ${params.additional_geno_format},${accessory_files[1]}" : ''
+    def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
     def additional_geno_fileprefix = accessory_files[1].baseName
     def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
     def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
@@ -70,7 +70,7 @@ process REGENIE_STEP2_GWAS {
     $condition_list \
     $additional_genotypes \
     $additional_sample_file \
-    --out ${project_id}_${chrom}_${task.index}
+    --out ${project_id}_${filename}_${chunk}
   """
 }
 
@@ -153,7 +153,7 @@ process REGENIE_STEP2_RAREVARS {
     $condition_list \
     $additional_genotypes \
     $additional_sample_file \
-    --out ${project_id}_${chrom}_${task.index}
+    --out ${project_id}_${filename}_${task.index}
   """
 }
 

@@ -183,6 +183,7 @@ if manhattan_annotation_type == "genes" and not annotated_tophits.empty:
 
   anno_value = "CLOSEST_GENE_NAME"
   anno_set = top_snp_per_gene['SNPID'].tolist()
+  del top_snp_per_gene
 
 else:
   #Get lead SNPs in each locus
@@ -224,7 +225,6 @@ display(figure)
 
 #Clean memory
 del figure
-del top_snp_per_gene
 gc.collect()
 ```
 
