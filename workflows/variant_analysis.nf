@@ -176,7 +176,7 @@ workflow RUN_VARIANT_ANALYSIS {
     PROCESS_RAREVAR_RESULTS_WF(REGENIE_STEP2_RAREVAR_WF.out.regenie_results)
 
     //==== GENERATE HTML REPORTS ====
-    report_input_ch = project_data.map{ tuple(it[0], it[1]) }
+    report_input_ch = project_data.map{ tuple(it[0], it[1], it[4]) }
       .join(input_validation_logs)
       .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
       .join(REGENIE_STEP2_RAREVAR_WF.out.regenie_log)

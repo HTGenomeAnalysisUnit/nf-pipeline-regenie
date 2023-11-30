@@ -4,7 +4,7 @@ process REPORT_GWAS {
   label 'html_report'
 
   input:
-    tuple val(project_id), path(phenotype_file_validated), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)
+    tuple val(project_id), path(phenotype_file_validated), val(covar_metadata), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)
     path report_template
     path quarto_report_css
  
@@ -20,11 +20,7 @@ process REPORT_GWAS {
     -P sumstat_file:'${regenie_merged_results}' \
     -P phenotype_file:'${phenotype_file_validated}' \
     -P phenotype:'${phenotype}' \
-    -P covariates:'${params.covariates_columns}' \
-    -P regenie_step1_log:'${step1_log}' \
-    -P regenie_step2_log:'${step2_log}' \
-    -P phenotype_log:'${phenotype_log}' \
-    -P covariate_log:'${covariate_log}' \
+    -P covariates:'${covar_metadata.cols} - ${covar_metadata.cat_cols}' \
     -P manhattan_annotation_type:'${params.manhattan_annotations}' \
     -P annotation_min_log10p:'${params.annotation_min_log10p}' \
     -P annotated_tophits_filename:'${annotated_tophits}' \
@@ -45,7 +41,7 @@ process REPORT_RAREVAR {
   label 'html_report'
 
   input:
-    tuple val(project_id), path(phenotype_file_validated), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits)
+    tuple val(project_id), path(phenotype_file_validated), val(covar_metadata), val(phenotype), path(regenie_merged_results), path(annotated_tophits)
     path report_template
     path quarto_report_css
 
@@ -61,11 +57,7 @@ process REPORT_RAREVAR {
     -P sumstat_file:'${regenie_merged_results}' \
     -P phenotype_file:'${phenotype_file_validated}' \
     -P phenotype:'${phenotype}' \
-    -P covariates:'${params.covariates_columns}' \
-    -P regenie_step1_log:'${step1_log}' \
-    -P regenie_step2_log:'${step2_log}' \
-    -P phenotype_log:'${phenotype_log}' \
-    -P covariate_log:'${covariate_log}' \
+    -P covariates:'${covar_metadata.cols} - ${covar_metadata.cat_cols}' \
     -P genome_build:'${params.genotypes_build}' \
     -P tophits_min_value:'${params.rarevar_min_log10p}' \
     -P sig_value_threshold:'${params.rarevar_stat_test_threshold}' \
