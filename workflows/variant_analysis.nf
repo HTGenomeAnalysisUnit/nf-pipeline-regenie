@@ -134,12 +134,8 @@ workflow RUN_VARIANT_ANALYSIS {
     PROCESS_GWAS_RESULTS_WF(REGENIE_STEP2_GWAS_WF.out.regenie_results, PREPARE_GWAS_DATA.out.processed_genotypes)
 
     //==== GENERATE HTML REPORTS ====
-    logs_ch = project_data.map{ tuple(it[0], it[1]) }
-      .join(input_validation_logs)
-      .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
-      .join(REGENIE_STEP2_GWAS_WF.out.regenie_log)
-
-    report_input_ch = logs_ch.combine(PROCESS_GWAS_RESULTS_WF.out.processed_results, by:0)
+    report_input_ch = project_data.map{ tuple(it[0], it[1], it[4]) }
+      .combine(PROCESS_GWAS_RESULTS_WF.out.processed_results, by:0)
       //[val(project_id), path(phenotype_file), path(phenotype_log), path(covariate_log), path(step1_log), path(step2_log), val(phenotype), path(regenie_merged_results), path(annotated_tophits), path(annotated_toploci)]
 
     if (params.make_report) {
@@ -177,9 +173,6 @@ workflow RUN_VARIANT_ANALYSIS {
 
     //==== GENERATE HTML REPORTS ====
     report_input_ch = project_data.map{ tuple(it[0], it[1], it[4]) }
-      .join(input_validation_logs)
-      .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
-      .join(REGENIE_STEP2_RAREVAR_WF.out.regenie_log)
       .combine(PROCESS_RAREVAR_RESULTS_WF.out.processed_results, by:0)
 
     if (params.make_report) {
