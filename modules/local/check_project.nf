@@ -27,7 +27,7 @@ process CHECK_PROJECT {
     	exit 1
   	}
 
-	log.info "Project ${project_id} initialized."
+	//log.info "Project ${project_id} initialized."
 
 	projects_config_log = file("${pipeline_log_dir}/projects_configuration.log")
   	projects_config_log.append(msg)

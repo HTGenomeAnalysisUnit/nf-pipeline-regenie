@@ -8,17 +8,22 @@ workflow PREPARE_PROJECT {
     main:
     //Make dummy files in case some optional files are not provided
     tmp_files = [:]
-    for (x in ['COV', 'CONDITION', 'ADDITIONAL_GENO', 'ADDITIONAL_GENO_SAMPLE']) {
+    for (x in ['COV', 'CONDITION']) {
         tmp_filename = "${workflow.workDir}/NO_${x}_FILE"
         tmp_files[x] = file(tmp_filename)
+        file(tmp_filename).append('')
+    }
+    for (x in ['sample','bgen','bgen.bgi']) {
+        tmp_filename = "${workflow.workDir}/NO_ADDITIONAL_GENO_FILE.${x}"
+        tmp_files["ADDITIONAL_GENO_${x}"] = file(tmp_filename)
         file(tmp_filename).append('')
     }
 
     //Set additional genotype files for conditional / interaction analysis
     if (!params.additional_geno_file || params.additional_geno_file == 'NA' || params.additional_geno_file == '') {
-        additional_bgen_pgen_bed = file(tmp_files['ADDITIONAL_GENO'], checkIfExists: true)
-        additional_sample_psam_fam = file("${tmp_files['ADDITIONAL_GENO']}.sample")
-        additional_bgi_pvar_bim = file("${tmp_files['ADDITIONAL_GENO']}.bgi")
+        additional_bgen_pgen_bed = file(tmp_files['ADDITIONAL_GENO_bgen'], checkIfExists: true)
+        additional_sample_psam_fam = file("${tmp_files['ADDITIONAL_GENO_sample']}", checkIfExists: true)
+        additional_bgi_pvar_bim = file("${tmp_files['ADDITIONAL_GENO_bgen.bgi']}", checkIfExists: true)
     } else {
         if(params.additional_geno_format == 'bgen') {
             additional_bgen_pgen_bed = file("${params.additional_geno_file}.bgen", checkIfExists: true)

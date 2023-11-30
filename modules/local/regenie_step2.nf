@@ -104,7 +104,7 @@ process REGENIE_STEP2_RAREVARS {
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait = pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
-    def cat_covariates = covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' || covar_meta.cat_cols == null ? '' : "--catCovarList ${covar_meta.cat_cols}"
+    def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''

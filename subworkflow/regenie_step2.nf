@@ -24,7 +24,7 @@ workflow REGENIE_STEP2_WF {
             REGENIE_STEP2_GWAS.out.regenie_step2_out_log
             .map{ project, n_chunks, log_file -> [groupKey(project, n_chunks), log_file] }
             .groupTuple()
-            .map { tuple(it[0], it[1][0]) }
+            //.map { tuple(it[0], it[1][0]) }
         )
 
         //Concatenate results
@@ -54,7 +54,7 @@ workflow REGENIE_STEP2_WF {
             REGENIE_STEP2_RAREVARS.out.regenie_step2_out_log
             .map{ project, n_chunks, log_file -> [groupKey(project, n_chunks), log_file] }
             .groupTuple()
-            .map { tuple(it[0], it[1][0]) }
+            //.map { tuple(it[0], it[1][0]) }
         )
         //Concatenate results
         concat_rarevar_results_ch = REGENIE_STEP2_RAREVARS.out.regenie_step2_out.transpose()

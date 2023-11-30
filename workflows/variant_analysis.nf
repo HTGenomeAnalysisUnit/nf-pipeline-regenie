@@ -180,7 +180,7 @@ workflow RUN_VARIANT_ANALYSIS {
       .join(input_validation_logs)
       .join(REGENIE_STEP1_WF.out.regenie_step1_parsed_logs)
       .join(REGENIE_STEP2_RAREVAR_WF.out.regenie_log)
-      .join(PROCESS_RAREVAR_RESULTS_WF.out.processed_results)
+      .combine(PROCESS_RAREVAR_RESULTS_WF.out.processed_results, by:0)
 
     if (params.make_report) {
       rarevar_report_template = file("$projectDir/reports/rare_vars_report_template.qmd",checkIfExists: true)

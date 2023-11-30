@@ -10,7 +10,7 @@ process REGENIE_LOG_PARSER_STEP2 {
     tuple val(project_id), path("${project_id}.step2.log"), emit: regenie_step2_parsed_logs
 
   """
-  RegenieLogParser.py ${regenie_step2_logs} --output ${project_id}.step2.log
+  RegenieLogParser.py ${regenie_step2_logs[0]} --output ${project_id}.step2.log
   """
 
 }
