@@ -123,7 +123,7 @@ Main results are summarised here by Manhattan and QQ plot.
   """
 ))
 
-if manhattan_annotation_type == "genes":
+if manhattan_annotation_type == "genes" and not annotated_tophits.empty:
   display(Markdown(
     f"""
   Annotated SNPs represent the configured top hits (SNPs with LOG10P above {annotation_min_log10p}) processed as follows:
