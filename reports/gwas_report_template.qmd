@@ -358,8 +358,8 @@ if phenotype_log:
     phenotype_log_df = pd.read_csv(phenotype_log, sep="\t")
     display(Markdown("### Phenotype File Validation\n\n"))
     display(phenotype_log_df)
-  else:
-    display(Markdown("**Phenotype log file not found**\n\n"))
+  # else:
+  #   display(Markdown("**Phenotype log file not found**\n\n"))
 ```
 
 :::
@@ -370,8 +370,8 @@ if covariate_log:
     covariate_log_df = pd.read_csv(covariate_log, sep="\t")
     display(Markdown("### Covariate File Validation\n\n"))
     display(covariate_log_df)
-  else:
-    display(Markdown("**Covariate log file not found**\n\n"))
+  # else:
+  #   display(Markdown("**Covariate log file not found**\n\n"))
 ```
 
 ```{python log3}
@@ -380,8 +380,8 @@ if regenie_step1_log:
     step1_log_df = pd.read_csv(regenie_step1_log, sep="\t")
     display(Markdown("### Regenie Step 1 Log\n\n"))
     display(step1_log_df)
-  else:
-    display(Markdown("**Regenie Step 1 log file not found**\n\n"))
+  # else:
+  #   display(Markdown("**Regenie Step 1 log file not found**\n\n"))
 ```
 
 ```{python log4}
@@ -390,8 +390,8 @@ if regenie_step2_log:
     step2_log_df = pd.read_csv(regenie_step2_log, sep="\t")
     display(Markdown("### Regenie Step 2 Log\n\n"))
     display(step2_log_df)
-  else:
-    display(Markdown("**Regenie Step 2 log file not found**\n\n"))
+  # else:
+  #   display(Markdown("**Regenie Step 2 log file not found**\n\n"))
 ```
 
 
