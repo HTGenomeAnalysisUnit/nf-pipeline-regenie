@@ -115,6 +115,14 @@ gc.collect()
 
 ## Main results
 
+```{python load_tophits}
+#Load tophits
+annotated_tophits=pd.DataFrame()
+if annotated_tophits_filename:
+	annotated_tophits = pd.read_csv(annotated_tophits_filename, sep="\t")
+	annotated_tophits = annotated_tophits.rename(columns={'ID': 'SNPID'})
+```
+
 ```{python main_results_md}
 
 display(Markdown(
@@ -157,12 +165,6 @@ regenieTable.data['P'] = 10 ** (-regenieTable.data['MLOG10P'])
 #| fig-width: 12
 #| fig-height: 5
 #| include: false
-
-#Load tophits
-annotated_tophits=pd.DataFrame()
-if annotated_tophits_filename:
-	annotated_tophits = pd.read_csv(annotated_tophits_filename, sep="\t")
-	annotated_tophits = annotated_tophits.rename(columns={'ID': 'SNPID'})
 
 if manhattan_annotation_type == "genes" and not annotated_tophits.empty:
   #Group by gene name and select the top hit
