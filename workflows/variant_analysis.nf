@@ -107,6 +107,7 @@ workflow RUN_VARIANT_ANALYSIS {
     project_data
   )
   
+  if (params.run_step2) {
   //==== STEP2 AND REPORTS - GWAS ====
   if (params.genotypes_imputed) {
     //Prepare data for step 2
@@ -183,6 +184,7 @@ workflow RUN_VARIANT_ANALYSIS {
           quarto_report_css
       )
     }
+  }
   }
 }
 
