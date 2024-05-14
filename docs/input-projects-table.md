@@ -15,6 +15,17 @@ The parameter `projects_table` is used to activate a multi-projects run by confi
 - `interaction_snp` (optional): a single variant ID to perform interaction analysis (GxG)
 - `interaction_cov` (optional): a single covariate name to perform interaction analysis (GxE)
 - `condition_list` (optional): a text file containing a list of variants IDs to condition on
+- `extract_snps_list` (optional): a text file containing a list of variants IDs to restrict GWAS analysis
+- `extract_genes_list` (optional): a text file containing a list of gene IDs to restrict rare variant analysis
+
+## Important note when using conditional or interaction SNP analysis
+
+When you specify `condition_list` or `interaction_snp` for one of your project, you must also configure the additional genotype datasets for the conditional analysis. This dataset should contain all the SNPs listed in the condition_list and interaction_snp and it's used to ensure that genetic information for these SNPs are available to all chunks. The same additional dataset is used across all projects at the moment.
+
+You have to set the following parameters:    
+
+- additional_geno_file: prefix of the genotype dataset containing vars in condition_list or interaction snp. This is mandatory for conditional or interaction analysis
+- additional_geno_format: can be bgen, pgen or bed.
 
 ## Examples
 
@@ -27,8 +38,8 @@ A minimal projects table can be as follows:
 
 An example project table with all columns can be as follows:
 
-| project_id | pheno_file | pheno_cols | pheno_binary | pheno_model | cov_file | cov_cols | cov_cat_cols | interaction_snp | interaction_cov | condition_list |
-|------------|------------|------------|--------------|-------------|----------|----------|--------------|-----------------|-----------------|----------------|
+| project_id | pheno_file | pheno_cols | pheno_binary | pheno_model | cov_file | cov_cols | cov_cat_cols | interaction_snp | interaction_cov | condition_list | extract_snps_list |
+|------------|------------|------------|--------------|-------------|----------|----------|--------------|-----------------|-----------------|----------------|----------------|
 | project1   | phenos.txt | qpheno1,qpheno2     | False   | additive      | covars.txt | cov1,cov2     | cat_covar1      | NA              | NA              | NA             |
 | project2   | phenos.txt | qpheno1,qpheno2     | False   | additive      | covars.txt | cov1,cov2     | cat_covar1      | rs12345             | NA              | conditional_snps.txt             |
-| project3   | phenos.txt | bpheno3,bpheno4     | True   | additive    | NO_COV_FILE | NA     | NA     | NA              | NA              | NA             |
+| project3   | phenos.txt | bpheno3,bpheno4     | True   | additive    | NO_COV_FILE | NA     | NA     | NA              | NA              | NA             | NA            |
