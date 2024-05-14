@@ -8,7 +8,8 @@ process REGENIE_STEP2_GWAS {
 
   input:
 	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(chunk), val(n_chunks)
-
+    //accessory_files = [condition_list, additional_bgen_pgen_bed, additional_sample_psam_fam, additional_bgi_pvar_bim, extract_snps_list, extract_genes_list]
+  
   output:
     tuple val(project_id), val(filename), val(chunk), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
     tuple val(project_id), val(n_chunks), path("${project_id}_${filename}_${chunk}.log"), emit: regenie_step2_out_log
@@ -24,7 +25,7 @@ process REGENIE_STEP2_GWAS {
     def firth = params.regenie_firth ? "--firth $firthApprox" : ""
     def binaryTrait =  pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
-    def extract_snps = params.regenie_extract_snps != '' ? "--extract $params.regenie_extract_snps" : ''
+    def extract_snps = accessory_files[4].name != 'NO_EXTRACT_SNPS_FILE' ? "--extract ${accessory_files[4]}" : ''
     def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
     def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
@@ -84,6 +85,7 @@ process REGENIE_STEP2_RAREVARS {
 
   input:
 	  tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), file(accessory_files), path(step1_predictions), val(filename), file(bed_bgen_pgen), file(bim_bgi_pvar), file(fam_sample_psam), val(chrom), val(gene), val(n_chunks)
+    //accessory_files = [condition_list, additional_bgen_pgen_bed, additional_sample_psam_fam, additional_bgi_pvar_bim, extract_snps_list, extract_genes_list]
     path rarevars_set_list
     path rarevars_anno_file
     path rarevars_mask_file
@@ -113,7 +115,7 @@ process REGENIE_STEP2_RAREVARS {
     def vc_maxAAF = params.rarevars_vc_maxAAF ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
-    def extract_genes = params.regenie_extract_genes != '' ? "--extract-sets $params.regenie_extract_genes" : ''
+    def extract_genes = accessory_files[5].name != 'NO_EXTRACT_GENES_FILE' ? "--extract-sets ${accessory_files[5]}" : ''
     def condition_list = accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-list ${accessory_files[0]}" : ''
     def additional_geno_fileprefix = accessory_files[1].baseName
     def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''

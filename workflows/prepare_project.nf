@@ -8,7 +8,7 @@ workflow PREPARE_PROJECT {
     main:
     //Make dummy files in case some optional files are not provided
     tmp_files = [:]
-    for (x in ['COV', 'CONDITION']) {
+    for (x in ['COV', 'CONDITION', 'EXTRACT_SNPS', 'EXTRACT_GENES']) {
         tmp_filename = "${workflow.workDir}/NO_${x}_FILE"
         tmp_files[x] = file(tmp_filename)
         file(tmp_filename).append('')
@@ -85,7 +85,9 @@ workflow PREPARE_PROJECT {
                     file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true),
                     additional_bgen_pgen_bed,
                     additional_sample_psam_fam,
-                    additional_bgi_pvar_bim
+                    additional_bgi_pvar_bim,
+                file("${!params.regenie_extract_snps || params.regenie_extract_snps == 'NA' || params.regenie_extract_snps == '' ? tmp_files['EXTRACT_SNPS'] : params.regenie_extract_snps}", checkIfExists: true),
+                file("${!params.regenie_extract_genes || params.regenie_extract_genes == 'NA' || params.regenie_extract_genes == '' ? tmp_files['EXTRACT_GENES'] : params.regenie_extract_genes}", checkIfExists: true)
                 ]
             )} 
 
@@ -120,7 +122,9 @@ workflow PREPARE_PROJECT {
                     file("${!row['condition_list'] || row['condition_list'] == 'NA' || row['condition_list'] == '' ? tmp_files['CONDITION'] : row['condition_list']}", checkIfExists: true),
                     additional_bgen_pgen_bed,
                     additional_sample_psam_fam,
-                    additional_bgi_pvar_bim
+                    additional_bgi_pvar_bim,
+                    file("${!row['extract_snps_list'] || row['extract_snps_list'] == 'NA' || row['extract_snps_list'] == '' ? tmp_files['EXTRACT_SNPS'] : row['extract_snps_list']}", checkIfExists: true),
+                    file("${!row['extract_genes_list'] || row['extract_genes_list'] == 'NA' || row['extract_genes_list'] == '' ? tmp_files['EXTRACT_GENES'] : row['extract_genes_list']}", checkIfExists: true)
                 ]
             )} 
     } else {
@@ -152,7 +156,9 @@ workflow PREPARE_PROJECT {
                 file("${!params.condition_list || params.condition_list == 'NA' || params.condition_list == '' ? tmp_files['CONDITION'] : params.condition_list}", checkIfExists: true),
                 additional_bgen_pgen_bed,
                 additional_sample_psam_fam,
-                additional_bgi_pvar_bim
+                additional_bgi_pvar_bim,
+                file("${!params.regenie_extract_snps || params.regenie_extract_snps == 'NA' || params.regenie_extract_snps == '' ? tmp_files['EXTRACT_SNPS'] : params.regenie_extract_snps}", checkIfExists: true),
+                file("${!params.regenie_extract_genes || params.regenie_extract_genes == 'NA' || params.regenie_extract_genes == '' ? tmp_files['EXTRACT_GENES'] : params.regenie_extract_genes}", checkIfExists: true)
             ]
         ])
 
