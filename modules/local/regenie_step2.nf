@@ -92,7 +92,7 @@ process REGENIE_STEP2_RAREVARS {
 
   output:
     tuple val(project_id), val(chrom), val(task.index), path("*regenie.gz"), val(n_chunks), emit: regenie_step2_out
-    tuple val(project_id), val(n_chunks), path("${project_id}_${chrom}_${task.index}.log"), emit: regenie_step2_out_log
+    tuple val(project_id), val(n_chunks), path("${project_id}_${filename}_${task.index}.log"), emit: regenie_step2_out_log
 
   script:
     def format = params.genotypes_rarevar_format in ['vcf','bcf'] ? 'bgen' : "${params.genotypes_rarevar_format}"
