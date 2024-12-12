@@ -34,6 +34,8 @@ workflow REGENIE_STEP1_SPLIT {
 }
 
 process SPLITL0 {
+  label 'regenie'
+
   input:
     tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(accessory_files), path(file_bim), path(file_bed), path(file_fam)
 
@@ -75,6 +77,7 @@ process SPLITL0 {
 }
 
 process RUNL0 {
+  label 'regenie'
   label 'step1_runl0'
   
   input:
@@ -125,6 +128,7 @@ process RUNL0 {
 }
 
 process RUNL1 {
+  label 'regenie'
   label 'step1_runl1'
   //stageInMode 'copy'
   

@@ -3,8 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL author="Edoardo Giacopuzzi"
 LABEL contact="edoardo.giacopuzzi@fht.org"
-LABEL image_version="0.6"
-LABEL regenie_version="3.3"
+LABEL image_version="0.7"
 LABEL bgenix_version="1.1.7"
 LABEL R_version="4.1.0"
 
@@ -20,12 +19,12 @@ RUN apt-get update && \
     gfortran \
     build-essential \
     automake \
-    python3 \
-    python3-pip \
     zlib1g-dev \
     libgomp1 \
     procps \
     libx11-6 \
+    python3 \
+    python3-pip \   
     openjdk-11-jdk \
     libjpeg-dev \
     libpcre2-dev pcre2-utils \
@@ -42,16 +41,9 @@ RUN apt-get update && \
 && apt-get -y clean all \
 && rm -rf /var/cache 
 
-# Install regenie
-WORKDIR /opt
-ENV REGENIE_VERSION "3.3"
-RUN mkdir regenie && cd regenie && \
-    wget https://github.com/rgcgithub/regenie/releases/download/v${REGENIE_VERSION}/regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
-    unzip -q regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
-    rm regenie_v${REGENIE_VERSION}.gz_x86_64_Linux.zip && \
-    mv regenie_v${REGENIE_VERSION}.gz_x86_64_Linux regenie && \
-    chmod +x regenie
-ENV PATH="/opt/regenie/:${PATH}"
+# Install basic python packages in the root env
+RUN python --version
+RUN pip install pandas==2.0.3 statsmodels==0.14.0
 
 #Install plink
 WORKDIR /opt
@@ -64,9 +56,9 @@ RUN mkdir plink && cd plink \
 
 # Install plink2
 WORKDIR /opt
-RUN wget https://s3.amazonaws.com/plink2-assets/alpha3/plink2_linux_avx2_20220814.zip \
-    && unzip -q plink2_linux_avx2_20220814.zip \
-    && rm plink2_linux_avx2_20220814.zip \
+RUN wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_avx2_20241206.zip \
+    && unzip -q plink2_linux_avx2_20241206.zip \
+    && rm plink2_linux_avx2_20241206.zip \
     && chmod a+x plink2 \
     && mv plink2 /usr/local/bin/plink2
 
@@ -102,9 +94,9 @@ RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
 
 # Prepare R environment
 WORKDIR "/opt"
-ENV R_LIBS /opt/R/libs
-ENV R_LIBS_USER /opt/R/user_libs
-ENV BIOC_VERSION 3.14
+ENV R_LIBS=/opt/R/libs
+ENV R_LIBS_USER=/opt/R/user_libs
+ENV BIOC_VERSION="3.14"
 
 RUN mkdir -p /home/ruser/R/libs \
     && mkdir -p /home/ruser/R/user_libs \
@@ -127,18 +119,13 @@ RUN R -e "install.packages(c('data.table', 'optparse'), repos = c(CRAN = 'https:
 
 # Install miniconda 
 WORKDIR /opt
-ENV CONDA_DIR /opt/conda
+ENV CONDA_DIR=/opt/conda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda
-ENV PATH=$CONDA_DIR/bin:$PATH
+ENV PATH=$PATH:$CONDA_DIR/bin
 
-# Install basic python packages in the root env
-RUN pip install pandas==1.5.3 statsmodels==0.13.5
-
-# Create a python2 environment
+# Create a python2 environment to install qctool
 RUN conda create -n python2 "python<3" 
-
-# Use python2 to install qctool
 WORKDIR /opt
 RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
     unzip qctool.tgz && \

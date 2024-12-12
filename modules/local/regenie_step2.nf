@@ -3,6 +3,7 @@ process REGENIE_STEP2_GWAS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_gwas_logs"}, mode: 'copy', pattern: '*.log'
   }
 
+  label 'regenie'
   label "step2_gwas"
   tag "${project_id}_${chrom}_chunk${task.index}"
 
@@ -80,6 +81,7 @@ process REGENIE_STEP2_RAREVARS {
     publishDir {"${params.logdir}/${project_id}/logs/step2_rarevar_logs"}, mode: 'copy', pattern: '*.log'
   }
 
+  label 'regenie'
   label "step2_rarevar"
   tag "${project_id}_chr${chrom}_chunk${task.index}"
 
@@ -112,6 +114,7 @@ process REGENIE_STEP2_RAREVARS {
     def refFirst = params.regenie_ref_first_step2 ? "--ref-first" : ''
     def maxCatLevels = params.maxCatLevels ? "--maxCatLevels ${params.maxCatLevels}" : ''
     def vc_tests = params.rarevars_vc_test ? "--vc-tests ${params.rarevars_vc_test.toLowerCase()}" : ''
+    def joint_tests = params.rarevars_joint_test ? "--joint ${params.rarevars_joint_test}" : ''
     def vc_maxAAF = params.rarevars_vc_maxAAF ? "--vc-maxAAF ${params.rarevars_vc_maxAAF}" : ''
     def write_mask_snplist = params.rarevars_write_mask_snplist ? "--write-mask-snplist" : ''
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
@@ -139,6 +142,7 @@ process REGENIE_STEP2_RAREVARS {
     $chromosome \
     $split_genes \
     $vc_tests \
+    $joint_tests \
     $vc_maxAAF \
     $binaryTrait \
     $bgen_sample \
