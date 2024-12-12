@@ -227,6 +227,11 @@
           "default": 0.05,
           "description": "Max AF for variants to be included in VC tests"
         },
+        "rarevars_joint_test": {
+          "type": "string",
+          "default": "minp,acat",
+          "description": "comma-separated list of joint tests to run. Choices: minp,acat,sbat. Note that sbat can't run on binary phenotypes"
+        },
         "regenie_build_mask": {
           "type": "string",
           "default": "max",
