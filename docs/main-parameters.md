@@ -16,7 +16,7 @@ Here is a list of the main parameters you need to adjust for a new analysis:
 
 - For GWAS analysis, set `regenie_gwas_test` to the type of model you want to test, either 'additive', 'dominant' or 'recessive'.
   
-- For rare variant test, set `rarevars_vc_test` as a comma-separated list of rare variants tests to perform among those accepted by regenie: skat, skato, skato-acat, acatv, acato, acato-full.
+- For rare variant test, set `rarevars_vc_test` as a comma-separated list of rare variants tests to perform among those accepted by regenie: skat, skato, skato-acat, acatv, acato, acato-full. You can also set `rarevars_joint_test` to perform a joint test across burden masks / bins. Possible values are: minp, acat, sbat.
 
 - Set `regenie_gwas_min_mac` and `regenie_rarevar_min_mac` to control the min allowed MAC for variants tested in either GWAS or rare variant analysis. Variants with MAC below this threshold will be excluded from the analysis.
 
