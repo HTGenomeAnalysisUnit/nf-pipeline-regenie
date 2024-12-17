@@ -385,7 +385,7 @@ for m in masks:
       verbose=False,
       build=genome_build
     )
-
+    
     plot_label = Markdown(f"#### Mask {m} - AF bin {a}\n\n")
     figure, log = regenieTable.plot_mqq(
       mode="qqm", skip=0, scaled=True,
@@ -396,6 +396,51 @@ for m in masks:
       sig_line_color='red',
       verbose=False)
     burden_plots.append((plot_label, figure))
+```
+
+```{python joint_burden_plot}
+#| fig-width: 3
+#| fig-height: 3
+#| include: false
+
+burden_dt = dt_clean[dt_clean['TEST'].str.contains('-BURDEN-')]
+
+tests = burden_dt['TEST'].unique().tolist()
+sig_value_threshold
+# For each line generate a regional plot using the plot_mqq function
+for t in tests:
+  sig_value_threshold = float(
+    bonferroni_threshold_df[
+        (bonferroni_threshold_df['TEST'] == t)
+    ]['bonferroni_thr']
+  )
+  mydt = burden_dt[(burden_dt['TEST'] == t)]
+  annotated_ids = mydt[(burden_dt['LOG10P'] >= sig_value_threshold)]['UNIQUEID'].tolist()
+  
+  regenieTable = gl.Sumstats(
+    mydt,
+    snpid='UNIQUEID',
+    chrom='CHROM',
+    pos='GENPOS',
+    mlog10p='LOG10P',
+    n='N',
+    beta='BETA',
+    se='SE',
+    other=['GENE','TEST','AFBIN','MASK'],
+    verbose=False,
+    build=genome_build
+  )
+
+  plot_label = Markdown(f"#### Burden joint test: {t}\n\n")
+  figure, log = regenieTable.plot_mqq(
+    mode="qqm", skip=0, scaled=True,
+    build=genome_build,
+    anno='GENE', anno_set=annotated_ids,
+    pinpoint=annotated_ids,
+    sig_level= 10 ** -sig_value_threshold,
+    sig_line_color='red',
+    verbose=False)
+  burden_plots.append((plot_label, figure))
 ```
 
 ::: {.callout-tip collapse="true"}
@@ -439,7 +484,7 @@ Results for other gene tests (SKAT, ACAT, ...) are showed separately for test an
 
 test_plots = []
 
-tests_dt = dt_clean[dt_clean['TEST'].str.contains('-')]
+tests_dt = dt_clean[dt_clean['TEST'].str.contains('ACATV|ACATO|SKAT|SKATO|ACATO-FULL|SKATO-ACAT')]
 
 masks = tests_dt['MASK'].unique().tolist()
 tests = tests_dt['TEST'].unique().tolist()
@@ -455,7 +500,7 @@ for t in tests:
     )
     mydt = tests_dt[(tests_dt['MASK'] == m) & (tests_dt['TEST'] == t)]
     annotated_ids = mydt[(tests_dt['LOG10P'] >= sig_value_threshold)]['UNIQUEID'].tolist()
-
+    
     regenieTable = gl.Sumstats(
       mydt,
       snpid='UNIQUEID',
@@ -469,7 +514,7 @@ for t in tests:
       verbose=False,
       build=genome_build
     )
-
+    
     plot_label = Markdown(f"#### Test {t} - Mask {m}\n\n")
     figure, log = regenieTable.plot_mqq(
       mode="qqm", skip=0, scaled=True,
