@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/nf-highspeed-gwas/master/nextflow_schema.json",
   "title": "nf-highspeed-gwas pipeline parameters",
   "description": "Regenie GWAS at high speed",
@@ -787,6 +787,13 @@
           "pattern": "^(\\d+\\.?\\s*(s|m|h|day)\\s*)+$",
           "hidden": true,
           "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
+        },
+        "help": {
+          "type": "boolean",
+          "description": "Display help text.",
+          "fa_icon": "fas fa-question-circle",
+          "hidden": true,
+          "help_text": "Show the pipeline help message and exit."
         }
       }
     }

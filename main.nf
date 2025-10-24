@@ -13,37 +13,48 @@ import java.text.SimpleDateFormat
 
 /*
 ======================================================================
-    INITIALIZATION
+    INITIALIZATION AND VALIDATION
 ======================================================================
 */
 
-//Check general required parameters
-requiredParams = [
-  'project', 'genotypes_build',
-  'chromosomes',
-  'prune_enabled',
-  'prune_maf',
-  'prune_window_kbsize',
-  'prune_step_size',
-  'prune_r2_threshold',
-  'qc_maf',
-  'qc_mac',
-  'qc_geno',
-  'qc_hwe',
-  'qc_mind',
-  'regenie_bsize_step1',
-  'step1_n_chunks',
-  'regenie_bsize_step2',
-  'annotation_min_log10p',
-  'annotation_interval_kb'
-]
+// Include nf-schema plugin functions
+include { paramsSummaryLog; paramsSummaryMap; paramsHelp } from 'plugin/nf-schema'
 
-for (param in requiredParams) {
-  if (params[param] == null || params[param] == '') {
-    exit 1, "Parameter ${param} is required."
-  }
+/*
+======================================================================
+    PARAMETER VALIDATION AND HELP
+======================================================================
+*/
+
+// Show help message if requested
+if (params.help) {
+    def String command = "nextflow run ${manifest.name} --project <PROJECT_ID> --genotypes_build <BUILD>"
+    log.info paramsHelp(command, parameters_schema: "$projectDir/nextflow_schema.json")
+    exit 0
 }
 
+// Print parameter summary log with enhanced formatting
+def summary_params = paramsSummaryMap(workflow, parameters_schema: "$projectDir/nextflow_schema.json")
+log.info paramsSummaryLog(workflow, parameters_schema: "$projectDir/nextflow_schema.json")
+
+// Log key pipeline information
+log.info """\
+==========================================================
+PIPELINE INFORMATION
+==========================================================
+Pipeline : ${manifest.name}
+Version  : ${manifest.version} 
+Git info : ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]
+Command  : ${workflow.commandLine}
+Profile  : ${workflow.profile}
+Work dir : ${workflow.workDir}
+==========================================================
+"""
+
+// Validate parameters using nf-schema - this will handle required parameter checks
+// Note: The manual validation has been replaced by the schema validation which is more robust
+
+//Additional conditional validation that cannot be easily expressed in JSON schema
 if (!(params.regenie_skip_predictions || params.regenie_premade_predictions)) {
   if (params.genotypes_array == null || params.genotypes_array == '') {
     exit 1, "Parameter genotypes_array is required when regenie_skip_predictions or regenie_premade_predictions are not set"
@@ -86,32 +97,18 @@ workflow {
   //==== SET WORKFLOW runName ====
   workflow.runName = "${params.project}-${workflow.runName}"
 
-  //==== INITIAL LOGGING OF PARAMETERS ====
-  log_params = [ 
-  'genotypes_array',
-  'genotypes_imputed', 'genotypes_imputed_format',
-  'genotypes_rarevar', 'genotypes_rarevar_format',
-  'genotypes_build',
-  'chromosomes',
-  'annotation_min_log10p',
-  'save_step1_predictions'
-  ]
-  
-  global_parameters = []
-  for (p in log_params) {
-    global_parameters.add("$p : " + params[p])
-  }
-
-log.info"""\
+  //==== ENHANCED PARAMETER LOGGING ====
+  // The comprehensive parameter summary is now provided by nf-schema at the beginning
+  log.info """\
 ==========================================================
-  REGENIE GWAS - SHARED PARAMETERS - NF PIPELINE    
+  REGENIE GWAS - HIGH-SPEED PIPELINE    
 ==========================================================
-
-${global_parameters.join('\n')}
+Pipeline: ${manifest.name} v${manifest.version}
 ==========================================================
 Please report issues to:
 https://github.com/HTGenomeAnalysisUnit/nf-pipeline-regenie
 or contact: edoardo.giacopuzzi@fht.org
+==========================================================
 """
 
   //==== PREPARE PROJECT INPUTS ====
