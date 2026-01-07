@@ -1,0 +1,6 @@
+model_id	model	trait_type	genetic_model	cat_var
+M1	Y1 ~ V1+V2+V3	quant	additive	NA
+M2	Y2 ~ V1+V2+V3	quant	additive	NA
+M3	B1 ~ V1+V2+V3	log	additive	NA
+M4	B2 ~ V1+V2+V3	log	additive	NA
+M5	Y1 ~ 1	quant	additive	NA

@@ -23,7 +23,7 @@ plink2 \
   ${sample_id_opt} \
   ${min_gq_opt} \
   ${dosage_certainty_opt} \
-  --out ${vcf_file.baseName} \
+  --out ${vcf_file.baseName.replaceAll(/\.vcf$/, '')} \
   --threads ${task.cpus} \
   --memory ${task.memory.toMega()}
 """
@@ -39,13 +39,14 @@ process CONVERT_TO_BGEN {
     tuple val(filename), path(vcf_file), val(chrom)
 
   output:
-    tuple val(filename), path("${vcf_file.baseName}.bgen"), path("${vcf_file.baseName}.bgen.bgi"), path("${vcf_file.baseName}.sample"), val(chrom), emit: genotypes_data
+    tuple val(filename), path("${output_bgen}.bgen"), path("${output_bgen}.bgen.bgi"), path("${output_bgen}.sample"), val(chrom), emit: genotypes_data
 
 script:
+output_bgen = "${vcf_file.baseName.replaceAll(/\.vcf$/,'')}"
 def dosage_opt = params.dosage_from ? "dosage=${params.dosage_from}" : ''
 def dosage_certainty_opt = params.import_dosage_certainty ? "--import-dosage-certainty ${params.import_dosage_certainty}" : ''
 def sample_id_opt = params.vcf_fixed_fid ? "--const-fid ${params.vcf_fixed_fid}" : '--double-id'
-def min_gq_opt = params.vcf_min_gq ? "--vcf-min-gq ${params.vcf_min_gq}" : ''
+def min_gq_opt = params.vcf_min_gq ? "--vcf-min-gq ${params.vcf_min_gq}" : '' 
 """
 plink2 \
   --${params.input_format} $vcf_file ${dosage_opt} \
@@ -53,10 +54,10 @@ plink2 \
   ${sample_id_opt} \
   ${min_gq_opt} \
   ${dosage_certainty_opt} \
-  --out ${vcf_file.baseName} \
+  --out ${output_bgen} \
   --threads ${task.cpus} \
   --memory ${task.memory.toMega()}
 
-bgenix -g ${vcf_file.baseName}.bgen -index
+bgenix -g ${output_bgen}.bgen -index
 """
 }
