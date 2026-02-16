@@ -31,13 +31,18 @@ workflow PROCESS_GWAS_RESULTS_WF {
 
 	main:
 	//==== FILTER AND ANNOTATE TOP HITS ====
-    FILTER_GWAS_RESULTS ( regenie_step2_by_phenotype )
-    
-    ANNOTATE_FILTERED (
-        FILTER_GWAS_RESULTS.out.results_filtered,
-        genes_bed_hg19,
-        genes_bed_hg38
-    )
+    if (params.filter_and_annotate_gwas) {
+        FILTER_GWAS_RESULTS ( regenie_step2_by_phenotype )
+        
+        ANNOTATE_FILTERED (
+            FILTER_GWAS_RESULTS.out.results_filtered,
+            genes_bed_hg19,
+            genes_bed_hg38
+        )
+        annotate_filter_out_ch = ANNOTATE_FILTERED.out.annotated_ch
+    } else {
+        annotate_filter_out_ch = regenie_step2_by_phenotype.map { it -> return tuple(it[0], it[1], it[2], file('NO_TOPHITS'))}
+    }
   
     //==== PERFORM VARIANT CLUMPING ====
     if (params.clumping) {
@@ -51,7 +56,7 @@ workflow PROCESS_GWAS_RESULTS_WF {
     }
 
     merged_results_and_annotated_filtered = regenie_step2_by_phenotype
-        .join(ANNOTATE_FILTERED.out.annotated_ch, by: [0,1])
+        .join(annotate_filter_out_ch, by: [0,1])
         .join(clump_results_ch, by: [0,1], remainder: true)
 
     emit:
@@ -64,21 +69,25 @@ workflow PROCESS_RAREVAR_RESULTS_WF {
     regenie_step2_by_phenotype //[project_id, phenotype, results_gz_file]
     
 	main:
-	//==== FILTER AND ANNOTATE TOP HITS ====
-    FILTER_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
-    PROCESS_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
-    /*
-    //At the moment we don't provide any additional annotation for gene based results
-    ANNOTATE_FILTERED (
-        FILTER_RESULTS.out.results_filtered,
-        genes_bed_hg19,
-        genes_bed_hg38
-    )
-    */
+    if (params.filter_and_annotate_rarevar) {
+        //==== FILTER AND ANNOTATE TOP HITS ====
+        FILTER_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
+        PROCESS_RAREVAR_RESULTS ( regenie_step2_by_phenotype )
+        /*
+        //At the moment we don't provide any additional annotation for gene based results
+        ANNOTATE_FILTERED (
+            FILTER_RESULTS.out.results_filtered,
+            genes_bed_hg19,
+            genes_bed_hg38
+        )
+        */
 
-    merged_results_and_annotated_filtered = regenie_step2_by_phenotype
-        .join(FILTER_RAREVAR_RESULTS.out.results_filtered, by: [0,1])
-       //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
+        merged_results_and_annotated_filtered = PROCESS_RAREVAR_RESULTS.out.results_processed
+            .join(FILTER_RAREVAR_RESULTS.out.results_filtered, by: [0,1])
+        //.map { tuple(it[0], it[1], it[2], "NO_CLUMP_FILE") }
+    } else {
+        merged_results_and_annotated_filtered = regenie_step2_by_phenotype.map { it -> return tuple(it[0], it[1], it[2], file('NO_TOPHITS'))}
+    }
 
     emit:
     //[val(project_id), val(phenotype), path(regenie_merged), path(annotated_tophits)]
