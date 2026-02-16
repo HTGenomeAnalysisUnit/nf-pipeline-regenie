@@ -10,7 +10,8 @@ process VALIDATE_PHENOTYPES {
   output:
     tuple val(project_id), file("${phenotypes_file.baseName}.pheno.validated.txt"), val(pheno_meta), emit: phenotypes_file_validated
     tuple val(project_id), path("${phenotypes_file.baseName}.pheno.validated.log"), emit: phenotypes_file_validated_log
-
+  
+  script:
   """
   RegenieValidateInput.py --input ${phenotypes_file} --output ${phenotypes_file.baseName}.pheno.validated.txt --type phenotype
   """

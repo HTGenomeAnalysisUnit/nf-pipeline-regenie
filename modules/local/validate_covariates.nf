@@ -10,7 +10,8 @@ process VALIDATE_COVARIATS {
   output:
     tuple val(project_id), path("${covariates_file.baseName}.cov.validated.txt"), val(covar_meta), file(accessory_files), emit: covariates_file_validated
     tuple val(project_id), path("${covariates_file.baseName}.cov.validated.log"), emit: covariates_file_validated_log
-
+  
+  script:
   """
   RegenieValidateInput.py --input ${covariates_file} --output  ${covariates_file.baseName}.cov.validated.txt --type covariate
   """

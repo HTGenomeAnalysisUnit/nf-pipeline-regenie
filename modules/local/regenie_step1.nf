@@ -43,7 +43,8 @@ process SPLITL0 {
     tuple val(project_id), path(phenotypes_file), val(pheno_meta), path(covariates_file), val(covar_meta), path(accessory_files), path("regenie_step1.master"), path("regenie_step1*.snplist"), path(file_bim), path(file_bed), path(file_fam)
 
   script:
-  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
+  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file" : ''
+  def covarColList = covar_meta.cols ? "--covarColList ${covar_meta.cols}" : ''
   //def make_no_cov_file = covariates_file.name == 'NO_COV_FILE' ? "unlink NO_COV_FILE; touch NO_COV_FILE" : ''
   def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
@@ -54,15 +55,17 @@ process SPLITL0 {
   def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
   def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
   def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
-
+  def phenocollist = pheno_meta.cols ? "--phenoColList ${pheno_meta.cols}" : ''
+  
   """
   # qcfiles path required for keep and extract (but not actually set below)
   regenie \
     --step 1 \
     --bed ${file_bed.baseName} \
     --phenoFile ${phenotypes_file} \
-    --phenoColList  ${pheno_meta.cols} \
+    $phenocollist \
     $covariants \
+    $covarColList \
     $cat_covariates \
     $deleteMissings \
     $refFirst \
@@ -88,7 +91,8 @@ process RUNL0 {
 
   script:
   master_prefix = master_file.simpleName
-  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
+  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file" : ''
+  def covarColList = covar_meta.cols ? "--covarColList ${covar_meta.cols}" : ''
   def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
@@ -101,6 +105,7 @@ process RUNL0 {
   def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
   def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
   def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
+  def phenocollist = pheno_meta.cols ? "--phenoColList ${pheno_meta.cols}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -108,8 +113,9 @@ process RUNL0 {
     --step 1 \
     --bed ${file_bed.baseName} \
     --phenoFile ${phenotypes_file} \
-    --phenoColList  ${pheno_meta.cols} \
+    $phenocollist \
     $covariants \
+    $covarColList \
     $cat_covariates \
     $deleteMissings \
     $forceStep1 \
@@ -147,7 +153,8 @@ process RUNL1 {
 
   script:
   master_prefix = master_file.simpleName
-  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
+  def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file" : ''
+  def covarColList = covar_meta.cols ? "--covarColList ${covar_meta.cols}" : ''
   def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
   def deleteMissings = params.phenotypes_delete_missings  ? "--strict" : ''
   def forceStep1 = params.regenie_force_step1  ? "--force-step1" : ''
@@ -160,6 +167,7 @@ process RUNL1 {
   def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
   def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
   def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
+  def phenocollist = pheno_meta.cols ? "--phenoColList ${pheno_meta.cols}" : ''
 
   """
   # qcfiles path required for keep and extract (but not actually set below)
@@ -167,9 +175,10 @@ process RUNL1 {
     --step 1 \
     --bed ${file_bed.baseName} \
     --phenoFile ${phenotypes_file} \
-    --phenoColList ${pheno_meta.cols} \
+    $phenocollist \
     --l1-phenoList ${single_pheno} \
     $covariants \
+    $covarColList \
     $cat_covariates \
     $deleteMissings \
     $forceStep1 \
