@@ -1,0 +1,48 @@
+{
+  "## TEST 6": "BGEN input by chromosome - step2 no split - quant phenotype - 3 covars",
+  "## PREREQ": "Per-chr BGEN .bgi files may need generating: bgenix -g file.bgen -index",
+
+  "RegenieGWAS.project": "test6",
+  "RegenieGWAS.genotypes_build": "hg19",
+  "RegenieGWAS.chromosomes": ["1", "2"],
+
+  "RegenieGWAS.genotypes_array_bed": "../tests/input/pipeline/example_step1.bed",
+  "RegenieGWAS.genotypes_array_bim": "../tests/input/pipeline/example_step1.bim",
+  "RegenieGWAS.genotypes_array_fam": "../tests/input/pipeline/example_step1.fam",
+
+  "RegenieGWAS.genotypes_imputed": [
+    {
+      "file_prefix": "example_chr1",
+      "primary_file": "../tests/input/pipeline/example_chr1.bgen",
+      "secondary_file": "../tests/input/pipeline/example_chr1.bgen.bgi",
+      "tertiary_file": "../tests/input/pipeline/example_chr1.sample",
+      "chromosome": "1"
+    },
+    {
+      "file_prefix": "example_chr2",
+      "primary_file": "../tests/input/pipeline/example_chr2.bgen",
+      "secondary_file": "../tests/input/pipeline/example_chr2.bgen.bgi",
+      "tertiary_file": "../tests/input/pipeline/example_chr2.sample",
+      "chromosome": "2"
+    }
+  ],
+  "RegenieGWAS.genotypes_imputed_format": "bgen",
+
+  "RegenieGWAS.phenotypes_filename": "../tests/input/pipeline/phenotype.txt",
+  "RegenieGWAS.phenotypes_columns": "Y1,Y2",
+  "RegenieGWAS.phenotypes_binary_trait": false,
+
+  "RegenieGWAS.step1_n_chunks": 2,
+
+  "RegenieGWAS.step2_gwas_split": false,
+  "RegenieGWAS.regenie_gwas_test": "additive",
+
+  "RegenieGWAS.genes_bed": "../genes/genes.GRCh37.1-22.sorted.bed",
+  "RegenieGWAS.genes_ranges": "../genes/glist-hg19-protein_coding",
+  "RegenieGWAS.collapse_closegenes_py": "../bin/collapse_closegenes.py",
+
+  "RegenieGWAS.clump_p1": 0.01,
+  "RegenieGWAS.clump_p2": 0.05,
+  "RegenieGWAS.annotation_min_log10p": 2,
+  "RegenieGWAS.make_report": false
+}

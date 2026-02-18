@@ -1,0 +1,50 @@
+{
+  "## TEST 9": "VCF input by chromosome - step2 split - quant phenotype - 3 covars",
+  "## PREREQ": "Per-chr VCF .tbi index files may need generating: tabix -p vcf file.vcf.gz",
+
+  "RegenieGWAS.project": "test9",
+  "RegenieGWAS.genotypes_build": "hg19",
+  "RegenieGWAS.chromosomes": ["1", "2"],
+
+  "RegenieGWAS.genotypes_array_bed": "../tests/input/pipeline/example_step1.bed",
+  "RegenieGWAS.genotypes_array_bim": "../tests/input/pipeline/example_step1.bim",
+  "RegenieGWAS.genotypes_array_fam": "../tests/input/pipeline/example_step1.fam",
+
+  "RegenieGWAS.genotypes_imputed": [
+    {
+      "file_prefix": "example_chr1",
+      "primary_file": "../tests/input/pipeline/example_chr1.vcf.gz",
+      "secondary_file": "../tests/input/pipeline/example_chr1.vcf.gz.tbi",
+      "tertiary_file": "../tests/input/pipeline/example_chr1.sample",
+      "chromosome": "1"
+    },
+    {
+      "file_prefix": "example_chr2",
+      "primary_file": "../tests/input/pipeline/example_chr2.vcf.gz",
+      "secondary_file": "../tests/input/pipeline/example_chr2.vcf.gz.tbi",
+      "tertiary_file": "../tests/input/pipeline/example_chr2.sample",
+      "chromosome": "2"
+    }
+  ],
+  "RegenieGWAS.genotypes_imputed_format": "vcf",
+
+  "RegenieGWAS.phenotypes_filename": "../tests/input/pipeline/phenotype.txt",
+  "RegenieGWAS.phenotypes_columns": "Y1,Y2",
+  "RegenieGWAS.phenotypes_binary_trait": false,
+
+  "RegenieGWAS.step1_n_chunks": 2,
+
+  "RegenieGWAS.step2_gwas_split": true,
+  "RegenieGWAS.step2_gwas_chunk_size": 250,
+  "RegenieGWAS.regenie_gwas_test": "additive",
+  "RegenieGWAS.make_chunks_sql": "../bin/get_intervals.sql",
+
+  "RegenieGWAS.genes_bed": "../genes/genes.GRCh37.1-22.sorted.bed",
+  "RegenieGWAS.genes_ranges": "../genes/glist-hg19-protein_coding",
+  "RegenieGWAS.collapse_closegenes_py": "../bin/collapse_closegenes.py",
+
+  "RegenieGWAS.clump_p1": 0.01,
+  "RegenieGWAS.clump_p2": 0.05,
+  "RegenieGWAS.annotation_min_log10p": 2,
+  "RegenieGWAS.make_report": false
+}

@@ -1,0 +1,9 @@
+{
+  "default_runtime_attributes": {
+    "maxRetries": 3,
+    "docker": "htgenomeanalysisunit/gwas-nf-pipeline:0.7"
+  },
+  "final_workflow_outputs_dir": "output/",
+  "use_relative_output_paths": true,
+  "workflow_failure_mode": "ContinueWhilePossible"
+}

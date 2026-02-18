@@ -1,0 +1,46 @@
+{
+  "## TEST 16": "BGEN input - step2 split - quant phenotype - 3 covars - no clump - report",
+
+  "RegenieGWAS.project": "test16",
+  "RegenieGWAS.genotypes_build": "hg19",
+  "RegenieGWAS.chromosomes": ["1", "2"],
+
+  "RegenieGWAS.genotypes_array_bed": "../tests/input/pipeline/example_step1.bed",
+  "RegenieGWAS.genotypes_array_bim": "../tests/input/pipeline/example_step1.bim",
+  "RegenieGWAS.genotypes_array_fam": "../tests/input/pipeline/example_step1.fam",
+
+  "RegenieGWAS.genotypes_imputed": [
+    {
+      "file_prefix": "example",
+      "primary_file": "../tests/input/pipeline/example.bgen",
+      "secondary_file": "../tests/input/pipeline/example.bgen.bgi",
+      "tertiary_file": "../tests/input/pipeline/example.sample",
+      "chromosome": "ONE_FILE"
+    }
+  ],
+  "RegenieGWAS.genotypes_imputed_format": "bgen",
+
+  "RegenieGWAS.phenotypes_filename": "../tests/input/pipeline/phenotype.txt",
+  "RegenieGWAS.phenotypes_columns": "Y1,Y2",
+  "RegenieGWAS.phenotypes_binary_trait": false,
+
+  "RegenieGWAS.covariates_filename": "../tests/input/pipeline/covariates.txt",
+  "RegenieGWAS.covariates_columns": "V1,V2,V3",
+
+  "RegenieGWAS.step1_n_chunks": 2,
+
+  "RegenieGWAS.step2_gwas_split": true,
+  "RegenieGWAS.step2_gwas_chunk_size": 250,
+  "RegenieGWAS.regenie_gwas_test": "additive",
+  "RegenieGWAS.make_chunks_sql": "../bin/get_intervals.sql",
+
+  "RegenieGWAS.genes_bed": "../genes/genes.GRCh37.1-22.sorted.bed",
+  "RegenieGWAS.genes_ranges": "../genes/glist-hg19-protein_coding",
+  "RegenieGWAS.collapse_closegenes_py": "../bin/collapse_closegenes.py",
+
+  "RegenieGWAS.clumping": false,
+  "RegenieGWAS.annotation_min_log10p": 2,
+  "RegenieGWAS.make_report": true,
+  "RegenieGWAS.gwas_report_template": "../reports/gwas_report_template.qmd",
+  "RegenieGWAS.quarto_report_css": "../reports/quarto_report.css"
+}

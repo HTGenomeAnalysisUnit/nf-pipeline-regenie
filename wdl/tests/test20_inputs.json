@@ -1,0 +1,44 @@
+{
+  "## TEST 20": "Models table mode - multiple models from models_input.txt",
+  "## MODE": "Mode 2: models_table",
+
+  "RegenieGWAS.genotypes_build": "hg19",
+  "RegenieGWAS.chromosomes": ["1", "2"],
+
+  "RegenieGWAS.genotypes_array_bed": "../tests/input/pipeline/example_step1.bed",
+  "RegenieGWAS.genotypes_array_bim": "../tests/input/pipeline/example_step1.bim",
+  "RegenieGWAS.genotypes_array_fam": "../tests/input/pipeline/example_step1.fam",
+
+  "RegenieGWAS.genotypes_imputed": [
+    {
+      "file_prefix": "example",
+      "primary_file": "../tests/input/pipeline/example.bgen",
+      "secondary_file": "../tests/input/pipeline/example.bgen.bgi",
+      "tertiary_file": "../tests/input/pipeline/example.sample",
+      "chromosome": "ONE_FILE"
+    }
+  ],
+  "RegenieGWAS.genotypes_imputed_format": "bgen",
+
+  "RegenieGWAS.models_table": "../tests/input/pipeline/models_input.txt",
+  "RegenieGWAS.phenotypes_filename": "../tests/input/pipeline/pheno_and_covars.txt",
+  "RegenieGWAS.pheno_chunker_r": "../bin/pheno_chunker.R",
+  "RegenieGWAS.prepare_projects_py": "../bin/prepare_projects.py",
+  "RegenieGWAS.pheno_chunk_size": 50,
+  "RegenieGWAS.missing_tolerance": 0.1,
+
+  "RegenieGWAS.step1_n_chunks": 2,
+
+  "RegenieGWAS.step2_gwas_split": true,
+  "RegenieGWAS.step2_gwas_chunk_size": 250,
+  "RegenieGWAS.make_chunks_sql": "../bin/get_intervals.sql",
+
+  "RegenieGWAS.genes_bed": "../genes/genes.GRCh37.1-22.sorted.bed",
+  "RegenieGWAS.genes_ranges": "../genes/glist-hg19-protein_coding",
+  "RegenieGWAS.collapse_closegenes_py": "../bin/collapse_closegenes.py",
+
+  "RegenieGWAS.clump_p1": 0.01,
+  "RegenieGWAS.clump_p2": 0.05,
+  "RegenieGWAS.annotation_min_log10p": 2,
+  "RegenieGWAS.make_report": false
+}
