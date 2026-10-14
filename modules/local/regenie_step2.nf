@@ -27,7 +27,8 @@ process REGENIE_STEP2_GWAS {
     def binaryTrait =  pheno_meta.binary == 'true' ? "--bt $firth " : ""
     def range = params.regenie_range != '' ? "--range $params.regenie_range" : ''
     def extract_snps = accessory_files[4].name != 'NO_EXTRACT_SNPS_FILE' ? "--extract ${accessory_files[4]}" : ''
-    def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file --covarColList ${covar_meta.cols}" : ''
+    def covariants = covariates_file.name != 'NO_COV_FILE' ? "--covarFile $covariates_file" : ''
+    def covarColList = covar_meta.cols ? "--covarColList ${covar_meta.cols}" : ''
     def cat_covariates = !covar_meta.cat_cols || covar_meta.cat_cols == '' || covar_meta.cat_cols == 'NA' ? '' : "--catCovarList ${covar_meta.cat_cols}"
     def deleteMissingData = params.phenotypes_delete_missings ? "--strict" : ''
     def predictions = params.regenie_skip_predictions ? '--ignore-pred' : ""
@@ -42,12 +43,28 @@ process REGENIE_STEP2_GWAS {
     def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
     def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
   """
+  #This ensures the phenotype file contains only the columns specified
+  awk -F '\t' -v OFS='\t' -v cols="${pheno_meta.cols}" '
+  BEGIN { n = split(cols, wanted, ",") }
+  NR == 1 {
+      for (i = 1; i <= NF; i++) column[\$i] = i
+      for (i = 1; i <= n; i++)
+          if (!(wanted[i] in column)) {
+              print "Unknown column: " wanted[i] > "/dev/stderr"
+              exit 1
+          }
+  }
+  {
+      for (i = 1; i <= n; i++)
+          printf "%s%s", $(column[wanted[i]]), (i < n ? OFS : ORS)
+  }
+  ' ${phenotypes_file} > filtered_phenotypes.tsv
+
   regenie \
     --step 2 \
     --${format} ${fileprefix}${extension} \
     --chrList ${params.chromosomes.join(',')} \
-    --phenoFile ${phenotypes_file} \
-    --phenoColList ${pheno_meta.cols} \
+    --phenoFile filtered_phenotypes.tsv \
     --bsize ${params.regenie_bsize_step2} \
     --pred regenie_step1_out_pred.list \
     --threads ${task.cpus} \
@@ -125,16 +142,31 @@ process REGENIE_STEP2_RAREVARS {
     def additional_geno_extension = params.additional_geno_format == 'bgen' ? '.bgen' : ''
     def additional_genotypes = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' ? "--condition-file ${params.additional_geno_format},${additional_geno_fileprefix}${additional_geno_extension}" : ''
     def additional_sample_file = accessory_files[1].name != 'NO_ADDITIONAL_GENO_FILE' && accessory_files[0].name != 'NO_CONDITION_FILE' && params.additional_geno_format == 'bgen' ? "--condition-file-sample ${accessory_files[2]}" : ''
-    def phenocollist = pheno_meta.cols ? "--phenoColList ${pheno_meta.cols}" : ''
   """
+  #This ensures the phenotype file contains only the columns specified
+  awk -F '\t' -v OFS='\t' -v cols="${pheno_meta.cols}" '
+  BEGIN { n = split(cols, wanted, ",") }
+  NR == 1 {
+      for (i = 1; i <= NF; i++) column[\$i] = i
+      for (i = 1; i <= n; i++)
+          if (!(wanted[i] in column)) {
+              print "Unknown column: " wanted[i] > "/dev/stderr"
+              exit 1
+          }
+  }
+  {
+      for (i = 1; i <= n; i++)
+          printf "%s%s", $(column[wanted[i]]), (i < n ? OFS : ORS)
+  }
+  ' ${phenotypes_file} > filtered_phenotypes.tsv
+
   regenie \
     --step 2 \
     --${format} ${fileprefix}${extension} \
     --anno-file $rarevars_anno_file \
     --set-list $rarevars_set_list \
     --mask-def $rarevars_mask_file \
-    --phenoFile ${phenotypes_file} \
-    ${phenocollist} \
+    --phenoFile filtered_phenotypes.tsv \
     --bsize ${params.regenie_bsize_step2} \
     --pred regenie_step1_out_pred.list \
     --threads ${task.cpus} \

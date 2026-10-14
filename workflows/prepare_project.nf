@@ -63,7 +63,7 @@ workflow PREPARE_PROJECT {
                 row[0][0],
                 file(row[0][1]),
                 [
-                    cols: null, // we pass null so all phenos are used from the pheno chunk file
+                    cols: row[0][2], // a filtered pheno file based on these columns is then generated in step2 module 
                     binary: "${row[0][3] == 'True' ? true : false}",
                     model: row[0][4]
                 ]
@@ -76,7 +76,7 @@ workflow PREPARE_PROJECT {
                 row[0][0],
                 file("${!row[0][5] || row[0][5] == 'NA' || row[0][5] == '' || row[0][5] == 'NO_COV_FILE' ? tmp_files['COV'] : row[0][5]}", checkIfExists: true),
                 [
-                    cols: null, // we pass null so all phenos are used from the pheno chunk file
+                    cols: null, // we pass null so all phenos are used from the covar chunk file
                     cat_cols: row[0][7],
                     gxe: params.interaction_cov,
                     gxg: params.interaction_snp
